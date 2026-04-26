@@ -1,8 +1,16 @@
 {
   "name": "@ashcoolman/leaf-toolkit",
   "version": "0.0.0-scaffold",
-  "private": true,
   "description": "Leaf-driven work loops: partition a codebase into bite-sized leaves, rank by priority, drive AI/agent loops against them with concurrency-safe tool wrappers.",
+  "license": "Apache-2.0",
+  "author": "Ash Coolman",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AshCoolman/tools-for-me.git",
+    "directory": "x/leaf-toolkit"
+  },
+  "homepage": "https://github.com/AshCoolman/tools-for-me/tree/main/x/leaf-toolkit",
+  "bugs": "https://github.com/AshCoolman/tools-for-me/issues",
   "type": "module",
   "bin": {
     "leaf": "bin/leaf"
