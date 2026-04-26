@@ -1,0 +1,27 @@
+{
+  "name": "@ashcoolman/leaf-toolkit",
+  "version": "0.0.0-scaffold",
+  "private": true,
+  "description": "Leaf-driven work loops: partition a codebase into bite-sized leaves, rank by priority, drive AI/agent loops against them with concurrency-safe tool wrappers.",
+  "type": "module",
+  "bin": {
+    "leaf": "bin/leaf"
+  },
+  "scripts": {
+    "leaf": "tsx src/cli.ts"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.0.0",
+    "tsx": "^4.0.0",
+    "yaml": "^2.4.0"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "examples"
+  ]
+}

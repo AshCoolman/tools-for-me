@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Thin wrapper — all logic lives in src/cli.ts.
+set -euo pipefail
+DIR="$(cd "$(dirname "$0")/.." && pwd)"
+exec npx tsx "$DIR/src/cli.ts" "$@"

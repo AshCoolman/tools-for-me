@@ -1,0 +1,21 @@
+{
+  "name": "@ashcoolman/root",
+  "private": true,
+  "scripts": {
+    "test": "lerna exec -- yarn test",
+    "prepare": "husky"
+  },
+  "workspaces": [
+    "x/*",
+    "x/*/*"
+  ],
+  "devDependencies": {
+    "husky": "^9.1.0",
+    "lerna": "8.1.2"
+  },
+  "resolutions": {
+    "prettier": "2.8.8"
+  },
+  "packageManager": "yarn@1.22.1",
+  "color": "#551111"
+}

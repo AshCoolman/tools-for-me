@@ -1,0 +1,16 @@
+node_modules/
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+!.yarn/patches
+!.yarn/sdks
+!.yarn/versions
+*.nogit*
+coverage/
+*.log
+*.env
+.aider*
+dist/
+*.gitignored.*
+.claude/settings.local.json
+**/*/.claude/settings.local.json
