@@ -1,5 +1,24 @@
 #!/usr/bin/env bash
-# Thin wrapper — all logic lives in src/cli.ts.
+# Thin wrapper — all logic lives in src/cli.ts. Walk up from this script's dir
+# looking for node_modules/.bin/tsx (could be in our own package or hoisted into
+# the consumer's root). No npx — direct exec, no resolver round-trip.
 set -euo pipefail
-DIR="$(cd "$(dirname "$0")/.." && pwd)"
-exec npx tsx "$DIR/src/cli.ts" "$@"
+SRC="$0"
+while [ -L "$SRC" ]; do
+  D="$(cd -P "$(dirname "$SRC")" && pwd)"
+  SRC="$(readlink "$SRC")"
+  [[ "$SRC" != /* ]] && SRC="$D/$SRC"
+done
+PKG="$(cd "$(dirname "$SRC")/.." && pwd)"
+
+DIR="$PKG"
+while :; do
+  if [ -x "$DIR/node_modules/.bin/tsx" ]; then
+    exec "$DIR/node_modules/.bin/tsx" "$PKG/src/cli.ts" "$@"
+  fi
+  PARENT="$(dirname "$DIR")"
+  [ "$PARENT" = "$DIR" ] && break
+  DIR="$PARENT"
+done
+echo "leaf: tsx not found (expected at <ancestor>/node_modules/.bin/tsx — install dependencies)" >&2
+exit 1

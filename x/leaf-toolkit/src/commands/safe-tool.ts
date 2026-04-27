@@ -6,8 +6,12 @@
 //          semaphore — no busy-poll.
 //
 // Usage:
-//   leaf safe-tool --cap 8 --match vitest -- npx vitest run --coverage
-//   leaf safe-tool --cap 4 --match playwright --flock-dir /tmp/leaf-locks -- npx playwright test
+//   leaf safe-tool --cap 8 --match vitest -- vitest run --coverage
+//   leaf safe-tool --cap 4 --match playwright --flock-dir /tmp/leaf-locks -- playwright test
+//
+// The trailing command runs in the consumer's PATH context — invoke via your
+// package manager's run-script (e.g. `yarn leaf safe-tool ...`) so
+// node_modules/.bin is on PATH.
 //
 // Flags:
 //   --cap N             hard cap on simultaneous matching procs (default 8)

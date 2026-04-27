@@ -29,10 +29,13 @@
   "files": [
     "bin",
     "src",
-    "README.md",
-    "examples"
+    "docs",
+    "skills",
+    "examples",
+    "README.md"
   ],
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "gitHead": "8dcc37af192526baeae2c596d088c693ecc4332b"
 }
