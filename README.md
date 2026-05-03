@@ -9,13 +9,15 @@ A Yarn workspaces monorepo. Packages live under `x/*` and stand alone — pick o
 | Package | Description |
 | --- | --- |
 | [`@ashcoolman/leaf-toolkit`](x/leaf-toolkit) | Partition a codebase into bite-sized leaves, rank by priority, drive AI/agent work loops against them with concurrency-safe tool wrappers. |
+| [`@ashcoolman/claude-context-dashboard`](x/claude-context-dashboard) | Local dashboard for Claude Code sessions — per-session context fullness and token usage, scanned from `~/.claude/projects` JSONL logs. |
 
 ## Layout
 
 ```
 .
 ├── x/                    # workspace packages
-│   └── leaf-toolkit/
+│   ├── leaf-toolkit/
+│   └── claude-context-dashboard/
 ├── package.json          # workspace root
 ├── lerna.json
 ├── .yarn/                # yarn 1.22.1 binary + plugins
@@ -34,4 +36,4 @@ yarn install
 
 ## License
 
-Apache 2.0 — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).
