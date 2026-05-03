@@ -1,0 +1,62 @@
+{
+  "allocation": {
+    "strategy": "round-robin",
+    "seed": 42,
+    "k": 4,
+    "assignments": [
+      {
+        "agentId": 0,
+        "leafIds": [
+          "src"
+        ]
+      },
+      {
+        "agentId": 1,
+        "leafIds": [
+          "src/commands"
+        ]
+      },
+      {
+        "agentId": 2,
+        "leafIds": [
+          "src/sim#b168b8"
+        ]
+      },
+      {
+        "agentId": 3,
+        "leafIds": [
+          "src/sim#f63c0e"
+        ]
+      }
+    ]
+  },
+  "collisions": {
+    "pairs": [],
+    "agentLoad": [
+      {
+        "agentId": 0,
+        "leafCount": 1,
+        "fileCount": 7,
+        "totalLoc": 234
+      },
+      {
+        "agentId": 1,
+        "leafCount": 1,
+        "fileCount": 10,
+        "totalLoc": 1773
+      },
+      {
+        "agentId": 2,
+        "leafCount": 1,
+        "fileCount": 12,
+        "totalLoc": 1299
+      },
+      {
+        "agentId": 3,
+        "leafCount": 1,
+        "fileCount": 3,
+        "totalLoc": 298
+      }
+    ]
+  }
+}

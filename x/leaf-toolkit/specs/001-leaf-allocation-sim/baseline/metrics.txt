@@ -1,0 +1,20 @@
+{
+  "leafCount": 4,
+  "totalLoc": 3604,
+  "totalFiles": 32,
+  "loc": {
+    "mean": 901,
+    "stddev": 657.1312654257139,
+    "min": 234,
+    "max": 1773,
+    "maxOverMin": 7.576923076923077
+  },
+  "files": {
+    "mean": 8,
+    "stddev": 3.391164991562634,
+    "min": 3,
+    "max": 12,
+    "maxOverMin": 4
+  },
+  "verdict": "unbalanced"
+}

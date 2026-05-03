@@ -16,7 +16,8 @@
     "leaf": "bin/leaf"
   },
   "scripts": {
-    "leaf": "tsx src/cli.ts"
+    "leaf": "tsx src/cli.ts",
+    "test": "tsx --test 'tests/**/*.test.ts'"
   },
   "engines": {
     "node": ">=20"

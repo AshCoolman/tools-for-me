@@ -7,9 +7,13 @@ export interface Leaf {
   path: string;
   /** Whole subtree, or one bin of an oversized subtree. */
   scope: "subtree" | "bin";
-  /** When scope === "bin": 1-based index out of binTotal. */
+  /** When scope === "bin": 1-based index out of binTotal. Sort/legibility aid; not
+   *  load-bearing for cross-run identity. */
   binIndex?: number;
   binTotal?: number;
+  /** Content-derived bin identifier (sha256 prefix, 6 hex). Present iff scope === "bin"
+   *  and binTotal > 1. Stable across runs for a given file set. */
+  binId?: string;
   /** When scope === "bin": child paths covered by this bin. */
   members?: string[];
   /** All files (repo-relative) included in the leaf. */

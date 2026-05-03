@@ -10,6 +10,7 @@ import { safeTool } from "./commands/safe-tool.js";
 import { safeVitest } from "./commands/safe-vitest.js";
 import { survey } from "./commands/survey.js";
 import { registerDomain } from "./commands/domain-register.js";
+import { sim } from "./commands/sim.js";
 
 const VERBS: Record<string, (argv: string[]) => Promise<void> | void> = {
   partition,
@@ -21,6 +22,7 @@ const VERBS: Record<string, (argv: string[]) => Promise<void> | void> = {
   "safe-vitest": safeVitest,
   survey,
   domain: registerDomain,
+  sim,
 };
 
 function usage(): never {

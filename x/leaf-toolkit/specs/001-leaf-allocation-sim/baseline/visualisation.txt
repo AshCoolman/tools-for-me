@@ -1,0 +1,44 @@
+src
+├── commands
+│   ├── domain-register.ts  [L2]
+│   ├── link.ts  [L2]
+│   ├── partition.ts  [L2]
+│   ├── priority.ts  [L2]
+│   ├── safe-tool.ts  [L2]
+│   ├── safe-vitest.ts  [L2]
+│   ├── scope-from-priority.ts  [L2]
+│   ├── sim.ts  [L2]
+│   ├── status.ts  [L2]
+│   └── survey.ts  [L2]
+├── doc
+│   └── parser.ts  [L1]
+├── plugins
+│   ├── coverage.ts  [L1]
+│   └── index.ts  [L1]
+├── sim
+│   ├── core
+│   │   ├── dirnode.ts  [L4]
+│   │   ├── partition-core.ts  [L4]
+│   │   └── prior-state.ts  [L4]
+│   ├── allocate.ts  [L3]
+│   ├── balance.ts  [L3]
+│   ├── cli.ts  [L3]
+│   ├── collide.ts  [L3]
+│   ├── drift.ts  [L3]
+│   ├── fixtures.ts  [L3]
+│   ├── mutations.ts  [L3]
+│   ├── overlap.ts  [L3]
+│   ├── prng.ts  [L3]
+│   ├── report.ts  [L3]
+│   ├── types.ts  [L3]
+│   └── visualise.ts  [L3]
+├── cli.ts  [L1]
+├── find-bin.ts  [L1]
+├── repo-root.ts  [L1]
+└── types.ts  [L1]
+
+Legend:
+  L1 → src
+  L2 → src/commands
+  L3 → src/sim#b168b8
+  L4 → src/sim#f63c0e
