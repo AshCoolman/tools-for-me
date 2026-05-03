@@ -1,9 +1,20 @@
 {
   "name": "@ashcoolman/leaf-toolkit",
-  "version": "0.0.0-scaffold",
+  "version": "1.0.0",
   "description": "Leaf-driven work loops: partition a codebase into bite-sized leaves, rank by priority, drive AI/agent loops against them with concurrency-safe tool wrappers.",
-  "license": "Apache-2.0",
-  "author": "Ash Coolman",
+  "keywords": [
+    "monorepo",
+    "coverage",
+    "ai-agent",
+    "claude-code",
+    "partition",
+    "priority",
+    "codebase",
+    "workflow",
+    "testing"
+  ],
+  "license": "MIT",
+  "author": "Ash Coolman <banquet.poll-4g@icloud.com>",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/AshCoolman/tools-for-me.git",
@@ -17,7 +28,8 @@
   },
   "scripts": {
     "leaf": "tsx src/cli.ts",
-    "test": "tsx --test 'tests/**/*.test.ts'"
+    "test": "tsx --test 'tests/**/*.test.ts'",
+    "prepublishOnly": "yarn test"
   },
   "engines": {
     "node": ">=20"
@@ -37,6 +49,5 @@
   ],
   "publishConfig": {
     "access": "public"
-  },
-  "gitHead": "8dcc37af192526baeae2c596d088c693ecc4332b"
+  }
 }

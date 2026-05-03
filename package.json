@@ -1,6 +1,14 @@
 {
   "name": "@ashcoolman/root",
   "private": true,
+  "license": "MIT",
+  "author": "Ash Coolman <banquet.poll-4g@icloud.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AshCoolman/tools-for-me.git"
+  },
+  "homepage": "https://github.com/AshCoolman/tools-for-me",
+  "bugs": "https://github.com/AshCoolman/tools-for-me/issues",
   "scripts": {
     "test": "lerna exec -- yarn test",
     "prepare": "husky"
