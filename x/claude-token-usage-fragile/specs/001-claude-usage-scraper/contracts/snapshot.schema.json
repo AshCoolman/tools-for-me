@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://internal/contracts/snapshot.schema.json",
+  "title": "Usage Snapshot",
+  "description": "The JSON body POSTed to http://127.0.0.1:8787/api/usage. This is the contract between the scraper and the local dashboard. The dashboard owns this shape; if it changes, the transform step in scripts/scrape-usage is updated to match.",
+  "type": "object",
+  "required": ["session", "week", "scrapedAt", "raw"],
+  "additionalProperties": false,
+  "properties": {
+    "session": {
+      "type": "object",
+      "required": ["percent", "resetsAt"],
+      "additionalProperties": false,
+      "properties": {
+        "percent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "resetsAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 UTC. Suffix MUST be 'Z'."
+        }
+      }
+    },
+    "week": {
+      "type": "object",
+      "required": ["percent", "resetsAt"],
+      "additionalProperties": false,
+      "properties": {
+        "percent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "resetsAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 UTC. Suffix MUST be 'Z'."
+        }
+      }
+    },
+    "scrapedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 UTC at the moment the upstream call returned 200."
+    },
+    "raw": {
+      "type": "object",
+      "description": "Verbatim upstream body. Passed through for the dashboard's diagnostic surface."
+    }
+  }
+}

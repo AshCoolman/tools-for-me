@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://internal/contracts/upstream-usage.schema.json",
+  "title": "Anthropic Private Usage Endpoint Response (PLACEHOLDER)",
+  "description": "Provisional shape of the response from the private usage endpoint. The exact field paths are PLACEHOLDERS until the operator completes R5 discovery (see research.md). Once a real fixture lands at tests/fixtures/upstream-usage.json, this schema is replaced with the captured shape and the jq paths in EndpointConfig are aligned to it. The transform step relies on the four field paths below resolving to non-null values of the expected types; any mismatch fails the scrape loud (FR-008).",
+  "type": "object",
+  "required": ["session", "week"],
+  "additionalProperties": true,
+  "properties": {
+    "session": {
+      "type": "object",
+      "required": ["utilizationPercent", "resetsAt"],
+      "additionalProperties": true,
+      "properties": {
+        "utilizationPercent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Percent of session quota used. Placeholder field name."
+        },
+        "resetsAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 UTC timestamp at which the session quota resets. Placeholder field name."
+        }
+      }
+    },
+    "week": {
+      "type": "object",
+      "required": ["utilizationPercent", "resetsAt"],
+      "additionalProperties": true,
+      "properties": {
+        "utilizationPercent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Percent of weekly quota used. Placeholder field name."
+        },
+        "resetsAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 UTC timestamp at which the weekly quota resets. Placeholder field name."
+        }
+      }
+    }
+  }
+}

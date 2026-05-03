@@ -1,0 +1,91 @@
+#!/bin/bash
+# start — single entrypoint for the usage statusline integration.
+# Subcommands: install (default), uninstall, verify, test.
+set -euo pipefail
+umask 077
+
+REPO="$(cd "$(dirname "$0")/.." && pwd)"
+SETTINGS="${HOME}/.claude/settings.json"
+STATUSLINE="${REPO}/scripts/usage-statusline"
+
+fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
+pass() { printf 'PASS: %s\n' "$*"; }
+
+usage() {
+  cat <<EOF
+Usage: scripts/start [install|uninstall|verify|test|--help]
+
+  install   Register usage-statusline in ~/.claude/settings.json (default).
+            Idempotent — overwrites only the statusLine field.
+  uninstall Remove the statusLine entry if it points at this repo.
+  verify    Run shellcheck + bats + LoC gate. CI-equivalent local gate.
+  test      Run the bats suite.
+  --help    This help.
+EOF
+}
+
+atomic_write() {
+  local path="$1" content="$2" tmp
+  tmp="$(mktemp "${path}.XXXXXX")" || fail "mktemp failed"
+  printf '%s\n' "$content" > "$tmp"
+  chmod 600 "$tmp"
+  mv -f "$tmp" "$path" || { rm -f "$tmp"; fail "atomic rename failed"; }
+}
+
+cmd_install() {
+  command -v jq >/dev/null 2>&1 || fail "jq required (brew install jq)"
+  [ -x "$STATUSLINE" ] || fail "$STATUSLINE not executable"
+  mkdir -p "$(dirname "$SETTINGS")"
+
+  local current updated
+  current="{}"
+  [ -f "$SETTINGS" ] && current="$(cat "$SETTINGS")"
+  printf '%s' "$current" | jq -e . >/dev/null 2>&1 \
+    || fail "$SETTINGS is not valid JSON; refusing to overwrite"
+  updated="$(printf '%s' "$current" | jq --arg cmd "$STATUSLINE" \
+    '.statusLine = {type:"command", command:$cmd}')"
+  atomic_write "$SETTINGS" "$updated"
+  pass "statusline registered in $SETTINGS"
+  echo "Next claude session will POST to ${DASHBOARD_URL_OVERRIDE:-http://127.0.0.1:8787/api/usage} once rate_limits arrives."
+}
+
+cmd_uninstall() {
+  [ -f "$SETTINGS" ] || { pass "nothing to uninstall"; return; }
+  local current path updated
+  current="$(cat "$SETTINGS")"
+  path="$(printf '%s' "$current" | jq -r '.statusLine.command // ""')"
+  if [ "$path" = "$STATUSLINE" ]; then
+    updated="$(printf '%s' "$current" | jq 'del(.statusLine)')"
+    atomic_write "$SETTINGS" "$updated"
+    pass "statusline removed from $SETTINGS"
+  else
+    pass "no matching statusline entry — nothing to do"
+  fi
+}
+
+cmd_verify() {
+  cd "$REPO"
+  command -v shellcheck >/dev/null 2>&1 || fail "shellcheck required"
+  command -v bats       >/dev/null 2>&1 || fail "bats required"
+  command -v jq         >/dev/null 2>&1 || fail "jq required"
+  pass "prereqs"
+  shellcheck scripts/start scripts/usage-statusline || fail "shellcheck"
+  pass "shellcheck clean"
+  bats tests/unit tests/integration >/dev/null || fail "bats — run 'scripts/start test' for details"
+  pass "bats green ($(find tests/unit tests/integration -name '*.bats' | wc -l | tr -d ' ') files)"
+  local loc; loc="$(wc -l < scripts/usage-statusline | tr -d ' ')"
+  [ "$loc" -le 50 ] || fail "usage-statusline is ${loc} LoC (rule-19 ceiling 50)"
+  pass "usage-statusline LoC: ${loc}/50"
+  pass "verify"
+}
+
+cmd_test() { cd "$REPO"; bats tests/unit tests/integration; }
+
+case "${1:-install}" in
+  install)   cmd_install ;;
+  uninstall) cmd_uninstall ;;
+  verify)    cmd_verify ;;
+  test)      cmd_test ;;
+  -h|--help) usage; exit 0 ;;
+  *)         fail "unknown command: $1 (try --help)" ;;
+esac

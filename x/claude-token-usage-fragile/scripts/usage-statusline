@@ -1,0 +1,38 @@
+#!/bin/bash
+# usage-statusline — Claude Code statusline hook.
+# Reads hook input on stdin. If rate_limits is present, POSTs a snapshot to
+# the local dashboard and prints a short status line to stdout for the UI.
+# With --snapshot, prints the JSON snapshot to stdout and skips POST (for tests).
+set -euo pipefail
+
+DASHBOARD_URL="${DASHBOARD_URL_OVERRIDE:-http://127.0.0.1:8787/api/usage}"
+mode="${1:-post}"
+
+input="$(cat)"
+five_pct="$(printf '%s' "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')"
+seven_pct="$(printf '%s' "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')"
+
+[ -n "$five_pct" ] && [ -n "$seven_pct" ] || {
+  [ "$mode" = "--snapshot" ] && exit 0
+  [ -n "$five_pct" ] && printf '5h:%.0f%%' "$five_pct"
+  exit 0
+}
+
+snapshot="$(printf '%s' "$input" | jq --arg sa "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{
+  session: { percent: .rate_limits.five_hour.used_percentage,
+             resetsAt: (.rate_limits.five_hour.resets_at | todateiso8601) },
+  week:    { percent: .rate_limits.seven_day.used_percentage,
+             resetsAt: (.rate_limits.seven_day.resets_at | todateiso8601) },
+  scrapedAt: $sa,
+  raw: .rate_limits
+}')"
+
+if [ "$mode" = "--snapshot" ]; then
+  printf '%s\n' "$snapshot"
+  exit 0
+fi
+
+curl --silent --max-time 1 -X POST -H 'content-type: application/json' \
+  --data "$snapshot" "$DASHBOARD_URL" >/dev/null 2>&1 || true
+
+printf '5h:%.0f%% 7d:%.0f%%' "$five_pct" "$seven_pct"

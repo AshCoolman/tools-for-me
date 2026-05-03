@@ -1,0 +1,10 @@
+{
+  "transcriptDir": "/tmp/test-transcript",
+  "model": "claude-opus-4-7",
+  "rate_limits": {
+    "five_hour": {
+      "used_percentage": 42,
+      "resets_at": 1777608000
+    }
+  }
+}

@@ -1,0 +1,6 @@
+tests/.tmp/
+*.log
+*.gitignored.*
+tests/fixtures/credentials.real.json
+tests/fixtures/upstream.flow
+.DS_Store

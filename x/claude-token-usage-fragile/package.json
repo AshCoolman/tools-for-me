@@ -1,0 +1,23 @@
+{
+  "name": "@ashcoolman/claude-token-usage-fragile",
+  "version": "1.0.0",
+  "description": "Claude Code statusline hook — shows 5h/7d token usage percentage, POSTs snapshots to a local dashboard.",
+  "license": "MIT",
+  "author": "Ash Coolman <banquet.poll-4g@icloud.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AshCoolman/tools-for-me.git",
+    "directory": "x/claude-token-usage-fragile"
+  },
+  "homepage": "https://github.com/AshCoolman/tools-for-me/tree/main/x/claude-token-usage-fragile",
+  "bugs": "https://github.com/AshCoolman/tools-for-me/issues",
+  "keywords": ["claude", "claude-code", "statusline", "token-usage", "bash"],
+  "private": true,
+  "scripts": {
+    "test": "bats tests/unit tests/integration",
+    "verify": "scripts/start verify"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
