@@ -11,6 +11,7 @@ A Yarn workspaces monorepo. Packages live under `x/*` and stand alone — pick o
 | [`@ashcoolman/leaf-toolkit`](x/leaf-toolkit) | Partition a codebase into bite-sized leaves, rank by priority, drive AI/agent work loops against them with concurrency-safe tool wrappers. |
 | [`@ashcoolman/claude-context-dashboard`](x/claude-context-dashboard) | Local dashboard for Claude Code sessions — per-session context fullness and token usage, scanned from `~/.claude/projects` JSONL logs. |
 | [`@ashcoolman/claude-token-usage-fragile`](x/claude-token-usage-fragile) | Claude Code statusline hook — shows 5h/7d token usage percentage, POSTs snapshots to a local dashboard. |
+| [`@ashcoolman/mini-speckit`](x/mini-speckit) | Lightweight, opt-in specify-plan-tasks-implement lifecycle for single-doc deliverables. Lower-ceremony alternative to full Spec Kit. |
 
 ## Layout
 
@@ -19,7 +20,8 @@ A Yarn workspaces monorepo. Packages live under `x/*` and stand alone — pick o
 ├── x/                    # workspace packages
 │   ├── leaf-toolkit/
 │   ├── claude-context-dashboard/
-│   └── claude-token-usage-fragile/
+│   ├── claude-token-usage-fragile/
+│   └── mini-speckit/
 ├── package.json          # workspace root
 ├── lerna.json
 ├── .yarn/                # yarn 1.22.1 binary + plugins

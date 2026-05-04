@@ -1,0 +1,25 @@
+{
+  "name": "@ashcoolman/mini-speckit",
+  "version": "1.0.0",
+  "description": "Lightweight specify-plan-tasks-implement lifecycle for trivially small, single-doc deliverables. A lower-ceremony alternative to full Spec Kit.",
+  "license": "MIT",
+  "author": "Ash Coolman <banquet.poll-4g@icloud.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AshCoolman/tools-for-me.git",
+    "directory": "x/mini-speckit"
+  },
+  "homepage": "https://github.com/AshCoolman/tools-for-me/tree/main/x/mini-speckit",
+  "bugs": "https://github.com/AshCoolman/tools-for-me/issues",
+  "keywords": ["claude-code", "codex", "speckit", "spec", "lifecycle", "bash", "slash-command", "skill"],
+  "private": true,
+  "bin": {
+    "mini-speckit": "bin/mini-speckit"
+  },
+  "scripts": {
+    "test": "echo 'no tests yet' && exit 0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
