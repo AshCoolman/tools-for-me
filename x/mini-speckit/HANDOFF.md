@@ -1,6 +1,6 @@
 # mini-speckit hand-off contract
 
-`/spec-next-mini` does not implement code. At the `tasks → implement` rung it appends a free-form one-line entry to `NEXT.md` at the repo root, then stops. A separate runner is responsible for picking up that entry and shipping the task.
+`/mini-speckit-next` does not implement code. At the `tasks → implement` rung it appends a free-form one-line entry to `NEXT.md` at the repo root, then stops. A separate runner is responsible for picking up that entry and shipping the task.
 
 This document defines the contract so any runner — your own custom one, a published runner suite, or even a human — can consume mini-speckit output.
 
@@ -15,7 +15,7 @@ Free-form numbered list at the repo root.
 
 The trailing `(short)` / `(medium)` / `(long)` is a budget hint, not a hard tag. Runners infer scope from the entry text plus any linked spec.
 
-`/spec-next-mini` writes entries in this shape when handing off:
+`/mini-speckit-next` writes entries in this shape when handing off:
 
 ```
 Ship T<N> of <spec-name> — <task title>. specs/<name>.md (T<N> block). (<budget>)
@@ -66,4 +66,4 @@ Minimum viable runner:
 
 ## Boundary
 
-`/spec-next-mini` writes; runners ship. Never bridge them silently — the boundary is the durable record (NEXT.md + spec doc + git history). If a runner authors content into a spec, or `/spec-next-mini` ships code, you've recreated the original "competing process" bug that motivated extracting mini-speckit in the first place.
+`/mini-speckit-next` writes; runners ship. Never bridge them silently — the boundary is the durable record (`NEXT.md` + spec doc + git history). If a runner authors content into a spec, or `/mini-speckit-next` ships code, you've recreated the original "competing process" bug that motivated extracting mini-speckit in the first place.

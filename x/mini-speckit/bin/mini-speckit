@@ -17,25 +17,25 @@ mini-speckit — lightweight spec lifecycle for single-doc deliverables
 Usage:
   mini-speckit --help       Show this help
   mini-speckit --agents     Compact summary for AI agents
-  mini-speckit install      Install Claude commands and Codex support into this repo
-  mini-speckit uninstall    Remove Claude commands and Codex support from this repo
+  mini-speckit install      Install host-native agent support into this repo
+  mini-speckit uninstall    Remove host-native agent support from this repo
   mini-speckit status       Show install status for this repo
 
 A specify -> plan -> tasks -> implement lifecycle that operates on a single
-markdown file. Claude uses `/mini-speckit-specify` to create specs and
-`/mini-speckit-next` to advance them; Codex uses the installed `mini-speckit`
-skill registered in `AGENTS.md`.
+markdown file. Claude uses custom commands, Codex uses a project skill, and
+Gemini uses a project skill plus native custom commands.
 
 Typical repo setup:
   mini-speckit install
 
-Files:
-  commands/mini-speckit-specify.md     Claude create-spec command
-  commands/mini-speckit-next.md        Claude advance-spec command
-  commands/spec-next-mini.md           Compatibility alias
-  codex/skills/mini-speckit/SKILL.md   Codex skill definition
-  template.md                          Single-file spec template reference
-  HANDOFF.md                           NEXT.md contract for runners
+Installed surfaces:
+  .claude/commands/mini-speckit-specify.md     Claude create-spec command
+  .claude/commands/mini-speckit-next.md        Claude advance-spec command
+  .claude/commands/spec-next-mini.md           Claude compatibility alias
+  .codex/skills/mini-speckit/SKILL.md          Codex project skill
+  .gemini/commands/mini-speckit/specify.toml   Gemini create-spec command
+  .gemini/commands/mini-speckit/next.toml      Gemini advance-spec command
+  .gemini/skills/mini-speckit/SKILL.md         Gemini project skill
 EOH
 }
 
@@ -43,7 +43,8 @@ cmd_agents() {
   cat <<'EOH'
 mini-speckit: lightweight specify->plan->tasks->implement lifecycle for single-doc specs.
 Claude entrypoints: /mini-speckit-specify to create a spec, /mini-speckit-next to advance it
-Codex entrypoint: installed mini-speckit skill registered in AGENTS.md
+Codex entrypoint: installed project skill at .codex/skills/mini-speckit
+Gemini entrypoints: /mini-speckit:specify and /mini-speckit:next, plus the installed project skill
 Repo setup: run mini-speckit install in the target repo
 Specs live at: specs/<name>.md
 Hand-off: writes to NEXT.md at repo root; a separate runner ships the work.

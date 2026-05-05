@@ -1,6 +1,6 @@
 # Spec: <name>
 
-> **mini-speckit single-file spec.** Lightweight alternative to GitHub Spec Kit. Suitable for trivially small, single-doc deliverables. Walked by `/spec-next-mini` or the Codex `mini-speckit` skill. Phases: `specify` -> `plan` -> `tasks` -> `implement` -> `done` -> `blocked`.
+> **mini-speckit single-file spec.** Lightweight alternative to GitHub Spec Kit. Suitable for trivially small, single-doc deliverables. Advanced by `/mini-speckit-next` or the installed `mini-speckit` skill. Phases: `specify` -> `plan` -> `tasks` -> `implement` -> `done` -> `blocked`.
 
 ## Status
 

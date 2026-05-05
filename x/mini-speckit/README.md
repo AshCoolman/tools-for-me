@@ -1,12 +1,16 @@
 # mini-speckit
 
-A **lightweight alternative** to GitHub Spec Kit for trivially small, single-doc deliverables.
+A lightweight alternative to full speckit for trivially small, single-doc
+deliverables.
 
 ## What it is
 
-A hand-rolled "specify -> plan -> tasks -> implement -> done" lifecycle that operates on a **single markdown file** per spec. Claude uses `/mini-speckit-specify` to create specs and `/mini-speckit-next` to advance them. Codex uses a local skill registration in `AGENTS.md` to do the same work idiomatically.
+`mini-speckit` is a `specify -> plan -> tasks -> implement -> done` lifecycle
+that operates on a single Markdown file per spec.
 
-It is **not** GitHub Spec Kit. It reuses speckit's lifecycle vocabulary and its tasks->implement hand-off boundary (`NEXT.md` -> a runner of your choice), but it avoids the heavier multi-file process for small work.
+It reuses speckit's lifecycle vocabulary and its `tasks -> implement` hand-off
+boundary (`NEXT.md` -> a runner of your choice), but it avoids the heavier
+multi-file process for small work.
 
 ## When it fits
 
@@ -16,9 +20,9 @@ It is **not** GitHub Spec Kit. It reuses speckit's lifecycle vocabulary and its 
 
 ## When it does not fit
 
-- multi-task surface contracts
+- multi-file contracts or public surface design
 - major cross-file design
-- public surface, env-var, or install-path design
+- env-var or install-path design
 - work that clearly needs full speckit structure
 
 ## Install in a repo
@@ -30,19 +34,34 @@ mini-speckit install
 ```
 
 That will:
-- seed `NEXT.md` if missing
-- install Claude command files into `.claude/commands/`
-- register the Codex skill in `AGENTS.md`
 
-Claude usage:
+- seed `NEXT.md` if missing
+- install Claude commands into `.claude/commands/`
+- install the shared mini-speckit skill into `.codex/skills/mini-speckit/`
+- install Gemini commands into `.gemini/commands/mini-speckit/`
+- install the shared mini-speckit skill into `.gemini/skills/mini-speckit/`
+- remove legacy `AGENTS.md` and `GEMINI.md` registration blocks from older installs
+
+## Usage
+
+Claude:
+
 - `/mini-speckit-specify <description>` creates a new spec
 - `/mini-speckit-next` advances an existing spec
 - `/spec-next-mini` remains as a compatibility alias
 
-Codex usage:
-- ask Codex to use `mini-speckit` to create or advance a spec
+Codex:
+
+- use the installed `mini-speckit` project skill
+
+Gemini:
+
+- `/mini-speckit:specify <description>` creates a new spec
+- `/mini-speckit:next` advances an existing spec
+- the installed `mini-speckit` project skill can also route naturally
 
 Specs live at:
+
 - `specs/<name>.md`
 
 ## Uninstall from a repo
@@ -51,11 +70,14 @@ Specs live at:
 mini-speckit uninstall
 ```
 
-## Files
+## Installed surfaces
 
-- `commands/mini-speckit-specify.md` - Claude create-spec command
-- `commands/mini-speckit-next.md` - Claude advance-spec command
-- `commands/spec-next-mini.md` - compatibility alias
-- `codex/skills/mini-speckit/SKILL.md` - Codex skill definition
-- `HANDOFF.md` - `NEXT.md` contract for runners
-- `template.md` - reference template for a single-file spec
+- `.claude/commands/mini-speckit-specify.md`
+- `.claude/commands/mini-speckit-next.md`
+- `.claude/commands/spec-next-mini.md`
+- `.codex/skills/mini-speckit/SKILL.md`
+- `.gemini/commands/mini-speckit/specify.toml`
+- `.gemini/commands/mini-speckit/next.toml`
+- `.gemini/skills/mini-speckit/SKILL.md`
+- `HANDOFF.md`
+- `template.md`

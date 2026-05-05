@@ -1,12 +1,12 @@
 # mini-speckit SHARED
 
-Common rules `/spec-next-mini` references. Slimmed copy scoped to what mini-speckit actually needs — independent of any parent repo. Bundle this with the rest of `mini-speckit/` and the layer is self-contained.
+Common rules `/mini-speckit-next` references. Slimmed copy scoped to what mini-speckit actually needs — independent of any parent repo. Bundle this with the rest of `mini-speckit/` and the layer is self-contained.
 
 ---
 
 ## Inventory sources
 
-- `specs/*.md` (top-level, single-file, mini-speckit format) — the only artefacts `/spec-next-mini` advances. Look for `## Status` with a `Phase:` line; files without that line are not mini-speckit specs.
+- `specs/*.md` (top-level, single-file, mini-speckit format) — the only artefacts `/mini-speckit-next` advances. Look for `## Status` with a `Phase:` line; files without that line are not mini-speckit specs.
 - `NEXT.md` at repo root — free-form human (+ auto) nominations; top of the list wins.
 - `git log --oneline -30` — recent direction; abandoned attempts.
 

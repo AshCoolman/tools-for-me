@@ -1,0 +1,10 @@
+description = "Advance an existing mini-speckit single-file spec by one rung."
+prompt = """
+Use the mini-speckit workflow defined here:
+
+@{.gemini/skills/mini-speckit/SKILL.md}
+
+Advance the relevant mini-speckit spec by exactly one rung. If the user provided arguments, treat them as hints about which spec to advance:
+
+{{args}}
+"""

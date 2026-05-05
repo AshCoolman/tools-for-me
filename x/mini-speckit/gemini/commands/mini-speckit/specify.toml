@@ -1,0 +1,12 @@
+description = "Create a new mini-speckit single-file spec from a short description."
+prompt = """
+Use the mini-speckit workflow defined here:
+
+@{.gemini/skills/mini-speckit/SKILL.md}
+
+Create a new mini-speckit spec from this description:
+
+{{args}}
+
+Do not advance beyond the `specify` rung unless the user explicitly asked for more.
+"""
