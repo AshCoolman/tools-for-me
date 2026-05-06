@@ -12,7 +12,7 @@ Use it when the user:
 - wants to work on a mini-speckit spec in `specs/*.md`
 - mentions `mini-speckit`
 - wants to advance a single-file mini-speckit spec one rung
-- wants the next mini-speckit task queued into `NEXT.md`
+- wants the next mini-speckit task implemented
 - wants the lightweight path rather than full speckit
 
 Do not use this skill for full speckit directories under `specs/<feature>/`; those belong to the normal speckit flow.
@@ -97,18 +97,16 @@ _(pending)_
 
 - `specify -> plan`: fill the `## Plan - HOW` block inline with approach, surface, files, validation, backward-compat, lock-in, and rollback.
 - `plan -> tasks`: decompose into 3-8 tasks with files, success, validation, and budget.
-- `tasks -> implement`: append one nomination line to `NEXT.md`. Do not implement code.
+- `tasks -> implement`: pick the first unshipped task. Implement it per its Files / Success / Validation fields. Run validation. Commit with conventional-commit scope `mini-spec`. Log the SHA in `## Implement`. One task per invocation.
 - `implement -> done`: only when every task has a SHA in `## Implement`.
 
 ## Validation
 
 - Markdown still reads cleanly.
 - The edited spec still has a coherent rung.
-- If you appended to `NEXT.md`, re-read it and confirm the line resolves to a budget and a spec path.
+- If you implemented a task, run its Validation commands and confirm they pass before committing.
 
 ## Hard rules
 
-- Never implement product code as part of this skill.
 - Never silently bridge mini-speckit into the full speckit workflow.
 - Never operate on multi-file speckit directories with this skill.
-- Keep edits inside the single mini-speckit spec plus `NEXT.md` when needed.

@@ -8,9 +8,9 @@ deliverables.
 `mini-speckit` is a `specify -> plan -> tasks -> implement -> done` lifecycle
 that operates on a single Markdown file per spec.
 
-It reuses speckit's lifecycle vocabulary and its `tasks -> implement` hand-off
-boundary (`NEXT.md` -> a runner of your choice), but it avoids the heavier
-multi-file process for small work.
+It reuses speckit's lifecycle vocabulary but avoids the heavier multi-file
+process for small work. `/mini-speckit-next` advances specs one rung at a time,
+including implementing tasks directly.
 
 ## When it fits
 
@@ -79,5 +79,4 @@ mini-speckit uninstall
 - `.gemini/commands/mini-speckit/specify.toml`
 - `.gemini/commands/mini-speckit/next.toml`
 - `.gemini/skills/mini-speckit/SKILL.md`
-- `HANDOFF.md`
 - `template.md`

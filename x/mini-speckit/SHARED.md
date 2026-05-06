@@ -20,7 +20,7 @@ For each entry, infer:
 - **What it is** (a spec path, a one-line task, a feature name)
 - **Roughly how big** (use the entry's text + any linked spec to estimate budget — short / medium / long)
 
-If the top entry's inferred budget matches the invoked command, ship it (or hand off — see `mini-speckit/HANDOFF.md`). Skip entries too vague to act on; surface a one-line warning. Do not enforce a schema. NEXT.md is for humans.
+If the top entry's inferred budget matches the invoked command, work on it. Skip entries too vague to act on; surface a one-line warning. Do not enforce a schema. NEXT.md is for humans.
 
 ---
 
@@ -50,7 +50,7 @@ A candidate falls to **score 0.05** (bare-idea floor) regardless of how much tex
 ## Validation matrix (light — adapt to the destination repo)
 
 1. Markdown of new artefacts parses; no broken internal links.
-2. For task hand-offs: re-read `NEXT.md` and confirm the new line is parseable (resolves to a budget + a spec path).
+2. For task implementations: run the task's Validation commands and confirm they pass before committing.
 3. If the destination repo provides a diff-review skill, invoke it against the staged + working diff before committing — fix any Blocking items in-loop. (Skip silently if none is configured.)
 
 ---

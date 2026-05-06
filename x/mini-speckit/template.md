@@ -35,7 +35,7 @@ _(Fill when phase advances from `specify` to `plan`. Until then, leave the bulle
 
 ## Tasks
 
-_(Fill when phase advances from `plan` to `tasks`. Each task is independently shippable under whatever runner the repo has configured - see `mini-speckit/HANDOFF.md`.)_
+_(Fill when phase advances from `plan` to `tasks`. Each task is implemented one per `/mini-speckit-next` invocation.)_
 
 - [ ] **T1 - <title>** - files: `...`. Success: `...`. Validation: `...`.
 - [ ] **T2 - <title>** - files: `...`. Success: `...`. Validation: `...`.

@@ -49,9 +49,10 @@ If no mini-speckit-format specs exist in the repo, stop with: `No mini-speckit s
 
 `tasks -> implement`
 - Pick the first unshipped task.
-- Append one free-form line to `NEXT.md`:
-  `Ship T<N> of <spec> - <task title>. specs/<name>.md (T<N> block). (<budget>)`
-- Do **not** implement code.
+- Implement it per its Files / Success / Validation fields.
+- Run the validation commands and confirm they pass.
+- Commit with conventional-commit scope `mini-spec`.
+- Log the SHA in `## Implement`.
 
 `implement -> done`
 - Only when every task has a SHA in `## Implement`.
@@ -60,7 +61,7 @@ If no mini-speckit-format specs exist in the repo, stop with: `No mini-speckit s
 
 - Markdown still reads cleanly.
 - The edited spec still has a coherent rung.
-- If you appended to `NEXT.md`, re-read it and confirm the line resolves to a budget and a spec path.
+- If you implemented a task, run its Validation commands and confirm they pass before committing.
 
 ## Commit discipline
 
@@ -71,6 +72,5 @@ If no mini-speckit-format specs exist in the repo, stop with: `No mini-speckit s
 ## Notes
 
 - This command is intentionally lightweight and low-ceremony.
-- Never implement code. Hand-off is at the tasks rung.
 - Never invoke `speckit-*` skills from this command.
-- One rung per invocation.
+- One rung per invocation. When implementing, one task per invocation.
