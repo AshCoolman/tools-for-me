@@ -1,0 +1,7 @@
+git commit -m "initial"
+git push origin main
+docker run --rm -it node:18
+git log --oneline -5
+curl -s https://example.com
+git diff --cached
+ls -la
