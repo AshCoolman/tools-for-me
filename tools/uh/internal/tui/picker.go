@@ -11,6 +11,9 @@ import (
 
 const preExpandN = 3
 
+// lines reserved for header, divider, preview, help, padding
+const chromeLines = 8
+
 type Action int
 
 const (
@@ -38,18 +41,20 @@ type posRow struct {
 }
 
 type Model struct {
-	baseTokens []string
-	flags      []flagRow
+	baseTokens  []string
+	flags       []flagRow
 	positionals []posRow
-	cursor     int
-	subCursor  int
-	inSub      bool
-	result     Result
-	done       bool
+	cursor      int
+	subCursor   int
+	inSub       bool
+	result      Result
+	done        bool
+	height      int
+	scroll      int
 }
 
 func New(baseTokens []string, space model.OptionSpace) Model {
-	m := Model{baseTokens: baseTokens}
+	m := Model{baseTokens: baseTokens, height: 24}
 	for _, rf := range space.Flags {
 		m.flags = append(m.flags, flagRow{rf: rf, chosenVal: -1})
 	}
@@ -72,12 +77,12 @@ func Run(baseTokens []string, space model.OptionSpace) (Result, error) {
 }
 
 var (
-	dim    = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
-	hi     = lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
-	green  = lipgloss.NewStyle().Foreground(lipgloss.Color("10"))
-	hdr    = lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Bold(true)
-	pvw    = lipgloss.NewStyle().Foreground(lipgloss.Color("229")).Bold(true)
-	subHi  = lipgloss.NewStyle().Foreground(lipgloss.Color("141"))
+	dim   = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
+	hi    = lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
+	green = lipgloss.NewStyle().Foreground(lipgloss.Color("10"))
+	hdr   = lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Bold(true)
+	pvw   = lipgloss.NewStyle().Foreground(lipgloss.Color("229")).Bold(true)
+	subHi = lipgloss.NewStyle().Foreground(lipgloss.Color("141"))
 )
 
 func (m Model) Init() tea.Cmd { return nil }
@@ -88,6 +93,9 @@ func (m Model) totalMain() int {
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.height = msg.Height
+		return m, nil
 	case tea.KeyMsg:
 		if m.inSub {
 			return m.updateSub(msg)
@@ -257,6 +265,54 @@ func (m Model) buildCmd() string {
 	return strings.Join(parts, " ")
 }
 
+// line is a rendered line with a tag indicating which cursor position it belongs to
+type line struct {
+	text      string
+	mainIdx   int // -1 if not a main row
+	subIdx    int // -1 if not a sub row
+}
+
+func (m Model) buildLines() ([]line, int) {
+	var lines []line
+	cursorLine := 0
+
+	for i, f := range m.flags {
+		isHere := i == m.cursor && !m.inSub
+		lines = append(lines, line{text: m.flagRowStr(f, isHere), mainIdx: i, subIdx: -1})
+
+		if isHere || (i == m.cursor && m.inSub) {
+			cursorLine = len(lines) - 1
+		}
+
+		if f.expanded && i == m.cursor && m.inSub {
+			for si, v := range f.rf.Values {
+				isSub := si == m.subCursor
+				lines = append(lines, line{text: m.expandedValueStr(f, v, si, isSub), mainIdx: i, subIdx: si})
+				if isSub {
+					cursorLine = len(lines) - 1
+				}
+			}
+		} else if !f.selected && !f.expanded && !f.rf.IsBool {
+			for _, l := range m.preExpandedStrs(f) {
+				lines = append(lines, line{text: l, mainIdx: -1, subIdx: -1})
+			}
+		}
+	}
+
+	lines = append(lines, line{text: dim.Render("  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄"), mainIdx: -1, subIdx: -1})
+
+	for i, p := range m.positionals {
+		idx := len(m.flags) + i
+		isHere := idx == m.cursor && !m.inSub
+		lines = append(lines, line{text: m.posRowStr(p, isHere), mainIdx: idx, subIdx: -1})
+		if isHere {
+			cursorLine = len(lines) - 1
+		}
+	}
+
+	return lines, cursorLine
+}
+
 func (m Model) View() string {
 	if m.done {
 		if m.result.Action != ActionQuit {
@@ -266,36 +322,66 @@ func (m Model) View() string {
 	}
 
 	var b strings.Builder
-	b.WriteString("\n")
 
+	// header
 	total := 0
 	for _, f := range m.flags {
 		total += f.rf.Count
 	}
-	b.WriteString(hdr.Render(fmt.Sprintf("  uh · %s · %d invocations",
-		strings.Join(m.baseTokens, " "), total)))
+	headerStr := hdr.Render(fmt.Sprintf("  uh · %s · %d invocations",
+		strings.Join(m.baseTokens, " "), total))
+
+	// build all content lines
+	allLines, cursorLine := m.buildLines()
+
+	// viewport: how many content lines fit
+	visible := m.height - chromeLines
+	if visible < 3 {
+		visible = 3
+	}
+
+	// scroll to keep cursor visible
+	scroll := m.scroll
+	if cursorLine < scroll {
+		scroll = cursorLine
+	}
+	if cursorLine >= scroll+visible {
+		scroll = cursorLine - visible + 1
+	}
+	if scroll < 0 {
+		scroll = 0
+	}
+	// (persist for next render via value receiver — doesn't mutate, but that's ok
+	// since bubbletea re-renders from the model returned by Update)
+
+	// render header
+	b.WriteString("\n")
+	b.WriteString(headerStr)
+
+	if len(allLines) > visible {
+		b.WriteString(dim.Render(fmt.Sprintf("  (%d/%d)", cursorLine+1, len(allLines))))
+	}
 	b.WriteString("\n\n")
 
-	for i, f := range m.flags {
-		isHere := i == m.cursor && !m.inSub
-		m.renderFlagRow(&b, f, isHere)
-
-		if f.expanded && i == m.cursor && m.inSub {
-			m.renderExpandedValues(&b, f)
-		} else if !f.selected && !f.expanded && !f.rf.IsBool {
-			m.renderPreExpanded(&b, f)
-		}
+	// render visible window
+	end := scroll + visible
+	if end > len(allLines) {
+		end = len(allLines)
 	}
 
-	b.WriteString(dim.Render("  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄"))
-	b.WriteString("\n")
-
-	for i, p := range m.positionals {
-		idx := len(m.flags) + i
-		isHere := idx == m.cursor && !m.inSub
-		m.renderPosRow(&b, p, isHere)
+	if scroll > 0 {
+		b.WriteString(dim.Render("  ↑ more") + "\n")
 	}
 
+	for i := scroll; i < end; i++ {
+		b.WriteString(allLines[i].text + "\n")
+	}
+
+	if end < len(allLines) {
+		b.WriteString(dim.Render("  ↓ more") + "\n")
+	}
+
+	// preview (pinned)
 	b.WriteString("\n")
 	cmd := m.buildCmd()
 	b.WriteString(dim.Render("  ─── preview ───────────────────────────────"))
@@ -318,7 +404,7 @@ func (m Model) View() string {
 	return b.String()
 }
 
-func (m Model) renderFlagRow(b *strings.Builder, f flagRow, isHere bool) {
+func (m Model) flagRowStr(f flagRow, isHere bool) string {
 	cursor := "  "
 	if isHere {
 		cursor = hi.Render("> ")
@@ -348,7 +434,7 @@ func (m Model) renderFlagRow(b *strings.Builder, f flagRow, isHere bool) {
 	}
 
 	count := dim.Render(fmt.Sprintf(" (%d×)", f.rf.Count))
-	b.WriteString(fmt.Sprintf("  %s%s %s%s\n", cursor, box, name, count))
+	return fmt.Sprintf("  %s%s %s%s", cursor, box, name, count)
 }
 
 func (m Model) checkbox(f flagRow) string {
@@ -361,50 +447,47 @@ func (m Model) checkbox(f flagRow) string {
 	return dim.Render("[ ]")
 }
 
-func (m Model) renderPreExpanded(b *strings.Builder, f flagRow) {
+func (m Model) preExpandedStrs(f flagRow) []string {
+	var out []string
 	n := preExpandN
 	if n > len(f.rf.Values) {
 		n = len(f.rf.Values)
 	}
 	for i := 0; i < n; i++ {
 		v := f.rf.Values[i]
-		text := dim.Render(fmt.Sprintf("       %s (%d×)", v.Text, v.Count))
-		b.WriteString(text + "\n")
+		out = append(out, dim.Render(fmt.Sprintf("       %s (%d×)", v.Text, v.Count)))
 	}
 	if len(f.rf.Values) > n {
-		b.WriteString(dim.Render(fmt.Sprintf("       +%d more", len(f.rf.Values)-n)) + "\n")
+		out = append(out, dim.Render(fmt.Sprintf("       +%d more", len(f.rf.Values)-n)))
 	}
+	return out
 }
 
-func (m Model) renderExpandedValues(b *strings.Builder, f flagRow) {
-	for i, v := range f.rf.Values {
-		isHere := i == m.subCursor
+func (m Model) expandedValueStr(f flagRow, v model.Ranked, idx int, isHere bool) string {
+	cursor := "       "
+	if isHere {
+		cursor = "     " + subHi.Render("> ")
+	}
 
-		cursor := "       "
-		if isHere {
-			cursor = "     " + subHi.Render("> ")
-		}
-
-		box := dim.Render("[ ]")
-		if f.rf.Repeatable {
-			for _, vi := range f.chosenMulti {
-				if vi == i {
-					box = green.Render("[x]")
-					break
-				}
+	box := dim.Render("[ ]")
+	if f.rf.Repeatable {
+		for _, vi := range f.chosenMulti {
+			if vi == idx {
+				box = green.Render("[x]")
+				break
 			}
 		}
-
-		text := v.Text
-		if isHere {
-			text = subHi.Render(text)
-		}
-		count := dim.Render(fmt.Sprintf(" (%d×)", v.Count))
-		b.WriteString(fmt.Sprintf("%s%s %s%s\n", cursor, box, text, count))
 	}
+
+	text := v.Text
+	if isHere {
+		text = subHi.Render(text)
+	}
+	count := dim.Render(fmt.Sprintf(" (%d×)", v.Count))
+	return fmt.Sprintf("%s%s %s%s", cursor, box, text, count)
 }
 
-func (m Model) renderPosRow(b *strings.Builder, p posRow, isHere bool) {
+func (m Model) posRowStr(p posRow, isHere bool) string {
 	cursor := "  "
 	if isHere {
 		cursor = hi.Render("> ")
@@ -418,5 +501,5 @@ func (m Model) renderPosRow(b *strings.Builder, p posRow, isHere bool) {
 		name = hi.Render(name)
 	}
 	count := dim.Render(fmt.Sprintf(" (%d×)", p.rp.Count))
-	b.WriteString(fmt.Sprintf("  %s%s %s%s\n", cursor, box, name, count))
+	return fmt.Sprintf("  %s%s %s%s", cursor, box, name, count)
 }
