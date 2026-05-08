@@ -17,7 +17,7 @@ type Action int
 
 const (
 	ActionExecute Action = iota
-	ActionCopy
+	ActionCommit
 	ActionQuit
 )
 
@@ -205,7 +205,7 @@ func (m Model) updateMain(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 
 	case "c":
-		m.result = Result{Command: m.buildCmd(), Action: ActionCopy}
+		m.result = Result{Command: m.buildCmd(), Action: ActionCommit}
 		m.done = true
 		return m, tea.Quit
 
@@ -602,7 +602,7 @@ func (m Model) viewFlags() string {
 			b.WriteString(dim.Render("  ──── [enter] select  [esc] discard  (i) type ──"))
 		}
 	} else {
-		b.WriteString(dim.Render("  ──── [enter] step in  [x] toggle  (i) type  (e)xecute  (c)opy  (q)uit ──"))
+		b.WriteString(dim.Render("  ──── [enter] step in  [x] toggle  (i) type  (e)xecute  (c)ommit  (q)uit ──"))
 	}
 	b.WriteString("\n")
 

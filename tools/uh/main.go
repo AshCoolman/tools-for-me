@@ -16,7 +16,6 @@ var version = "dev"
 
 type opts struct {
 	dryRun      bool
-	copy        bool
 	historyFile string
 	version     bool
 	baseTokens  []string
@@ -30,7 +29,7 @@ func parseArgs(args []string) opts {
 	var rest []string
 
 	known := map[string]bool{
-		"--dry-run": true, "--copy": true, "--version": true,
+		"--dry-run": true, "--version": true,
 		"--history-file": true, "-h": true, "--help": true,
 	}
 
@@ -39,8 +38,6 @@ func parseArgs(args []string) opts {
 		switch {
 		case a == "--dry-run":
 			o.dryRun = true
-		case a == "--copy":
-			o.copy = true
 		case a == "--version":
 			o.version = true
 		case a == "--history-file" && i+1 < len(args):
@@ -118,14 +115,11 @@ func main() {
 	switch result.Action {
 	case tui.ActionQuit:
 		os.Exit(0)
-	case tui.ActionCopy:
-		copyToClipboard(result.Command)
+	case tui.ActionCommit:
+		// print to stdout — shell wrapper pushes onto prompt
+		fmt.Println(result.Command)
 	case tui.ActionExecute:
-		if o.copy {
-			copyToClipboard(result.Command)
-		} else {
-			execute(result.Command)
-		}
+		execute(result.Command)
 	}
 }
 
@@ -158,28 +152,6 @@ func dumpSpace(baseTokens []string, space model.OptionSpace, total int) {
 	}
 }
 
-func copyToClipboard(cmd string) {
-	// try pbcopy (macOS), then xclip, then xsel
-	for _, clip := range [][]string{
-		{"pbcopy"},
-		{"xclip", "-selection", "clipboard"},
-		{"xsel", "--clipboard", "--input"},
-	} {
-		bin, err := exec.LookPath(clip[0])
-		if err != nil {
-			continue
-		}
-		c := exec.Command(bin, clip[1:]...)
-		c.Stdin = strings.NewReader(cmd)
-		if err := c.Run(); err == nil {
-			fmt.Fprintf(os.Stderr, "copied: %s\n", cmd)
-			return
-		}
-	}
-	// fallback: print it
-	fmt.Println(cmd)
-}
-
 func execute(cmd string) {
 	shell := os.Getenv("SHELL")
 	if shell == "" {
@@ -202,10 +174,18 @@ func usage() {
 	fmt.Fprintf(os.Stderr, `uh — unwrap history
 
 Usage:
-  uh <command...>                    interactive command builder from history
-  uh <command...> --dry-run          print option space summary, no TUI
-  uh <command...> --copy             copy composed command to clipboard
+  uh <command...>                        interactive command builder from history
+  uh <command...> --dry-run              print option space summary, no TUI
   uh <command...> --history-file <path>  override history file
+
+TUI keys:
+  (e)xecute    run the command directly
+  (c)ommit     print to stdout (use shell wrapper for prompt population)
+  (i)nsert     type a custom value
+  (q)uit       exit without action
+
+Shell wrapper (add to .zshrc for prompt population):
+  uh() { local cmd; cmd="$(command uh "$@")" && print -z "$cmd" }
 
 Examples:
   uh git                       all git commands
@@ -214,7 +194,6 @@ Examples:
 
 Flags:
   --dry-run              print option space, no TUI
-  --copy                 copy to clipboard instead of executing
   --history-file <path>  override auto-detected history file
   --version              print version and exit
   -h, --help             show this help
