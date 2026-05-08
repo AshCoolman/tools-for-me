@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Thin wrapper — real code in start.mts
+exec npx tsx "$(dirname "$0")/start.mts" "$@"

@@ -1,0 +1,42 @@
+{
+  "name": "@ashcoolman/token-smoulder",
+  "version": "0.0.0-scaffold",
+  "description": "Local quota-aware AI work dispatcher",
+  "license": "Apache-2.0",
+  "author": "Ash Coolman <banquet.poll-4g@icloud.com>",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "token-smoulder": "bin/token-smoulder"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src tests"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "src",
+    "bin",
+    "README.md",
+    "specs/main/contracts/*.ts"
+  ],
+  "dependencies": {
+    "@inquirer/prompts": "^5",
+    "commander": "^12",
+    "tsx": "^4",
+    "ulid": "^2",
+    "zod": "^3"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@typescript-eslint/eslint-plugin": "^8.59.2",
+    "@typescript-eslint/parser": "^8.59.2",
+    "eslint": "^9",
+    "typescript": "^5",
+    "vitest": "^3"
+  }
+}

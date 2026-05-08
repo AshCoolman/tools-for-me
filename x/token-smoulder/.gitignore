@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+.orchestration-state/
+orchestration/*
+!orchestration/.gitkeep
+*.log
+.DS_Store
+.env
+.env.local
