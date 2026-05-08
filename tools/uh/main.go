@@ -115,9 +115,8 @@ func main() {
 	switch result.Action {
 	case tui.ActionQuit:
 		os.Exit(0)
-	case tui.ActionCommit:
-		// print to stdout — shell wrapper pushes onto prompt
-		fmt.Println(result.Command)
+	case tui.ActionCopy:
+		copyToClipboard(result.Command)
 	case tui.ActionExecute:
 		execute(result.Command)
 	}
@@ -152,6 +151,27 @@ func dumpSpace(baseTokens []string, space model.OptionSpace, total int) {
 	}
 }
 
+func copyToClipboard(cmd string) {
+	for _, clip := range [][]string{
+		{"pbcopy"},
+		{"xclip", "-selection", "clipboard"},
+		{"xsel", "--clipboard", "--input"},
+	} {
+		bin, err := exec.LookPath(clip[0])
+		if err != nil {
+			continue
+		}
+		c := exec.Command(bin, clip[1:]...)
+		c.Stdin = strings.NewReader(cmd)
+		if err := c.Run(); err == nil {
+			fmt.Fprintf(os.Stderr, "copied: %s\n", cmd)
+			return
+		}
+	}
+	fmt.Fprintf(os.Stderr, "uh: no clipboard tool found (pbcopy/xclip/xsel)\n")
+	fmt.Println(cmd)
+}
+
 func execute(cmd string) {
 	shell := os.Getenv("SHELL")
 	if shell == "" {
@@ -180,12 +200,12 @@ Usage:
 
 TUI keys:
   (e)xecute    run the command directly
-  (c)ommit     print to stdout (use shell wrapper for prompt population)
-  (i)nsert     type a custom value
+  (c)opy       copy to clipboard
+  (i)nsert     edit the full command
+  [enter]      step into flag values
+  [x]          toggle flag on/off
+  [esc]        back / cancel
   (q)uit       exit without action
-
-Shell wrapper (add to .zshrc for prompt population):
-  uh() { local cmd; cmd="$(command uh "$@")" && print -z "$cmd" }
 
 Examples:
   uh git                       all git commands

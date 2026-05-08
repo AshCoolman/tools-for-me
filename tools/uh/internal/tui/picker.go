@@ -17,7 +17,7 @@ type Action int
 
 const (
 	ActionExecute Action = iota
-	ActionCommit
+	ActionCopy
 	ActionQuit
 )
 
@@ -229,7 +229,7 @@ func (m Model) updateMain(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 
 	case "c":
-		m.result = Result{Command: m.buildCmd(), Action: ActionCommit}
+		m.result = Result{Command: m.buildCmd(), Action: ActionCopy}
 		m.done = true
 		return m, tea.Quit
 
@@ -353,7 +353,7 @@ func (m Model) updateTyping(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case tea.KeyEnter:
 		if m.editingCmd {
 			if m.input != "" {
-				m.result = Result{Command: m.input, Action: ActionCommit}
+				m.result = Result{Command: m.input, Action: ActionCopy}
 				m.done = true
 				return m, tea.Quit
 			}
@@ -466,7 +466,7 @@ func (m Model) buildLines() ([]line, int) {
 		}
 
 		// show typing input inline when in insert mode on this flag
-		if i == m.cursor && m.typing {
+		if i == m.cursor && m.typing && !m.editingCmd {
 			inputLine := fmt.Sprintf("       %s %s█",
 				subHi.Render("|"), subHi.Render(m.input))
 			lines = append(lines, line{text: inputLine, mainIdx: -1, subIdx: -1})
@@ -634,7 +634,7 @@ func (m Model) viewFlags() string {
 	b.WriteString("\n")
 
 	if m.editingCmd {
-		b.WriteString(dim.Render("  ──── editing command  [enter] commit  [esc] cancel ──"))
+		b.WriteString(dim.Render("  ──── editing command  [enter] copy  [esc] cancel ──"))
 	} else if m.typing {
 		b.WriteString(dim.Render("  ──── type a value  [enter] confirm  [esc] cancel ──"))
 	} else if m.inSub {
@@ -645,9 +645,9 @@ func (m Model) viewFlags() string {
 			b.WriteString(dim.Render("  ──── [enter] select  [esc] discard  (i) type ──"))
 		}
 	} else if m.origBaseTokens != nil {
-		b.WriteString(dim.Render("  ──── [esc] back  [enter] step in  [x] toggle  (i) type  (e)xecute  (c)ommit  (q)uit ──"))
+		b.WriteString(dim.Render("  ──── [esc] back  [enter] step in  [x] toggle  (i) type  (e)xecute  (c)opy  (q)uit ──"))
 	} else {
-		b.WriteString(dim.Render("  ──── [enter] step in  [x] toggle  (i) type  (e)xecute  (c)ommit  (q)uit ──"))
+		b.WriteString(dim.Render("  ──── [enter] step in  [x] toggle  (i) type  (e)xecute  (c)opy  (q)uit ──"))
 	}
 	b.WriteString("\n")
 

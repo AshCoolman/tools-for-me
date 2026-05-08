@@ -182,11 +182,11 @@ func TestExecuteAction(t *testing.T) {
 	}
 }
 
-func TestCommitAction(t *testing.T) {
+func TestCopyAction(t *testing.T) {
 	m := New([]string{"docker", "run"}, testInvocations())
 	m2 := send(m, "x", "c").(Model)
-	if m2.result.Action != ActionCommit {
-		t.Errorf("action = %v, want Commit", m2.result.Action)
+	if m2.result.Action != ActionCopy {
+		t.Errorf("action = %v, want Copy", m2.result.Action)
 	}
 }
 
