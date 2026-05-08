@@ -27,7 +27,9 @@ func DetectFile() string {
 	return ""
 }
 
-func Read(path string, baseCmd string) ([]string, error) {
+// Read filters history lines whose leading tokens match baseTokens.
+// e.g. baseTokens=["docker","compose"] matches "docker compose up -d".
+func Read(path string, baseTokens []string) ([]string, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -48,7 +50,7 @@ func Read(path string, baseCmd string) ([]string, error) {
 		if cmd == "" {
 			continue
 		}
-		if matchesBase(cmd, baseCmd) {
+		if matchesBase(cmd, baseTokens) {
 			results = append(results, cmd)
 		}
 	}
@@ -71,13 +73,19 @@ func stripZshMeta(line string) string {
 	return line[idx+1:]
 }
 
-func matchesBase(cmd string, base string) bool {
-	// first token must match the base command
+func matchesBase(cmd string, baseTokens []string) bool {
 	fields := strings.Fields(cmd)
-	if len(fields) == 0 {
+	if len(fields) < len(baseTokens) {
 		return false
 	}
-	// strip path prefix: /usr/bin/git -> git
-	first := filepath.Base(fields[0])
-	return first == base
+	for i, tok := range baseTokens {
+		field := fields[i]
+		if i == 0 {
+			field = filepath.Base(field)
+		}
+		if field != tok {
+			return false
+		}
+	}
+	return true
 }

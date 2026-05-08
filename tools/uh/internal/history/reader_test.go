@@ -10,7 +10,7 @@ func fixture(name string) string {
 }
 
 func TestReadZshHistory(t *testing.T) {
-	results, err := Read(fixture("zsh_history"), "git")
+	results, err := Read(fixture("zsh_history"), []string{"git"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -24,7 +24,7 @@ func TestReadZshHistory(t *testing.T) {
 }
 
 func TestReadBashHistory(t *testing.T) {
-	results, err := Read(fixture("bash_history"), "git")
+	results, err := Read(fixture("bash_history"), []string{"git"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -35,7 +35,7 @@ func TestReadBashHistory(t *testing.T) {
 }
 
 func TestReadNoMatches(t *testing.T) {
-	results, err := Read(fixture("bash_history"), "rutabaga")
+	results, err := Read(fixture("bash_history"), []string{"rutabaga"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +45,7 @@ func TestReadNoMatches(t *testing.T) {
 }
 
 func TestReadEmptyFile(t *testing.T) {
-	results, err := Read(fixture("empty_history"), "git")
+	results, err := Read(fixture("empty_history"), []string{"git"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,9 +55,34 @@ func TestReadEmptyFile(t *testing.T) {
 }
 
 func TestReadNonexistentFile(t *testing.T) {
-	_, err := Read(fixture("does_not_exist"), "git")
+	_, err := Read(fixture("does_not_exist"), []string{"git"})
 	if err == nil {
 		t.Fatal("expected error for nonexistent file")
+	}
+}
+
+func TestReadMultiTokenBase(t *testing.T) {
+	// add docker compose lines to zsh fixture
+	results, err := Read(fixture("zsh_history"), []string{"docker", "run"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("got %d results, want 1: %v", len(results), results)
+	}
+	if results[0] != "docker run --rm -it node:18" {
+		t.Errorf("got %q", results[0])
+	}
+}
+
+func TestReadSingleTokenMatchesAll(t *testing.T) {
+	// "docker" alone should match "docker run --rm -it node:18"
+	results, err := Read(fixture("zsh_history"), []string{"docker"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("got %d results, want 1: %v", len(results), results)
 	}
 }
 
@@ -80,10 +105,22 @@ func TestStripZshMeta(t *testing.T) {
 }
 
 func TestMatchesBaseWithPath(t *testing.T) {
-	if !matchesBase("/usr/bin/git commit -m foo", "git") {
+	if !matchesBase("/usr/bin/git commit -m foo", []string{"git"}) {
 		t.Error("expected /usr/bin/git to match base 'git'")
 	}
-	if matchesBase("/usr/bin/git commit", "docker") {
+	if matchesBase("/usr/bin/git commit", []string{"docker"}) {
 		t.Error("expected /usr/bin/git not to match 'docker'")
+	}
+}
+
+func TestMatchesMultiToken(t *testing.T) {
+	if !matchesBase("docker compose up -d", []string{"docker", "compose"}) {
+		t.Error("expected 'docker compose' to match")
+	}
+	if matchesBase("docker run --rm", []string{"docker", "compose"}) {
+		t.Error("expected 'docker run' not to match 'docker compose'")
+	}
+	if !matchesBase("/usr/local/bin/docker compose up", []string{"docker", "compose"}) {
+		t.Error("expected path-prefixed 'docker compose' to match")
 	}
 }

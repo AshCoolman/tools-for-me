@@ -31,9 +31,9 @@
 - **Approach:** Go module at `tools/uh/`. Isolated from the npm monorepo — not a yarn workspace, not referenced by `package.json`. Go version pinned via `mise` (`.mise.toml` at `tools/uh/`). Single `main.go` entry point with internal packages for history parsing, command modeling, and TUI. The pipeline is: read history file → filter lines by base command → parse each line into a structured invocation (subcommand, flags, flag-values, positional args) → deduplicate and frequency-rank the option space → present a bubbletea inline picker → assemble and output/execute the composed command.
 
 - **Surface:**
-  - `uh <base-command>` — main entry point
-  - `uh <base-command> --dry-run` — print composed command without executing
-  - `uh <base-command> --copy` — copy to clipboard instead of executing
+  - `uh <tokens...>` — main entry point; accepts one or more tokens (e.g. `uh docker compose`)
+  - `uh <tokens...> --dry-run` — print composed command without executing
+  - `uh <tokens...> --copy` — copy to clipboard instead of executing
   - `uh --history-file <path>` — override auto-detected history file
   - No config files, no env vars beyond `$HISTFILE`.
 
@@ -267,10 +267,14 @@ Clean exit, no TUI, exit code 1.
 - **Budget:** short
 
 ## Implement
-_(pending)_
+- Task 1 — `f20c0a5`
+- Task 2 — `fd3480c`
 
 ## Notes / open questions
 - **Decided:** lives at `tools/uh/` in this monorepo. Mirrored to a standalone read-only repo via subtree push.
 - **Decided:** Go + bubbletea/bubbles. Managed via `mise`.
 - zsh history format includes timestamps (`: 1234567890:0;command`) — parser needs to strip those.
 - Should repeated flag-value pairs be frequency-ranked in the picker? Probably yes.
+- Discriminated unions: detect mutually exclusive flag groups from co-occurrence data (e.g. `-d` never with `-it`). Enrich the option space model so the TUI can grey out contradictory flags. Candidate for Task 4 enrichment.
+- Exit code filtering: only include history entries that exited 0. Depends on shell — zsh `EXTENDED_HISTORY` stores duration but not exit code. Atuin does. Nice-to-have, gated on backend detection.
+- **Future:** `ah` ("analyze help") — separate tool that parses `--help` / man pages to build the complete option space skeleton. `uh` provides ranking from history; `ah` provides structure from docs. They compose: `ah` skeleton + `uh` frequency = full picture.
