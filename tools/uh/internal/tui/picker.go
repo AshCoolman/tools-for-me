@@ -64,6 +64,7 @@ type Model struct {
 	subCursor   int
 	inSub       bool
 	typing      bool
+	editingCmd  bool
 	input       string
 
 	result Result
@@ -111,6 +112,7 @@ func (m *Model) buildFlagView(invocations []parser.Invocation) {
 	m.subCursor = 0
 	m.inSub = false
 	m.typing = false
+	m.editingCmd = false
 	m.input = ""
 	m.scroll = 0
 
@@ -244,8 +246,11 @@ func (m Model) updateMain(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case " ", "x":
 		if m.cursor < len(m.flags) {
 			f := &m.flags[m.cursor]
-			if f.rf.IsBool {
-				f.selected = !f.selected
+			f.selected = !f.selected
+			if !f.selected {
+				f.chosenVal = -1
+				f.chosenMulti = nil
+				f.customVal = ""
 			}
 		} else {
 			pi := m.cursor - len(m.flags)
@@ -268,13 +273,9 @@ func (m Model) updateMain(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 
 	case "i":
-		if m.cursor < len(m.flags) {
-			f := &m.flags[m.cursor]
-			if !f.rf.IsBool {
-				m.typing = true
-				m.input = ""
-			}
-		}
+		m.editingCmd = true
+		m.typing = true
+		m.input = m.buildCmd()
 	}
 	return m, nil
 }
@@ -347,9 +348,16 @@ func (m Model) updateTyping(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.Type {
 	case tea.KeyEsc:
 		m.typing = false
+		m.editingCmd = false
 		m.input = ""
 	case tea.KeyEnter:
-		if m.input != "" && m.cursor < len(m.flags) {
+		if m.editingCmd {
+			if m.input != "" {
+				m.result = Result{Command: m.input, Action: ActionCommit}
+				m.done = true
+				return m, tea.Quit
+			}
+		} else if m.input != "" && m.cursor < len(m.flags) {
 			f := &m.flags[m.cursor]
 			f.customVal = m.input
 			f.selected = true
@@ -361,6 +369,7 @@ func (m Model) updateTyping(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			}
 		}
 		m.typing = false
+		m.editingCmd = false
 		m.input = ""
 	case tea.KeyBackspace:
 		if len(m.input) > 0 {
@@ -401,16 +410,22 @@ func (m Model) buildCmd() string {
 		if f.rf.IsBool {
 			parts = append(parts, f.rf.Name)
 		} else if f.rf.Repeatable {
-			for _, vi := range f.chosenMulti {
-				if vi < len(f.rf.Values) {
-					parts = append(parts, f.rf.Name, f.rf.Values[vi].Text)
+			if len(f.chosenMulti) > 0 {
+				for _, vi := range f.chosenMulti {
+					if vi < len(f.rf.Values) {
+						parts = append(parts, f.rf.Name, f.rf.Values[vi].Text)
+					}
 				}
+			} else {
+				parts = append(parts, f.rf.Name)
 			}
 		} else {
 			if f.customVal != "" {
 				parts = append(parts, f.rf.Name, f.customVal)
 			} else if f.chosenVal >= 0 && f.chosenVal < len(f.rf.Values) {
 				parts = append(parts, f.rf.Name, f.rf.Values[f.chosenVal].Text)
+			} else {
+				parts = append(parts, f.rf.Name)
 			}
 		}
 	}
@@ -608,13 +623,19 @@ func (m Model) viewFlags() string {
 	}
 
 	b.WriteString("\n")
-	cmd := m.buildCmd()
 	b.WriteString(dim.Render("  ─── preview ───────────────────────────────"))
 	b.WriteString("\n")
-	b.WriteString("  " + pvw.Render(cmd))
+	if m.editingCmd {
+		b.WriteString("  " + pvw.Render(m.input+"█"))
+	} else {
+		cmd := m.buildCmd()
+		b.WriteString("  " + pvw.Render(cmd))
+	}
 	b.WriteString("\n")
 
-	if m.typing {
+	if m.editingCmd {
+		b.WriteString(dim.Render("  ──── editing command  [enter] commit  [esc] cancel ──"))
+	} else if m.typing {
 		b.WriteString(dim.Render("  ──── type a value  [enter] confirm  [esc] cancel ──"))
 	} else if m.inSub {
 		f := m.flags[m.cursor]
