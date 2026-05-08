@@ -26,11 +26,28 @@ try {
 }
 ```
 
+## TypeScript
+
+Use `unknown` at trust boundaries; narrow immediately.
+
+Use `any` only when the type cannot reasonably be expressed, and explain it.
+
+Derive types instead of duplicating shapes: generated types, `Pick`, `Omit`, `ReturnType`, `Parameters`, `Awaited`, indexed access, `z.infer`.
+
+Do not change runtime behaviour while fixing types. Be careful with `||` → `??`, `== null` → `=== null`, truthiness, spread order, defaults, catch behaviour, and sync/async changes.
+
+`interface` vs `type`: follow nearby code. Use `type` for unions/derived shapes.
+
+
 ## Boundaries
 
 Treat boundary operations as fallible: `JSON.parse`, `new URL`, `fetch`, schema parsing, storage, SDKs, `structuredClone`, scripts/process calls.
 
 Handle locally or intentionally bubble.
+
+## Typeguarding
+
+Zod is good. Use at boundaries
 
 ## Regex
 
@@ -72,22 +89,6 @@ export { QuestionCard } from './QuestionCard';
 export type { QuestionCardProps } from './QuestionCard';
 ```
 
-## TypeScript
-
-Use `unknown` at trust boundaries; narrow immediately.
-
-Use `any` only when the type cannot reasonably be expressed, and explain it.
-
-Derive types instead of duplicating shapes: generated types, `Pick`, `Omit`, `ReturnType`, `Parameters`, `Awaited`, indexed access, `z.infer`.
-
-Do not change runtime behaviour while fixing types. Be careful with `||` → `??`, `== null` → `=== null`, truthiness, spread order, defaults, catch behaviour, and sync/async changes.
-
-`interface` vs `type`: follow nearby code. Use `type` for unions/derived shapes.
-
-
-## Typeguarding
-
-Zod is good.
 
 ## Data transformation
 
@@ -102,9 +103,9 @@ Avoid ad hoc middle transformations. Use a named layer if transformation sits in
 Prefer expressive discriminated config over mixed bags.
 
 ```ts
-type MapConfig =
-  | { type: 'MapTiler'; token: string }
-  | { type: 'Esri'; offline: boolean; mapStyle: string };
+type ProviderConfig =
+  | { type: 'GoogleAnaltics'; token: string }
+  | { type: 'HeapAnalytics'; offline: boolean; key: string; isRUM:true };
 ```
 
 Local-only config may be `VITE_DEV_*` / `REACT_DEV_*`.
@@ -131,13 +132,17 @@ If testing an arrays of input-for-scenario, map over results to create a human r
 
 ## Scripts
 
+Limit User prompts for things only they can do due (knoweldge, security, etc).
+
+Hand-hold & automate maximally; If you can infer - or pre-search - or store and re-use, then do it.
+
+If a script is very likely to stay small, low churn, simple - shell script is ok. Else use Inquirer with mts.
+
 Scripts should fail clearly and safely.
 
 Prefer fail-fast, input validation, quoted paths, PASS/FAIL output, non-destructive defaults, dry-run where practical, macOS/Linux portability, and useful diagnostics.
 
-If a script is very likely to stay small, low churn, simple - shell script is ok. Else use Inquirer with mts.
 
-Try to hand-hold and automate maximally. If you can infer - or pre-search - or store and re-use, then do it.
 
 ## D3
 
