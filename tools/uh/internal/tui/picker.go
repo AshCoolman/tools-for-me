@@ -32,6 +32,7 @@ type flagRow struct {
 	selected    bool
 	chosenVal   int
 	chosenMulti []int
+	customVal   string
 }
 
 type posRow struct {
@@ -60,6 +61,8 @@ type Model struct {
 	cursor      int
 	subCursor   int
 	inSub       bool
+	typing      bool
+	input       string
 
 	result Result
 	done   bool
@@ -146,6 +149,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 		return m, nil
 	case tea.KeyMsg:
+		if m.typing {
+			return m.updateTyping(msg)
+		}
 		if m.phase == phaseSubcmd {
 			return m.updateSubcmd(msg)
 		}
@@ -238,6 +244,15 @@ func (m Model) updateMain(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			pi := m.cursor - len(m.flags)
 			m.positionals[pi].selected = !m.positionals[pi].selected
 		}
+
+	case "i":
+		if m.cursor < len(m.flags) {
+			f := &m.flags[m.cursor]
+			if !f.rf.IsBool {
+				m.typing = true
+				m.input = ""
+			}
+		}
 	}
 	return m, nil
 }
@@ -298,6 +313,43 @@ func (m Model) updateSub(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				m.cursor++
 			}
 		}
+
+	case "i":
+		m.typing = true
+		m.input = ""
+	}
+	return m, nil
+}
+
+func (m Model) updateTyping(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.Type {
+	case tea.KeyEsc:
+		m.typing = false
+		m.input = ""
+	case tea.KeyEnter:
+		if m.input != "" && m.cursor < len(m.flags) {
+			f := &m.flags[m.cursor]
+			f.customVal = m.input
+			f.selected = true
+			f.chosenVal = -1
+			f.expanded = false
+			m.inSub = false
+			if m.cursor < m.totalMain()-1 {
+				m.cursor++
+			}
+		}
+		m.typing = false
+		m.input = ""
+	case tea.KeyBackspace:
+		if len(m.input) > 0 {
+			m.input = m.input[:len(m.input)-1]
+		}
+	case tea.KeySpace:
+		m.input += " "
+	default:
+		if msg.Type == tea.KeyRunes {
+			m.input += string(msg.Runes)
+		}
 	}
 	return m, nil
 }
@@ -333,7 +385,9 @@ func (m Model) buildCmd() string {
 				}
 			}
 		} else {
-			if f.chosenVal >= 0 && f.chosenVal < len(f.rf.Values) {
+			if f.customVal != "" {
+				parts = append(parts, f.rf.Name, f.customVal)
+			} else if f.chosenVal >= 0 && f.chosenVal < len(f.rf.Values) {
 				parts = append(parts, f.rf.Name, f.rf.Values[f.chosenVal].Text)
 			}
 		}
@@ -372,10 +426,14 @@ func (m Model) buildLines() ([]line, int) {
 					cursorLine = len(lines) - 1
 				}
 			}
-		} else if !f.selected && !f.expanded && !f.rf.IsBool {
-			for _, l := range m.preExpandedStrs(f) {
-				lines = append(lines, line{text: l, mainIdx: -1, subIdx: -1})
-			}
+		}
+
+		// show typing input inline when in insert mode on this flag
+		if i == m.cursor && m.typing {
+			inputLine := fmt.Sprintf("       %s %s█",
+				subHi.Render("|"), subHi.Render(m.input))
+			lines = append(lines, line{text: inputLine, mainIdx: -1, subIdx: -1})
+			cursorLine = len(lines) - 1
 		}
 	}
 
@@ -534,15 +592,17 @@ func (m Model) viewFlags() string {
 	b.WriteString("  " + pvw.Render(cmd))
 	b.WriteString("\n")
 
-	if m.inSub {
+	if m.typing {
+		b.WriteString(dim.Render("  ──── type a value  [enter] confirm  [esc] cancel ──"))
+	} else if m.inSub {
 		f := m.flags[m.cursor]
 		if f.rf.Repeatable {
-			b.WriteString(dim.Render("  ──── [x] toggle  [enter] keep  [esc] discard ──"))
+			b.WriteString(dim.Render("  ──── [x] toggle  [enter] keep  [esc] discard  (i) type ──"))
 		} else {
-			b.WriteString(dim.Render("  ──── [enter] select  [esc] discard ─────────────"))
+			b.WriteString(dim.Render("  ──── [enter] select  [esc] discard  (i) type ──"))
 		}
 	} else {
-		b.WriteString(dim.Render("  ──── [enter] step in  [x] toggle  (e)xecute  (c)opy  (q)uit ──"))
+		b.WriteString(dim.Render("  ──── [enter] step in  [x] toggle  (i) type  (e)xecute  (c)opy  (q)uit ──"))
 	}
 	b.WriteString("\n")
 
@@ -560,7 +620,9 @@ func (m Model) flagRowStr(f flagRow, isHere bool) string {
 	valStr := ""
 
 	if !f.rf.IsBool {
-		if f.selected && !f.rf.Repeatable && f.chosenVal >= 0 && f.chosenVal < len(f.rf.Values) {
+		if f.selected && f.customVal != "" {
+			valStr = " " + f.customVal
+		} else if f.selected && !f.rf.Repeatable && f.chosenVal >= 0 && f.chosenVal < len(f.rf.Values) {
 			valStr = " " + f.rf.Values[f.chosenVal].Text
 		} else if f.selected && f.rf.Repeatable && len(f.chosenMulti) > 0 {
 			names := []string{}
