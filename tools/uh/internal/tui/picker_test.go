@@ -266,10 +266,55 @@ func TestSubcmdDrillDown(t *testing.T) {
 	}
 }
 
+func TestSubcmdBackNavigation(t *testing.T) {
+	m := New([]string{"git"}, testSubcmdInvocations())
+
+	// drill into "commit"
+	m2 := send(m, "enter").(Model)
+	if m2.phase != phaseFlags {
+		t.Fatal("should be in flags phase")
+	}
+	if len(m2.baseTokens) != 2 {
+		t.Fatalf("baseTokens = %v", m2.baseTokens)
+	}
+
+	// press esc to go back
+	m3 := sendSpecial(m2, tea.KeyEsc).(Model)
+	if m3.phase != phaseSubcmd {
+		t.Fatal("should be back in subcmd phase")
+	}
+	if len(m3.baseTokens) != 1 || m3.baseTokens[0] != "git" {
+		t.Errorf("baseTokens should be restored to [git], got %v", m3.baseTokens)
+	}
+	if len(m3.subcmds) != 3 {
+		t.Errorf("subcmds should still have 3, got %d", len(m3.subcmds))
+	}
+}
+
+func TestBuildFlagViewResetsTyping(t *testing.T) {
+	m := New([]string{"docker", "run"}, testInvocations())
+	m.typing = true
+	m.input = "foo"
+	m.buildFlagView(testInvocations())
+	if m.typing {
+		t.Error("typing should be reset")
+	}
+	if m.input != "" {
+		t.Error("input should be reset")
+	}
+}
+
 func TestSingleSubcmdSkipsPhase(t *testing.T) {
-	// all invocations have same subcommand — should skip subcmd phase
 	m := New([]string{"docker", "run"}, testInvocations())
 	if m.phase != phaseFlags {
 		t.Error("should skip subcmd phase when only one subcommand")
+	}
+}
+
+func TestEscDoesNothingWithoutDrillDown(t *testing.T) {
+	m := New([]string{"docker", "run"}, testInvocations())
+	m2 := sendSpecial(m, tea.KeyEsc).(Model)
+	if m2.phase != phaseFlags {
+		t.Error("esc should do nothing when there was no subcmd phase")
 	}
 }

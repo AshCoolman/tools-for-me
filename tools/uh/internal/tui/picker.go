@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -10,7 +11,6 @@ import (
 	"github.com/AshCoolman/uh/internal/parser"
 )
 
-const preExpandN = 3
 const chromeLines = 8
 
 type Action int
@@ -51,9 +51,11 @@ type Model struct {
 	baseTokens  []string
 	invocations []parser.Invocation
 
-	phase       phase
-	subcmds     []model.Ranked
-	subcmdIdx   int
+	phase           phase
+	subcmds         []model.Ranked
+	subcmdIdx       int
+	origBaseTokens  []string
+	origInvocations []parser.Invocation
 
 	space       model.OptionSpace
 	flags       []flagRow
@@ -90,6 +92,8 @@ func New(baseTokens []string, invocations []parser.Invocation) Model {
 	if repeatedSubcmds >= 2 {
 		m.phase = phaseSubcmd
 		m.subcmds = subcmds
+		m.origBaseTokens = append([]string{}, baseTokens...)
+		m.origInvocations = invocations
 	} else {
 		m.phase = phaseFlags
 		m.buildFlagView(invocations)
@@ -106,6 +110,8 @@ func (m *Model) buildFlagView(invocations []parser.Invocation) {
 	m.cursor = 0
 	m.subCursor = 0
 	m.inSub = false
+	m.typing = false
+	m.input = ""
 	m.scroll = 0
 
 	for _, rf := range space.Flags {
@@ -120,7 +126,7 @@ func (m Model) Result() Result { return m.result }
 
 func Run(baseTokens []string, invocations []parser.Invocation) (Result, error) {
 	m := New(baseTokens, invocations)
-	p := tea.NewProgram(m, tea.WithAltScreen())
+	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithOutput(os.Stderr))
 	final, err := p.Run()
 	if err != nil {
 		return Result{}, err
@@ -198,6 +204,22 @@ func (m Model) updateMain(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.result = Result{Command: m.buildCmd(), Action: ActionQuit}
 		m.done = true
 		return m, tea.Quit
+
+	case "esc":
+		if m.origBaseTokens != nil {
+			m.baseTokens = m.origBaseTokens
+			m.invocations = m.origInvocations
+			m.phase = phaseSubcmd
+			m.origBaseTokens = nil
+			m.origInvocations = nil
+			m.flags = nil
+			m.positionals = nil
+			m.cursor = 0
+			m.subCursor = 0
+			m.inSub = false
+			m.typing = false
+			m.scroll = 0
+		}
 
 	case "e":
 		m.result = Result{Command: m.buildCmd(), Action: ActionExecute}
@@ -601,6 +623,8 @@ func (m Model) viewFlags() string {
 		} else {
 			b.WriteString(dim.Render("  ──── [enter] select  [esc] discard  (i) type ──"))
 		}
+	} else if m.origBaseTokens != nil {
+		b.WriteString(dim.Render("  ──── [esc] back  [enter] step in  [x] toggle  (i) type  (e)xecute  (c)ommit  (q)uit ──"))
 	} else {
 		b.WriteString(dim.Render("  ──── [enter] step in  [x] toggle  (i) type  (e)xecute  (c)ommit  (q)uit ──"))
 	}
@@ -652,22 +676,6 @@ func (m Model) checkbox(f flagRow) string {
 		return green.Render("[x]")
 	}
 	return dim.Render("[ ]")
-}
-
-func (m Model) preExpandedStrs(f flagRow) []string {
-	var out []string
-	n := preExpandN
-	if n > len(f.rf.Values) {
-		n = len(f.rf.Values)
-	}
-	for i := 0; i < n; i++ {
-		v := f.rf.Values[i]
-		out = append(out, dim.Render(fmt.Sprintf("       %s (%d×)", v.Text, v.Count)))
-	}
-	if len(f.rf.Values) > n {
-		out = append(out, dim.Render(fmt.Sprintf("       +%d more", len(f.rf.Values)-n)))
-	}
-	return out
 }
 
 func (m Model) expandedValueStr(f flagRow, v model.Ranked, idx int, isHere bool) string {
