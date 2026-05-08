@@ -101,17 +101,15 @@ func main() {
 		invocations = append(invocations, parser.Parse(line, baseTokens))
 	}
 
-	// build option space
-	space := model.Build(invocations)
-
 	// dry-run: just dump the option space summary
 	if o.dryRun {
+		space := model.Build(invocations)
 		dumpSpace(baseTokens, space, len(lines))
 		os.Exit(0)
 	}
 
-	// launch TUI
-	result, err := tui.Run(baseTokens, space)
+	// launch TUI with invocations (supports drill-down)
+	result, err := tui.Run(baseTokens, invocations)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "uh: %v\n", err)
 		os.Exit(1)

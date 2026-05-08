@@ -7,11 +7,10 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/AshCoolman/uh/internal/model"
+	"github.com/AshCoolman/uh/internal/parser"
 )
 
 const preExpandN = 3
-
-// lines reserved for header, divider, preview, help, padding
 const chromeLines = 8
 
 type Action int
@@ -40,34 +39,84 @@ type posRow struct {
 	selected bool
 }
 
+type phase int
+
+const (
+	phaseSubcmd phase = iota
+	phaseFlags
+)
+
 type Model struct {
 	baseTokens  []string
+	invocations []parser.Invocation
+
+	phase       phase
+	subcmds     []model.Ranked
+	subcmdIdx   int
+
+	space       model.OptionSpace
 	flags       []flagRow
 	positionals []posRow
 	cursor      int
 	subCursor   int
 	inSub       bool
-	result      Result
-	done        bool
-	height      int
-	scroll      int
+
+	result Result
+	done   bool
+	height int
+	scroll int
 }
 
-func New(baseTokens []string, space model.OptionSpace) Model {
-	m := Model{baseTokens: baseTokens, height: 24}
+func New(baseTokens []string, invocations []parser.Invocation) Model {
+	m := Model{
+		baseTokens:  baseTokens,
+		invocations: invocations,
+		height:      24,
+	}
+
+	subcmds := model.Subcommands(invocations)
+
+	// show subcmd picker when there are multiple distinct first-positionals
+	// that each appear more than once (filters out noise like image names)
+	repeatedSubcmds := 0
+	for _, sc := range subcmds {
+		if sc.Count >= 2 {
+			repeatedSubcmds++
+		}
+	}
+	if repeatedSubcmds >= 2 {
+		m.phase = phaseSubcmd
+		m.subcmds = subcmds
+	} else {
+		m.phase = phaseFlags
+		m.buildFlagView(invocations)
+	}
+
+	return m
+}
+
+func (m *Model) buildFlagView(invocations []parser.Invocation) {
+	space := model.Build(invocations)
+	m.space = space
+	m.flags = nil
+	m.positionals = nil
+	m.cursor = 0
+	m.subCursor = 0
+	m.inSub = false
+	m.scroll = 0
+
 	for _, rf := range space.Flags {
 		m.flags = append(m.flags, flagRow{rf: rf, chosenVal: -1})
 	}
 	for _, rp := range space.Positionals {
 		m.positionals = append(m.positionals, posRow{rp: rp})
 	}
-	return m
 }
 
 func (m Model) Result() Result { return m.result }
 
-func Run(baseTokens []string, space model.OptionSpace) (Result, error) {
-	m := New(baseTokens, space)
+func Run(baseTokens []string, invocations []parser.Invocation) (Result, error) {
+	m := New(baseTokens, invocations)
 	p := tea.NewProgram(m, tea.WithAltScreen())
 	final, err := p.Run()
 	if err != nil {
@@ -97,10 +146,42 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 		return m, nil
 	case tea.KeyMsg:
+		if m.phase == phaseSubcmd {
+			return m.updateSubcmd(msg)
+		}
 		if m.inSub {
 			return m.updateSub(msg)
 		}
 		return m.updateMain(msg)
+	}
+	return m, nil
+}
+
+// subcmd phase: pick a subcommand to drill into
+func (m Model) updateSubcmd(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "q", "ctrl+c":
+		m.result = Result{Command: m.buildCmd(), Action: ActionQuit}
+		m.done = true
+		return m, tea.Quit
+
+	case "up", "k":
+		if m.subcmdIdx > 0 {
+			m.subcmdIdx--
+		}
+
+	case "down", "j":
+		if m.subcmdIdx < len(m.subcmds)-1 {
+			m.subcmdIdx++
+		}
+
+	case "enter", " ":
+		sub := m.subcmds[m.subcmdIdx].Text
+		m.baseTokens = append(m.baseTokens, sub)
+		filtered := model.FilterByFirstPositional(m.invocations, sub)
+		m.invocations = filtered
+		m.phase = phaseFlags
+		m.buildFlagView(filtered)
 	}
 	return m, nil
 }
@@ -265,11 +346,10 @@ func (m Model) buildCmd() string {
 	return strings.Join(parts, " ")
 }
 
-// line is a rendered line with a tag indicating which cursor position it belongs to
 type line struct {
-	text      string
-	mainIdx   int // -1 if not a main row
-	subIdx    int // -1 if not a sub row
+	text    string
+	mainIdx int
+	subIdx  int
 }
 
 func (m Model) buildLines() ([]line, int) {
@@ -299,14 +379,16 @@ func (m Model) buildLines() ([]line, int) {
 		}
 	}
 
-	lines = append(lines, line{text: dim.Render("  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄"), mainIdx: -1, subIdx: -1})
+	if len(m.positionals) > 0 {
+		lines = append(lines, line{text: dim.Render("  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄"), mainIdx: -1, subIdx: -1})
 
-	for i, p := range m.positionals {
-		idx := len(m.flags) + i
-		isHere := idx == m.cursor && !m.inSub
-		lines = append(lines, line{text: m.posRowStr(p, isHere), mainIdx: idx, subIdx: -1})
-		if isHere {
-			cursorLine = len(lines) - 1
+		for i, p := range m.positionals {
+			idx := len(m.flags) + i
+			isHere := idx == m.cursor && !m.inSub
+			lines = append(lines, line{text: m.posRowStr(p, isHere), mainIdx: idx, subIdx: -1})
+			if isHere {
+				cursorLine = len(lines) - 1
+			}
 		}
 	}
 
@@ -321,26 +403,97 @@ func (m Model) View() string {
 		return ""
 	}
 
-	var b strings.Builder
-
-	// header
-	total := 0
-	for _, f := range m.flags {
-		total += f.rf.Count
+	if m.phase == phaseSubcmd {
+		return m.viewSubcmd()
 	}
-	headerStr := hdr.Render(fmt.Sprintf("  uh · %s · %d invocations",
-		strings.Join(m.baseTokens, " "), total))
+	return m.viewFlags()
+}
 
-	// build all content lines
-	allLines, cursorLine := m.buildLines()
+func (m Model) viewSubcmd() string {
+	var b strings.Builder
+	b.WriteString("\n")
 
-	// viewport: how many content lines fit
+	total := len(m.invocations)
+	b.WriteString(hdr.Render(fmt.Sprintf("  uh · %s · %d invocations",
+		strings.Join(m.baseTokens, " "), total)))
+	b.WriteString("\n\n")
+
 	visible := m.height - chromeLines
 	if visible < 3 {
 		visible = 3
 	}
 
-	// scroll to keep cursor visible
+	scroll := m.scroll
+	if m.subcmdIdx < scroll {
+		scroll = m.subcmdIdx
+	}
+	if m.subcmdIdx >= scroll+visible {
+		scroll = m.subcmdIdx - visible + 1
+	}
+
+	if len(m.subcmds) > visible {
+		b.WriteString(hdr.Render(fmt.Sprintf("  (%d/%d)", m.subcmdIdx+1, len(m.subcmds))))
+		b.WriteString("\n")
+	}
+
+	if scroll > 0 {
+		b.WriteString(dim.Render("  ↑ more") + "\n")
+	}
+
+	end := scroll + visible
+	if end > len(m.subcmds) {
+		end = len(m.subcmds)
+	}
+
+	for i := scroll; i < end; i++ {
+		sc := m.subcmds[i]
+		isHere := i == m.subcmdIdx
+		cursor := "  "
+		if isHere {
+			cursor = hi.Render("> ")
+		}
+		name := sc.Text
+		if isHere {
+			name = hi.Render(name)
+		}
+		count := dim.Render(fmt.Sprintf(" (%d×)", sc.Count))
+		b.WriteString(fmt.Sprintf("  %s  %s%s\n", cursor, name, count))
+	}
+
+	if end < len(m.subcmds) {
+		b.WriteString(dim.Render("  ↓ more") + "\n")
+	}
+
+	b.WriteString("\n")
+	b.WriteString(dim.Render("  ─── preview ───────────────────────────────"))
+	b.WriteString("\n")
+	base := strings.Join(m.baseTokens, " ")
+	if m.subcmdIdx < len(m.subcmds) {
+		base += " " + m.subcmds[m.subcmdIdx].Text
+	}
+	b.WriteString("  " + pvw.Render(base+" ..."))
+	b.WriteString("\n")
+	b.WriteString(dim.Render("  ──── [enter] drill in  (q)uit ──────────────"))
+	b.WriteString("\n")
+
+	return b.String()
+}
+
+func (m Model) viewFlags() string {
+	var b strings.Builder
+	b.WriteString("\n")
+
+	total := len(m.invocations)
+	b.WriteString(hdr.Render(fmt.Sprintf("  uh · %s · %d invocations",
+		strings.Join(m.baseTokens, " "), total)))
+
+	allLines, cursorLine := m.buildLines()
+
+	visible := m.height - chromeLines
+	if visible < 3 {
+		visible = 3
+	}
+
 	scroll := m.scroll
 	if cursorLine < scroll {
 		scroll = cursorLine
@@ -351,19 +504,12 @@ func (m Model) View() string {
 	if scroll < 0 {
 		scroll = 0
 	}
-	// (persist for next render via value receiver — doesn't mutate, but that's ok
-	// since bubbletea re-renders from the model returned by Update)
-
-	// render header
-	b.WriteString("\n")
-	b.WriteString(headerStr)
 
 	if len(allLines) > visible {
 		b.WriteString(dim.Render(fmt.Sprintf("  (%d/%d)", cursorLine+1, len(allLines))))
 	}
 	b.WriteString("\n\n")
 
-	// render visible window
 	end := scroll + visible
 	if end > len(allLines) {
 		end = len(allLines)
@@ -381,7 +527,6 @@ func (m Model) View() string {
 		b.WriteString(dim.Render("  ↓ more") + "\n")
 	}
 
-	// preview (pinned)
 	b.WriteString("\n")
 	cmd := m.buildCmd()
 	b.WriteString(dim.Render("  ─── preview ───────────────────────────────"))

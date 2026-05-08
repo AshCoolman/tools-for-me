@@ -108,6 +108,39 @@ func Build(invocations []parser.Invocation) OptionSpace {
 	return space
 }
 
+// Subcommands extracts the first positional from each invocation as a ranked list.
+// These are likely subcommands (e.g. "commit", "push", "log" for git).
+func Subcommands(invocations []parser.Invocation) []Ranked {
+	counts := map[string]int{}
+	for _, inv := range invocations {
+		if len(inv.Positionals) > 0 {
+			counts[inv.Positionals[0]]++
+		}
+	}
+	var out []Ranked
+	for text, cnt := range counts {
+		out = append(out, Ranked{Text: text, Count: cnt})
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].Count > out[j].Count
+	})
+	return out
+}
+
+// FilterByFirstPositional returns only invocations whose first positional matches sub,
+// with that positional removed (it's been "consumed" as a subcommand).
+func FilterByFirstPositional(invocations []parser.Invocation, sub string) []parser.Invocation {
+	var out []parser.Invocation
+	for _, inv := range invocations {
+		if len(inv.Positionals) > 0 && inv.Positionals[0] == sub {
+			filtered := inv
+			filtered.Positionals = append([]string{}, inv.Positionals[1:]...)
+			out = append(out, filtered)
+		}
+	}
+	return out
+}
+
 type flagAccum struct {
 	name       string
 	count      int
