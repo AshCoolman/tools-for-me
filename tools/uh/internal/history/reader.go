@@ -50,8 +50,14 @@ func Read(path string, baseTokens []string) ([]string, error) {
 		if cmd == "" {
 			continue
 		}
-		if matchesBase(cmd, baseTokens) {
-			results = append(results, cmd)
+		for _, sub := range splitCompound(cmd) {
+			sub = strings.TrimSpace(sub)
+			if sub == "" {
+				continue
+			}
+			if matchesBase(sub, baseTokens) {
+				results = append(results, sub)
+			}
 		}
 	}
 	if err := scanner.Err(); err != nil {
@@ -71,6 +77,59 @@ func stripZshMeta(line string) string {
 		return line
 	}
 	return line[idx+1:]
+}
+
+// splitCompound breaks a line on shell compound operators (&&, ||, |, ;)
+// while respecting quotes.
+func splitCompound(line string) []string {
+	var parts []string
+	var cur strings.Builder
+	inSingle := false
+	inDouble := false
+	runes := []rune(line)
+
+	for i := 0; i < len(runes); i++ {
+		r := runes[i]
+
+		if r == '\'' && !inDouble {
+			inSingle = !inSingle
+			cur.WriteRune(r)
+			continue
+		}
+		if r == '"' && !inSingle {
+			inDouble = !inDouble
+			cur.WriteRune(r)
+			continue
+		}
+		if inSingle || inDouble {
+			cur.WriteRune(r)
+			continue
+		}
+
+		// check two-char operators first
+		if i+1 < len(runes) {
+			pair := string(runes[i : i+2])
+			if pair == "&&" || pair == "||" {
+				parts = append(parts, cur.String())
+				cur.Reset()
+				i++ // skip second char
+				continue
+			}
+		}
+
+		if r == '|' || r == ';' {
+			parts = append(parts, cur.String())
+			cur.Reset()
+			continue
+		}
+
+		cur.WriteRune(r)
+	}
+
+	if cur.Len() > 0 {
+		parts = append(parts, cur.String())
+	}
+	return parts
 }
 
 func matchesBase(cmd string, baseTokens []string) bool {

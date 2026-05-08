@@ -1,0 +1,5 @@
+cd foo && git commit -m "bar"
+git add . && git push origin main
+echo done || git status
+ls -la | grep foo
+git log --oneline

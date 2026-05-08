@@ -113,6 +113,54 @@ func TestMatchesBaseWithPath(t *testing.T) {
 	}
 }
 
+func TestSplitCompound(t *testing.T) {
+	tests := []struct {
+		input string
+		want  []string
+	}{
+		{"git add . && git commit -m foo", []string{"git add . ", " git commit -m foo"}},
+		{"cd foo || echo fail", []string{"cd foo ", " echo fail"}},
+		{"cat file | grep foo", []string{"cat file ", " grep foo"}},
+		{"git add .; git commit", []string{"git add .", " git commit"}},
+		{"git commit -m 'a && b'", []string{"git commit -m 'a && b'"}},
+		{`echo "pipe | here" && git push`, []string{`echo "pipe | here" `, " git push"}},
+		{"simple command", []string{"simple command"}},
+		{"a && b || c | d ; e", []string{"a ", " b ", " c ", " d ", " e"}},
+	}
+	for _, tt := range tests {
+		got := splitCompound(tt.input)
+		if len(got) != len(tt.want) {
+			t.Errorf("splitCompound(%q) = %v (len %d), want %v (len %d)",
+				tt.input, got, len(got), tt.want, len(tt.want))
+			continue
+		}
+		for i := range got {
+			if got[i] != tt.want[i] {
+				t.Errorf("splitCompound(%q)[%d] = %q, want %q",
+					tt.input, i, got[i], tt.want[i])
+			}
+		}
+	}
+}
+
+func TestReadCompoundLine(t *testing.T) {
+	results, err := Read(fixture("compound_history"), []string{"git"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// should extract git commands from compound lines, not the cd/echo parts
+	for _, r := range results {
+		if !matchesBase(r, []string{"git"}) {
+			t.Errorf("non-git result: %q", r)
+		}
+	}
+	// compound_history has: cd foo && git commit, git add . && git push, echo || git status, ls|grep, git log
+	// = git commit, git add, git push, git status, git log = 5
+	if len(results) != 5 {
+		t.Errorf("got %d results, want 5: %v", len(results), results)
+	}
+}
+
 func TestMatchesMultiToken(t *testing.T) {
 	if !matchesBase("docker compose up -d", []string{"docker", "compose"}) {
 		t.Error("expected 'docker compose' to match")
