@@ -1,10 +1,10 @@
 # Spec: web-ui
 
 ## Status
-- **Phase:** tasks
+- **Phase:** done
 - **Owner:** Ash Coolman
 - **Created:** 2026-05-08
-- **Last advanced:** 2026-05-08 by `/mini-speckit-next` (plan → tasks)
+- **Last advanced:** 2026-05-09 by `/mini-speckit-next` (implement → done, all 7 tasks shipped)
 - **Effort budget when ready to build:** medium
 
 ## Specify - WHAT and WHY
@@ -387,7 +387,13 @@ Each tier has its own gate. All gates run before the next tier starts.
 
 ## Implement
 
-- **Task 1:** _(pending commit)_
+- **Task 1:** `26d7b71` — *Inner API refactoring (listInner, stateInner, addInner, runInner, unlockInner, clearSuppressionInner, eventsInner, suppressionsInner)
+- **Task 2:** `006c4a2` — Server skeleton + SSE + command registration (ui.ts, router.ts, sse.ts, index.ts)
+- **Task 3:** `d6274fa` — Vite scaffold + build pipeline + static serving (ui-assets/, build:ui, ui:dev, prepack)
+- **Task 4:** `1f6ef5e` — Tier 1 control board (15 API routes, SSE polling, UnitBoard/QuotaGauge/ExternalDot/DaemonControls)
+- **Task 5:** `453e380` — Tier 2 ingest (POST /api/add, GET /api/sources, widen-allowlist, AddDropZone/SourceShelf/Verdict)
+- **Task 6:** `9211d23` — Tier 3 visibility (GET/PUT work.md, event tailing, WorkEditor/EventTail/SuppressionsPanel)
+- **Task 7:** `3bdbe53` — Integration tests (14 tests) + README UI section
 
 ## Notes / open questions
 
