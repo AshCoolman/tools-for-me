@@ -18,5 +18,8 @@
   "include": [
     "src/**/*.ts",
     "tests/**/*.ts"
+  ],
+  "exclude": [
+    "src/cli/ui-assets"
   ]
 }

@@ -11,6 +11,9 @@
   },
   "scripts": {
     "build": "tsc --noEmit",
+    "build:ui": "cd src/cli/ui-assets && npm install --ignore-scripts && npx vite build",
+    "ui:dev": "cd src/cli/ui-assets && npm install --ignore-scripts && npx vite",
+    "prepack": "npm run build:ui",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src tests"
@@ -21,6 +24,7 @@
   "files": [
     "src",
     "bin",
+    "src/cli/ui-assets/dist",
     "README.md",
     "specs/main/contracts/*.ts"
   ],
