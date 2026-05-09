@@ -12,6 +12,7 @@ import { clearSuppressionCommand } from './clear-suppression.js';
 import { newCommand } from './new.js';
 import { lintCommand } from './lint.js';
 import { addCommand } from './add.js';
+import { uiCommand } from './ui.js';
 
 async function main(argv: string[]): Promise<number> {
   const program = new Command();
@@ -146,6 +147,21 @@ async function main(argv: string[]): Promise<number> {
       process.exitCode = await addCommand(ideaOrName, {
         json: !!opts.json,
         section: opts.section,
+      });
+    });
+
+  program
+    .command('ui')
+    .description('start the local web UI')
+    .option('--port <number>', 'port to listen on', '8788')
+    .option('--host <addr>', 'bind address (loopback only)', '127.0.0.1')
+    .option('--no-banner', 'suppress the URL banner')
+    .action(async opts => {
+      const port = Number(opts.port);
+      process.exitCode = await uiCommand({
+        port: Number.isFinite(port) && port >= 0 ? port : 8788,
+        host: opts.host,
+        banner: opts.banner !== false,
       });
     });
 
