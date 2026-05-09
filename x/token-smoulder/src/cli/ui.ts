@@ -4,6 +4,12 @@ import { join, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Router } from './ui-server/router.js';
 import { SseHub } from './ui-server/sse.js';
+import { getUnits, getUnitState, postUnitRun, postUnitUnlock, postUnitClearSuppression, getSuppressions, getUnitCheck } from './ui-server/handlers/units.js';
+import { getQuota, getExternal } from './ui-server/handlers/quota.js';
+import { getDaemonStatus, postDaemonStart, postDaemonStop } from './ui-server/handlers/daemon.js';
+import { getPrefs, putPrefs } from './ui-server/handlers/prefs.js';
+import { listInner } from './list.js';
+import { selectQuotaSource, selectContentionDetector } from './wiring.js';
 
 export type UiOptions = {
   port: number;
@@ -56,6 +62,21 @@ export async function uiCommand(opts: UiOptions): Promise<number> {
     sse.accept(req, res);
   });
 
+  router.on('GET', '/api/units', getUnits);
+  router.on('GET', '/api/units/:name/state', getUnitState);
+  router.on('GET', '/api/units/:name/check', getUnitCheck);
+  router.on('POST', '/api/units/:name/run', postUnitRun);
+  router.on('POST', '/api/units/:name/unlock', postUnitUnlock);
+  router.on('POST', '/api/units/:name/clear-suppression', postUnitClearSuppression);
+  router.on('GET', '/api/suppressions', getSuppressions);
+  router.on('GET', '/api/quota', getQuota);
+  router.on('GET', '/api/external', getExternal);
+  router.on('GET', '/api/daemon/status', getDaemonStatus);
+  router.on('POST', '/api/daemon/start', postDaemonStart);
+  router.on('POST', '/api/daemon/stop', postDaemonStop);
+  router.on('GET', '/api/prefs', getPrefs);
+  router.on('PUT', '/api/prefs', putPrefs);
+
   router.on('GET', '/assets/:path*', async (_req, res, params) => {
     const rel = params['path'] ?? '';
     const filePath = join(DIST_DIR, 'assets', rel);
@@ -89,11 +110,29 @@ export async function uiCommand(opts: UiOptions): Promise<number> {
 
   sse.start();
 
+  const pollTimer = setInterval(async () => {
+    if (sse.size === 0) return;
+    try {
+      const units = await listInner();
+      sse.sendEvent('units', JSON.stringify(units));
+    } catch { /* ignore */ }
+    try {
+      const snap = await selectQuotaSource().read();
+      sse.sendEvent('quota', JSON.stringify(snap));
+    } catch { /* ignore */ }
+    try {
+      const detector = selectContentionDetector();
+      const active = await detector.isActiveWithin(30 * 60_000);
+      sse.sendEvent('external', JSON.stringify({ active }));
+    } catch { /* ignore */ }
+  }, 2000);
+
   return new Promise<number>(resolve => {
     let resolved = false;
     const shutdown = () => {
       if (resolved) return;
       resolved = true;
+      clearInterval(pollTimer);
       sse.drain();
       server.close(() => resolve(0));
     };

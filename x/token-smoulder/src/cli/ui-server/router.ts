@@ -1,5 +1,24 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
+export function readJson(req: IncomingMessage): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    req.on('data', (c: Buffer) => chunks.push(c));
+    req.on('end', () => {
+      const raw = Buffer.concat(chunks).toString();
+      if (raw.length === 0) { resolve({}); return; }
+      try { resolve(JSON.parse(raw)); }
+      catch (e) { reject(e); }
+    });
+    req.on('error', reject);
+  });
+}
+
+export function json(res: ServerResponse, status: number, data: unknown): void {
+  res.writeHead(status, { 'content-type': 'application/json' });
+  res.end(JSON.stringify(data));
+}
+
 export type RouteHandler = (
   req: IncomingMessage,
   res: ServerResponse,
