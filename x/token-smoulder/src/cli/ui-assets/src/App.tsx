@@ -5,6 +5,9 @@ import { UnitBoard } from './components/UnitBoard';
 import { QuotaGauge } from './components/QuotaGauge';
 import { ExternalDot } from './components/ExternalDot';
 import { DaemonControls } from './components/DaemonControls';
+import { AddDropZone } from './components/AddDropZone';
+import { SourceShelf } from './components/SourceShelf';
+import { Verdict, type AddVerdict } from './components/Verdict';
 
 type UnitItem = { name: string; riskClass: string; latestStatus: string | null };
 type QuotaSnap = { session: number; week: number };
@@ -15,6 +18,7 @@ export function App() {
   const [quota, setQuota] = useState<QuotaSnap>({ session: 1, week: 1 });
   const [externalActive, setExternalActive] = useState(false);
   const [daemon, setDaemon] = useState<DaemonStatus>({ running: false, pid: null });
+  const [verdict, setVerdict] = useState<AddVerdict | null>(null);
 
   const refreshUnits = useCallback(async () => {
     try {
@@ -58,6 +62,28 @@ export function App() {
         </div>
       </div>
       <UnitBoard items={units} onRefresh={refreshUnits} />
+
+      <div style={{ marginTop: '2rem' }}>
+        <h2 style={{ margin: '0 0 0.75rem', fontSize: '1rem', fontWeight: 500 }}>add unit</h2>
+        <AddDropZone onVerdict={(v) => { setVerdict(v); refreshUnits(); }} />
+        <SourceShelf onSelect={(s) => {
+          api.post<{ kind: string; verdict?: AddVerdict }>('/api/add', { idea: s.title, fileText: s.snippet })
+            .then(r => { if (r.kind === 'verdict' && r.verdict) { setVerdict(r.verdict); refreshUnits(); } })
+            .catch(() => {});
+        }} />
+        {verdict && (
+          <Verdict
+            verdict={verdict}
+            onDismiss={() => setVerdict(null)}
+            onRefresh={() => {
+              api.post<{ kind: string; verdict?: AddVerdict }>('/api/add', { idea: verdict.name })
+                .then(r => { if (r.kind === 'verdict' && r.verdict) setVerdict(r.verdict); })
+                .catch(() => {});
+              refreshUnits();
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 }

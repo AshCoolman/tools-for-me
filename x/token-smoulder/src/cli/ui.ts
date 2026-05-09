@@ -8,6 +8,7 @@ import { getUnits, getUnitState, postUnitRun, postUnitUnlock, postUnitClearSuppr
 import { getQuota, getExternal } from './ui-server/handlers/quota.js';
 import { getDaemonStatus, postDaemonStart, postDaemonStop } from './ui-server/handlers/daemon.js';
 import { getPrefs, putPrefs } from './ui-server/handlers/prefs.js';
+import { postAdd, getSources, postWidenAllowlist } from './ui-server/handlers/add.js';
 import { listInner } from './list.js';
 import { selectQuotaSource, selectContentionDetector } from './wiring.js';
 
@@ -76,6 +77,9 @@ export async function uiCommand(opts: UiOptions): Promise<number> {
   router.on('POST', '/api/daemon/stop', postDaemonStop);
   router.on('GET', '/api/prefs', getPrefs);
   router.on('PUT', '/api/prefs', putPrefs);
+  router.on('POST', '/api/add', postAdd);
+  router.on('GET', '/api/sources', getSources);
+  router.on('POST', '/api/units/:name/widen-allowlist', postWidenAllowlist);
 
   router.on('GET', '/assets/:path*', async (_req, res, params) => {
     const rel = params['path'] ?? '';
