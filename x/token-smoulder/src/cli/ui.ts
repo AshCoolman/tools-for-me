@@ -1,8 +1,9 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import { readFile, stat } from 'node:fs/promises';
+import { readFile, stat, writeFile } from 'node:fs/promises';
 import { join, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Router } from './ui-server/router.js';
+import { readJson, json } from './ui-server/router.js';
 import { SseHub } from './ui-server/sse.js';
 import { getUnits, getUnitState, postUnitRun, postUnitUnlock, postUnitClearSuppression, getSuppressions, getUnitCheck } from './ui-server/handlers/units.js';
 import { getQuota, getExternal } from './ui-server/handlers/quota.js';
@@ -10,6 +11,8 @@ import { getDaemonStatus, postDaemonStart, postDaemonStop } from './ui-server/ha
 import { getPrefs, putPrefs } from './ui-server/handlers/prefs.js';
 import { postAdd, getSources, postWidenAllowlist } from './ui-server/handlers/add.js';
 import { listInner } from './list.js';
+import { eventsInner } from './events.js';
+import { findOrchestrationDir } from './orchestration.js';
 import { selectQuotaSource, selectContentionDetector } from './wiring.js';
 
 export type UiOptions = {
@@ -81,6 +84,50 @@ export async function uiCommand(opts: UiOptions): Promise<number> {
   router.on('GET', '/api/sources', getSources);
   router.on('POST', '/api/units/:name/widen-allowlist', postWidenAllowlist);
 
+  router.on('GET', '/api/units/:name/work', async (_req, res, params) => {
+    const name = params['name'] ?? '';
+    try {
+      const orchDir = await findOrchestrationDir();
+      const workPath = join(orchDir, name, 'work.md');
+      const text = await readFile(workPath, 'utf8');
+      json(res, 200, { text });
+    } catch {
+      json(res, 404, { error: `work.md not found for ${name}` });
+    }
+  });
+
+  router.on('PUT', '/api/units/:name/work', async (req, res, params) => {
+    const name = params['name'] ?? '';
+    const body = await readJson(req) as { text?: string };
+    if (typeof body.text !== 'string') {
+      json(res, 400, { error: 'text is required' });
+      return;
+    }
+    try {
+      const orchDir = await findOrchestrationDir();
+      const workPath = join(orchDir, name, 'work.md');
+      await stat(join(orchDir, name));
+      await writeFile(workPath, body.text, 'utf8');
+      sse.sendEvent('work-saved', JSON.stringify({ name }));
+      json(res, 200, { status: 'saved' });
+    } catch {
+      json(res, 404, { error: `unit ${name} not found` });
+    }
+  });
+
+  router.on('GET', '/api/events', async (req, res) => {
+    const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
+    const since = url.searchParams.get('since') ?? '1h';
+    const type = url.searchParams.get('type') ?? undefined;
+    const limit = Number(url.searchParams.get('limit') ?? '100');
+    const result = await eventsInner({ since, type, limit: Number.isFinite(limit) ? limit : 100 });
+    if (result.kind === 'unknown-type') {
+      json(res, 400, { error: `unknown event type: ${result.type}` });
+      return;
+    }
+    json(res, 200, result.events);
+  });
+
   router.on('GET', '/assets/:path*', async (_req, res, params) => {
     const rel = params['path'] ?? '';
     const filePath = join(DIST_DIR, 'assets', rel);
@@ -114,6 +161,8 @@ export async function uiCommand(opts: UiOptions): Promise<number> {
 
   sse.start();
 
+  let lastEventTs = new Date().toISOString();
+
   const pollTimer = setInterval(async () => {
     if (sse.size === 0) return;
     try {
@@ -128,6 +177,18 @@ export async function uiCommand(opts: UiOptions): Promise<number> {
       const detector = selectContentionDetector();
       const active = await detector.isActiveWithin(30 * 60_000);
       sse.sendEvent('external', JSON.stringify({ active }));
+    } catch { /* ignore */ }
+    try {
+      const result = await eventsInner({ since: '5s', limit: 50 });
+      if (result.kind === 'ok') {
+        const newEvents = result.events.filter(e => e.timestamp > lastEventTs);
+        for (const ev of newEvents) {
+          sse.sendEvent('event', JSON.stringify(ev));
+        }
+        if (newEvents.length > 0) {
+          lastEventTs = newEvents[newEvents.length - 1]!.timestamp;
+        }
+      }
     } catch { /* ignore */ }
   }, 2000);
 

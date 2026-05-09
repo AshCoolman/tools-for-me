@@ -8,10 +8,14 @@ import { DaemonControls } from './components/DaemonControls';
 import { AddDropZone } from './components/AddDropZone';
 import { SourceShelf } from './components/SourceShelf';
 import { Verdict, type AddVerdict } from './components/Verdict';
+import { EventTail } from './components/EventTail';
+import { WorkEditor } from './components/WorkEditor';
+import { SuppressionsPanel } from './components/SuppressionsPanel';
 
 type UnitItem = { name: string; riskClass: string; latestStatus: string | null };
 type QuotaSnap = { session: number; week: number };
 type DaemonStatus = { running: boolean; pid: number | null };
+type EventEntry = { name: string; timestamp: string; orchestrationName?: string; runId?: string; payload?: Record<string, unknown> };
 
 export function App() {
   const [units, setUnits] = useState<UnitItem[]>([]);
@@ -19,6 +23,8 @@ export function App() {
   const [externalActive, setExternalActive] = useState(false);
   const [daemon, setDaemon] = useState<DaemonStatus>({ running: false, pid: null });
   const [verdict, setVerdict] = useState<AddVerdict | null>(null);
+  const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
+  const [events, setEvents] = useState<EventEntry[]>([]);
 
   const refreshUnits = useCallback(async () => {
     try {
@@ -38,12 +44,13 @@ export function App() {
     refreshUnits();
     refreshDaemon();
 
-    const disconnect = connectSse('/events', ['units', 'quota', 'external'], (event, data) => {
+    const disconnect = connectSse('/events', ['units', 'quota', 'external', 'event'], (event, data) => {
       try {
         const parsed = JSON.parse(data);
         if (event === 'units') setUnits(parsed.items);
         if (event === 'quota') setQuota({ session: parsed.session, week: parsed.week });
         if (event === 'external') setExternalActive(parsed.active);
+        if (event === 'event') setEvents(prev => [...prev.slice(-199), parsed]);
       } catch { /* ignore malformed */ }
     });
 
@@ -61,7 +68,20 @@ export function App() {
           <DaemonControls running={daemon.running} onRefresh={refreshDaemon} />
         </div>
       </div>
-      <UnitBoard items={units} onRefresh={refreshUnits} />
+      <UnitBoard items={units} onRefresh={refreshUnits} selectedUnit={selectedUnit} onSelect={setSelectedUnit} />
+      {selectedUnit && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+          <div>
+            <h2 style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', fontWeight: 500 }}>{selectedUnit} — work.md</h2>
+            <WorkEditor unitName={selectedUnit} />
+          </div>
+          <div>
+            <h2 style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', fontWeight: 500 }}>{selectedUnit} — events</h2>
+            <EventTail events={events} filterUnit={selectedUnit} />
+          </div>
+        </div>
+      )}
+      <SuppressionsPanel />
 
       <div style={{ marginTop: '2rem' }}>
         <h2 style={{ margin: '0 0 0.75rem', fontSize: '1rem', fontWeight: 500 }}>add unit</h2>

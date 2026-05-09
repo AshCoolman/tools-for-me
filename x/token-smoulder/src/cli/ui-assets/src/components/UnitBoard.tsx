@@ -9,9 +9,11 @@ type UnitItem = {
 type Props = {
   items: UnitItem[];
   onRefresh: () => void;
+  selectedUnit?: string | null;
+  onSelect?: (name: string | null) => void;
 };
 
-export function UnitBoard({ items, onRefresh }: Props) {
+export function UnitBoard({ items, onRefresh, selectedUnit, onSelect }: Props) {
   if (items.length === 0) {
     return <p style={{ color: '#666' }}>No orchestration units found.</p>;
   }
@@ -37,8 +39,13 @@ export function UnitBoard({ items, onRefresh }: Props) {
       </thead>
       <tbody>
         {items.map(item => (
-          <tr key={item.name} style={{ borderBottom: '1px solid #333' }}>
-            <td style={tdStyle}>{item.name}</td>
+          <tr key={item.name} style={{ borderBottom: '1px solid #333', background: selectedUnit === item.name ? '#252525' : undefined }}>
+            <td style={tdStyle}>
+              <button
+                onClick={() => onSelect?.(selectedUnit === item.name ? null : item.name)}
+                style={{ background: 'none', border: 'none', color: '#6bd', cursor: 'pointer', padding: 0, fontSize: 'inherit', textDecoration: 'underline', textUnderlineOffset: 2 }}
+              >{item.name}</button>
+            </td>
             <td style={tdStyle}>
               <span style={riskBadge(item.riskClass)}>{item.riskClass}</span>
             </td>
