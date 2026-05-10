@@ -190,7 +190,7 @@ export function App() {
           </div>
 
           {/* Editor area */}
-          <div className={`editor${isAddTab ? ' editor--single' : ''}`}>
+          <div className={`editor${isAddTab || !activeTab ? ' editor--single' : ''}`}>
             {activeTab === null && (
               <div className="placeholder">Select a work item from the sidebar</div>
             )}
@@ -223,14 +223,11 @@ export function App() {
               </div>
             )}
             {activeTab && !isAddTab && (
-              <div className="pane" style={{ gridColumn: '1 / -1' }}>
-                <div className="pane-header">
-                  <span className="filename">work.md</span>
-                </div>
-                <div className="pane-body">
-                  <WorkEditor unitName={activeTab} />
-                </div>
-              </div>
+              <>
+                <WorkEditor unitName={activeTab} file="work" />
+                <WorkEditor unitName={activeTab} file="policy" />
+                <WorkEditor unitName={activeTab} file="executor" />
+              </>
             )}
           </div>
 

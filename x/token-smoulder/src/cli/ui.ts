@@ -115,6 +115,62 @@ export async function uiCommand(opts: UiOptions): Promise<number> {
     }
   });
 
+  router.on('GET', '/api/units/:name/policy', async (_req, res, params) => {
+    const name = params['name'] ?? '';
+    try {
+      const orchDir = await findOrchestrationDir();
+      const text = await readFile(join(orchDir, name, 'policy.ts'), 'utf8');
+      json(res, 200, { text });
+    } catch {
+      json(res, 404, { error: `policy.ts not found for ${name}` });
+    }
+  });
+
+  router.on('PUT', '/api/units/:name/policy', async (req, res, params) => {
+    const name = params['name'] ?? '';
+    const body = await readJson(req) as { text?: string };
+    if (typeof body.text !== 'string') {
+      json(res, 400, { error: 'text is required' });
+      return;
+    }
+    try {
+      const orchDir = await findOrchestrationDir();
+      await stat(join(orchDir, name));
+      await writeFile(join(orchDir, name, 'policy.ts'), body.text, 'utf8');
+      json(res, 200, { status: 'saved' });
+    } catch {
+      json(res, 404, { error: `unit ${name} not found` });
+    }
+  });
+
+  router.on('GET', '/api/units/:name/executor', async (_req, res, params) => {
+    const name = params['name'] ?? '';
+    try {
+      const orchDir = await findOrchestrationDir();
+      const text = await readFile(join(orchDir, name, 'executor.ts'), 'utf8');
+      json(res, 200, { text });
+    } catch {
+      json(res, 404, { error: `executor.ts not found for ${name}` });
+    }
+  });
+
+  router.on('PUT', '/api/units/:name/executor', async (req, res, params) => {
+    const name = params['name'] ?? '';
+    const body = await readJson(req) as { text?: string };
+    if (typeof body.text !== 'string') {
+      json(res, 400, { error: 'text is required' });
+      return;
+    }
+    try {
+      const orchDir = await findOrchestrationDir();
+      await stat(join(orchDir, name));
+      await writeFile(join(orchDir, name, 'executor.ts'), body.text, 'utf8');
+      json(res, 200, { status: 'saved' });
+    } catch {
+      json(res, 404, { error: `unit ${name} not found` });
+    }
+  });
+
   router.on('GET', '/api/events', async (req, res) => {
     const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
     const since = url.searchParams.get('since') ?? '1h';

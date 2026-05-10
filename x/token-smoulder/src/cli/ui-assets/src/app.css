@@ -159,7 +159,12 @@ body { font-family: var(--sans); color: var(--fg); }
 .code {
   font-family: var(--mono); font-size: 11.5px; line-height: 1.6;
   color: var(--fg); white-space: pre-wrap; word-break: break-word;
+  margin: 0;
 }
+.code-hd { color: var(--hd); font-weight: 600; }
+.code-kw { color: var(--kw); }
+.code-str { color: var(--str); }
+.code-dim { color: var(--fg-dim); }
 
 /* Bottom panel */
 .panel {
