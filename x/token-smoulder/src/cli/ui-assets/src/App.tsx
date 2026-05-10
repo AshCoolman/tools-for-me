@@ -4,12 +4,9 @@ import { connectSse } from './lib/sse';
 import { api } from './lib/api';
 import { ExternalDot } from './components/ExternalDot';
 import { Sidebar, statusColor, statusLabel } from './components/Sidebar';
-import { AddDropZone } from './components/AddDropZone';
-import { SourceShelf } from './components/SourceShelf';
-import { Verdict, type AddVerdict } from './components/Verdict';
+import { AddTab } from './components/AddTab';
 import { EventTail } from './components/EventTail';
 import { WorkEditor } from './components/WorkEditor';
-import { SuppressionsPanel } from './components/SuppressionsPanel';
 import { RunSummary } from './components/RunSummary';
 import { GatesPanel, useGatesBadge } from './components/GatesPanel';
 
@@ -27,7 +24,6 @@ export function App() {
   const [quota, setQuota] = useState<QuotaSnap | null>(null);
   const [externalActive, setExternalActive] = useState(false);
   const [daemon, setDaemon] = useState<DaemonStatus>({ running: false, pid: null });
-  const [verdict, setVerdict] = useState<AddVerdict | null>(null);
   const [events, setEvents] = useState<EventEntry[]>([]);
   const [suppressions, setSuppressions] = useState<SuppressionRecord[]>([]);
 
@@ -127,11 +123,10 @@ export function App() {
 
   return (
     <div className="frame">
-      {/* Titlebar */}
       <div className="titlebar">
         <span>token-smoulder</span>
         <span className="spacer" />
-        <span className="dim">external: {externalActive ? 'active' : 'idle'}</span>
+        <ExternalDot active={externalActive} />
         <button
           className="btn primary"
           disabled={!activeUnit || actionBusy !== null}
@@ -160,9 +155,7 @@ export function App() {
           quota={quota}
         />
 
-        {/* Main content area */}
         <div className="main">
-          {/* Tab bar */}
           <div className="tabbar">
             {openTabs.map(name => (
               <div
@@ -191,7 +184,6 @@ export function App() {
             <span className="tab-add" title="Add new work" onClick={() => openTab(ADD_TAB)}>+</span>
           </div>
 
-          {/* Editor area */}
           <div className={`editor${isAddTab || !activeTab ? ' editor--single' : ''}`}>
             {activeTab === null && (
               <div className="placeholder">Select a work item from the sidebar</div>
@@ -199,28 +191,7 @@ export function App() {
             {isAddTab && (
               <div className="pane">
                 <div className="pane-body">
-                  <AddDropZone onVerdict={(v) => {
-                    setVerdict(v);
-                    refreshUnits();
-                    if (v.name) convertAddTab(v.name);
-                  }} />
-                  <SourceShelf onSelect={(s) => {
-                    api.post<{ kind: string; verdict?: AddVerdict }>('/api/add', { idea: s.title, fileText: s.snippet })
-                      .then(r => { if (r.kind === 'verdict' && r.verdict) { setVerdict(r.verdict); refreshUnits(); if (r.verdict.name) convertAddTab(r.verdict.name); } })
-                      .catch(() => {});
-                  }} />
-                  {verdict && (
-                    <Verdict
-                      verdict={verdict}
-                      onDismiss={() => setVerdict(null)}
-                      onRefresh={() => {
-                        api.post<{ kind: string; verdict?: AddVerdict }>('/api/add', { idea: verdict.name })
-                          .then(r => { if (r.kind === 'verdict' && r.verdict) setVerdict(r.verdict); })
-                          .catch(() => {});
-                        refreshUnits();
-                      }}
-                    />
-                  )}
+                  <AddTab onConverted={convertAddTab} onRefreshUnits={refreshUnits} />
                 </div>
               </div>
             )}
@@ -233,7 +204,6 @@ export function App() {
             )}
           </div>
 
-          {/* Bottom panel */}
           <div className="panel">
             <div className="panel-tabs">
               <div
@@ -276,7 +246,6 @@ export function App() {
         </div>
       </div>
 
-      {/* Statusbar */}
       <div className="statusbar">
         {activeUnit && (
           <>
