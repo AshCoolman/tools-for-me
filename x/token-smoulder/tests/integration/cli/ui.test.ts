@@ -1,6 +1,6 @@
 import { describe, expect, it, afterEach } from 'vitest';
 import { spawn, type ChildProcess } from 'node:child_process';
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -66,6 +66,44 @@ describe('UI server', () => {
 
     const res = await fetch(`${base}/api/units/valid-readonly/state`);
     expect(res.status).toBe(404);
+  }, 15_000);
+
+  it('GET /api/units/:name/state returns run record when one exists', async () => {
+    const stateDir = await mkdtemp(join(tmpdir(), 'ui-'));
+    const runsDir = join(stateDir, 'runs', 'valid-readonly');
+    await mkdir(runsDir, { recursive: true });
+    const record = {
+      runId: 'test-run-001',
+      orchestrationName: 'valid-readonly',
+      status: 'failed',
+      riskClass: 'readonly',
+      workHash: 'a'.repeat(64),
+      policyHash: 'b'.repeat(64),
+      executorHash: 'c'.repeat(64),
+      startedAt: '2026-05-10T00:00:00.000Z',
+      endedAt: '2026-05-10T00:00:01.000Z',
+      steps: [{ index: 0, prompt: 'test prompt', status: 'failed', error: 'test error' }],
+      failureSignature: 'test error',
+      decision: {
+        shouldRun: true,
+        orchestrationName: 'valid-readonly',
+        reasons: ['test reason'],
+        failedReasons: [],
+        riskClass: 'readonly',
+        selectedWorkHash: 'a'.repeat(64),
+        evaluatedAt: '2026-05-10T00:00:00.000Z',
+      },
+    };
+    await writeFile(join(runsDir, 'latest.json'), JSON.stringify(record));
+
+    const { base } = await startServer({ TOKEN_SMOULDER_STATE_DIR: stateDir });
+    const res = await fetch(`${base}/api/units/valid-readonly/state`);
+    expect(res.status).toBe(200);
+    const body = await res.json() as Record<string, unknown>;
+    expect(body.runId).toBe('test-run-001');
+    expect(body.status).toBe('failed');
+    expect(body.failureSignature).toBe('test error');
+    expect(Array.isArray(body.steps)).toBe(true);
   }, 15_000);
 
   it('GET /api/quota returns session and week fields', async () => {
