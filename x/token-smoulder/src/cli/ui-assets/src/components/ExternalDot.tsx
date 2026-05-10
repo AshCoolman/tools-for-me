@@ -13,7 +13,7 @@ export function ExternalDot({ active }: Props) {
         boxShadow: active ? '0 0 6px #c44' : 'none',
       }} />
       <span style={{ fontSize: '0.75rem', color: '#aaa' }}>
-        {active ? 'external session active' : 'no external sessions'}
+        {active ? 'external: active (blocked)' : 'external: idle'}
       </span>
     </div>
   );

@@ -8,7 +8,7 @@ export function QuotaGauge({ label, value }: Props) {
   const color = pct > 50 ? '#4a4' : pct > 25 ? '#ca4' : '#c44';
   return (
     <div style={{ display: 'inline-block', marginRight: '1.5rem' }}>
-      <div style={{ fontSize: '0.75rem', color: '#888', marginBottom: '0.25rem' }}>{label}</div>
+      <div style={{ fontSize: '0.75rem', color: '#888', marginBottom: '0.25rem' }}>{label} quota</div>
       <div style={{ width: 120, height: 8, background: '#333', borderRadius: 4, overflow: 'hidden' }}>
         <div style={{ width: `${pct}%`, height: '100%', background: color, transition: 'width 0.3s' }} />
       </div>

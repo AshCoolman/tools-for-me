@@ -42,9 +42,10 @@ export function DaemonControls({ running, onRefresh }: Props) {
             type="number"
             value={tick}
             onChange={e => setTick(e.target.value)}
+            aria-label="tick interval in milliseconds"
             style={{ width: 60, fontSize: '0.75rem', padding: '0.15rem 0.3rem', background: '#222', color: '#ccc', border: '1px solid #444', borderRadius: 3 }}
-            title="tick interval (ms)"
           />
+          <span style={{ fontSize: '0.65rem', color: '#666' }}>ms</span>
           <button onClick={start} style={btnStyle}>start</button>
         </>
       )}
