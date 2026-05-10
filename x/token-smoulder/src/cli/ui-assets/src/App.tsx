@@ -2,9 +2,8 @@ import './app.css';
 import { useEffect, useState, useCallback } from 'react';
 import { connectSse } from './lib/sse';
 import { api } from './lib/api';
-import { QuotaGauge } from './components/QuotaGauge';
 import { ExternalDot } from './components/ExternalDot';
-import { DaemonControls } from './components/DaemonControls';
+import { Sidebar, statusColor, statusLabel } from './components/Sidebar';
 import { AddDropZone } from './components/AddDropZone';
 import { SourceShelf } from './components/SourceShelf';
 import { Verdict, type AddVerdict } from './components/Verdict';
@@ -21,21 +20,6 @@ type DaemonStatus = { running: boolean; pid: number | null };
 type EventEntry = { name: string; timestamp: string; orchestrationName?: string; runId?: string; payload?: Record<string, unknown> };
 type SuppressionRecord = { key: string; orchestrationName: string; reason: string };
 type PanelTab = 'run' | 'events' | 'gates';
-
-function statusColor(status: string | null): string {
-  if (status === 'completed') return 'var(--ok)';
-  if (status === 'failed') return 'var(--err)';
-  if (status === 'running') return 'var(--blue)';
-  if (status === 'suppressed') return 'var(--stopped)';
-  if (status === 'skipped') return 'var(--warn)';
-  return 'var(--fg-dim)';
-}
-
-function statusLabel(status: string | null): string {
-  if (!status) return '—';
-  if (status === 'suppressed') return 'stopped';
-  return status;
-}
 
 export function App() {
   const [units, setUnits] = useState<UnitItem[]>([]);
@@ -139,9 +123,6 @@ export function App() {
   const activeUnit = units.find(u => u.name === activeTab);
   const isAddTab = activeTab === ADD_TAB;
 
-  const getSuppression = (name: string) =>
-    suppressions.find(s => s.orchestrationName === name);
-
   return (
     <div className="frame">
       {/* Titlebar */}
@@ -166,57 +147,16 @@ export function App() {
       </div>
 
       <div className="body">
-        {/* Sidebar */}
-        <aside className="sidebar">
-          <h6>work</h6>
-
-          {units.map(item => {
-            const suppression = getSuppression(item.name);
-            return (
-              <div key={item.name}>
-                <div
-                  className={`unit${activeTab === item.name ? ' active' : ''}`}
-                  onClick={() => openTab(item.name)}
-                >
-                  <span className="dot" style={{ background: statusColor(item.latestStatus) }} />
-                  <span className="name">{item.name}</span>
-                  <span className="risk-chip">{item.riskClass}</span>
-                  <span className="state" style={{ color: statusColor(item.latestStatus) }}>
-                    {statusLabel(item.latestStatus)}
-                  </span>
-                </div>
-                {suppression && (
-                  <div className="stopped-reason">{suppression.reason}</div>
-                )}
-              </div>
-            );
-          })}
-
-          {units.length === 0 && (
-            <div style={{ padding: '4px 8px', fontSize: '11px', color: 'var(--fg-dim)' }}>
-              No work items found.
-            </div>
-          )}
-
-          <button className="add-btn" onClick={() => openTab(ADD_TAB)}>
-            + Add new work
-          </button>
-
-          {/* Footer: daemon + quotas */}
-          <div className="sidebar-footer">
-            <DaemonControls running={daemon.running} onRefresh={refreshDaemon} />
-            {quota && (
-              <>
-                <div className="quota-row" style={{ marginTop: 8 }}>
-                  <QuotaGauge label="week" value={quota.week} />
-                </div>
-                <div className="quota-row" style={{ marginTop: 4 }}>
-                  <QuotaGauge label="session" value={quota.session} />
-                </div>
-              </>
-            )}
-          </div>
-        </aside>
+        <Sidebar
+          units={units}
+          suppressions={suppressions}
+          activeTab={activeTab}
+          onOpenTab={openTab}
+          onOpenAddTab={() => openTab(ADD_TAB)}
+          daemon={daemon}
+          onRefreshDaemon={refreshDaemon}
+          quota={quota}
+        />
 
         {/* Main content area */}
         <div className="main">

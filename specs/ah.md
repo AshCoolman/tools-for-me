@@ -147,7 +147,7 @@ None. Independent module, no shared code at runtime. Delete `tools/ah/` to remov
 - **Budget:** short
 
 ## Implement
-- Task 1-5: all implemented in single commit (see below)
+- Task 1-5: all implemented in `f3ef050`
 
 ## Notes / open questions
 - Some tools print help to stderr, some to stdout — capture both
