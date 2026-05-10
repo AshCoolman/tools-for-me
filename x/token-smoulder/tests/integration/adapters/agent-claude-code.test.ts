@@ -25,11 +25,6 @@ describe('ClaudeCodeAgent', () => {
       'claude',
       `#!/usr/bin/env bash
 set -e
-seen_owner=0
-for arg in "$@"; do
-  if [ "$arg" = "--owner=scheduler" ]; then seen_owner=1; fi
-done
-if [ "$seen_owner" != "1" ]; then echo "missing --owner=scheduler" >&2; exit 7; fi
 if [ "$TOKEN_SMOULDER_OWNER" != "scheduler" ]; then echo "missing env tag" >&2; exit 8; fi
 
 read -r prompt

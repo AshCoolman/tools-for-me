@@ -40,16 +40,11 @@ export class ExternalSessionPidContentionDetector implements ContentionDetector 
       const command = m[2] ?? '';
       if (this.excludeOwnPid !== null && pid === this.excludeOwnPid) continue;
       if (!this.patterns.some(p => p.test(command))) continue;
-      if (this.commandIsSchedulerOwned(command)) continue;
       if (await this.envIsSchedulerOwned(pid)) continue;
       this.lastSeen.set(pid, now);
       sessions.push({ pid, command, lastActiveAt: new Date(now).toISOString() });
     }
     return sessions;
-  }
-
-  private commandIsSchedulerOwned(command: string): boolean {
-    return /--owner=scheduler\b/.test(command);
   }
 
   async isActiveWithin(durationMs: number): Promise<boolean> {

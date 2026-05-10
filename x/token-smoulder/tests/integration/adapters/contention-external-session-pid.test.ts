@@ -15,21 +15,21 @@ afterEach(() => {
 });
 
 describe('ExternalSessionPidContentionDetector', () => {
-  it('excludes scheduler-owned processes (--owner=scheduler in argv)', async () => {
-    // Tagged child: command contains --owner=scheduler so the detector skips it.
+  it('excludes scheduler-owned processes (TOKEN_SMOULDER_OWNER env)', async () => {
+    const marker = `smoulder_tagged_${Date.now()}`;
     const tagged = spawn(
       process.execPath,
-      ['-e', `setInterval(()=>{}, 100); process.title='claude-child --owner=scheduler';`],
+      ['-e', `globalThis.${marker}=1; setInterval(()=>{}, 100)`],
       {
         env: { ...process.env, TOKEN_SMOULDER_OWNER: 'scheduler' },
         stdio: 'ignore',
       },
     );
     spawned.push(tagged);
-    await new Promise(r => setTimeout(r, 200));
+    await new Promise(r => setTimeout(r, 300));
 
     const det = new ExternalSessionPidContentionDetector({
-      patterns: [/claude-child/],
+      patterns: [new RegExp(marker)],
       excludeOwnPid: process.pid,
     });
     const sessions = await det.listExternalSessions();
@@ -37,14 +37,15 @@ describe('ExternalSessionPidContentionDetector', () => {
   });
 
   it('detects an untagged matching process', async () => {
-    const untagged = spawn(process.execPath, ['-e', `setInterval(()=>{}, 100); process.title='claude-untagged';`], {
+    const marker = `smoulder_untagged_${Date.now()}`;
+    const untagged = spawn(process.execPath, ['-e', `globalThis.${marker}=1; setInterval(()=>{}, 100)`], {
       stdio: 'ignore',
     });
     spawned.push(untagged);
-    await new Promise(r => setTimeout(r, 200));
+    await new Promise(r => setTimeout(r, 300));
 
     const det = new ExternalSessionPidContentionDetector({
-      patterns: [/claude-untagged/],
+      patterns: [new RegExp(marker)],
       excludeOwnPid: process.pid,
     });
     const sessions = await det.listExternalSessions();

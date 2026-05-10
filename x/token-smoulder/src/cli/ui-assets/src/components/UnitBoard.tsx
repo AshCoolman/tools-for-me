@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { api } from '../lib/api';
 
 type UnitItem = {
@@ -13,19 +14,29 @@ type Props = {
   onSelect?: (name: string | null) => void;
 };
 
+type ActionState = { busy: string | null; result: string | null; error: string | null };
+
 export function UnitBoard({ items, onRefresh, selectedUnit, onSelect }: Props) {
+  const [actionState, setActionState] = useState<Record<string, ActionState>>({});
+
   if (items.length === 0) {
     return <p style={{ color: '#666' }}>No orchestration units found.</p>;
   }
 
   const action = async (name: string, verb: string) => {
+    setActionState(prev => ({ ...prev, [name]: { busy: verb, result: null, error: null } }));
     try {
-      await api.post(`/api/units/${encodeURIComponent(name)}/${verb}`);
+      const data = await api.post<Record<string, unknown>>(`/api/units/${encodeURIComponent(name)}/${verb}`);
+      const msg = data.status ? String(data.status) : data.error ? String(data.error) : 'ok';
+      setActionState(prev => ({ ...prev, [name]: { busy: null, result: msg, error: null } }));
     } catch (e) {
-      console.error(`${verb} ${name}:`, e);
+      const msg = e instanceof Error ? e.message : String(e);
+      setActionState(prev => ({ ...prev, [name]: { busy: null, result: null, error: msg } }));
     }
     onRefresh();
   };
+
+  const getState = (name: string): ActionState => actionState[name] ?? { busy: null, result: null, error: null };
 
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
@@ -38,27 +49,38 @@ export function UnitBoard({ items, onRefresh, selectedUnit, onSelect }: Props) {
         </tr>
       </thead>
       <tbody>
-        {items.map(item => (
-          <tr key={item.name} style={{ borderBottom: '1px solid #333', background: selectedUnit === item.name ? '#252525' : undefined }}>
-            <td style={tdStyle}>
-              <button
-                onClick={() => onSelect?.(selectedUnit === item.name ? null : item.name)}
-                style={{ background: 'none', border: 'none', color: '#6bd', cursor: 'pointer', padding: 0, fontSize: 'inherit', textDecoration: 'underline', textUnderlineOffset: 2 }}
-              >{item.name}</button>
-            </td>
-            <td style={tdStyle}>
-              <span style={riskBadge(item.riskClass)}>{item.riskClass}</span>
-            </td>
-            <td style={tdStyle}>
-              <span style={statusBadge(item.latestStatus)}>{item.latestStatus ?? '-'}</span>
-            </td>
-            <td style={tdStyle}>
-              <button onClick={() => action(item.name, 'run')} style={actionBtn} title="run once">run</button>
-              <button onClick={() => action(item.name, 'unlock')} style={actionBtn} title="unlock">unlock</button>
-              <button onClick={() => action(item.name, 'clear-suppression')} style={actionBtn} title="clear suppression">unsuppress</button>
-            </td>
-          </tr>
-        ))}
+        {items.map(item => {
+          const s = getState(item.name);
+          return (
+            <tr key={item.name} style={{ borderBottom: '1px solid #333', background: selectedUnit === item.name ? '#252525' : undefined }}>
+              <td style={tdStyle}>
+                <button
+                  onClick={() => onSelect?.(selectedUnit === item.name ? null : item.name)}
+                  style={{ background: 'none', border: 'none', color: '#6bd', cursor: 'pointer', padding: 0, fontSize: 'inherit', textDecoration: 'underline', textUnderlineOffset: 2 }}
+                >{item.name}</button>
+              </td>
+              <td style={tdStyle}>
+                <span style={riskBadge(item.riskClass)}>{item.riskClass}</span>
+              </td>
+              <td style={tdStyle}>
+                <span style={statusBadge(item.latestStatus)}>{item.latestStatus ?? '-'}</span>
+              </td>
+              <td style={tdStyle}>
+                <button onClick={() => action(item.name, 'run')} disabled={!!s.busy} style={actionBtn} title="run once">
+                  {s.busy === 'run' ? 'running...' : 'run'}
+                </button>
+                <button onClick={() => action(item.name, 'unlock')} disabled={!!s.busy} style={actionBtn} title="unlock">
+                  {s.busy === 'unlock' ? '...' : 'unlock'}
+                </button>
+                <button onClick={() => action(item.name, 'clear-suppression')} disabled={!!s.busy} style={actionBtn} title="clear suppression">
+                  {s.busy === 'clear-suppression' ? '...' : 'unsuppress'}
+                </button>
+                {s.result && <span style={resultStyle}>{s.result}</span>}
+                {s.error && <span style={errorStyle}>{s.error}</span>}
+              </td>
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );
@@ -77,6 +99,9 @@ const actionBtn: React.CSSProperties = {
   borderRadius: 3,
   cursor: 'pointer',
 };
+
+const resultStyle: React.CSSProperties = { fontSize: '0.7rem', color: '#6d6', marginLeft: '0.3rem' };
+const errorStyle: React.CSSProperties = { fontSize: '0.7rem', color: '#d66', marginLeft: '0.3rem' };
 
 function riskBadge(riskClass: string): React.CSSProperties {
   const bg = riskClass === 'readonly' ? '#2a3a2a' : riskClass === 'repo-local' ? '#3a3a2a' : '#3a2a2a';

@@ -63,7 +63,7 @@ export class ClaudeCodeAgent implements AgentClient {
     return new Promise<AgentResponse>((resolve, reject) => {
       const child = spawn(
         this.bin,
-        ['--owner=scheduler'],
+        ['-p', '--output-format', 'json'],
         {
           env: { ...this.env, TOKEN_SMOULDER_OWNER: 'scheduler' },
           stdio: ['pipe', 'pipe', 'pipe'],
