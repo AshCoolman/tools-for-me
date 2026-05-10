@@ -12,8 +12,8 @@ export function selectQuotaSource(): QuotaSource {
   const which = process.env.TOKEN_SMOULDER_QUOTA_SOURCE ?? '';
   if (which === 'fake-pass') return fakePassQuota();
   if (which === 'fake-fail') return fakeFailQuota();
-  if (which === 'claude-token-usage-fragile') return new ClaudeTokenUsageFragileQuota();
-  return new ClaudeTokenSimpleQuota();
+  if (which === 'claude-token-simple') return new ClaudeTokenSimpleQuota();
+  return new ClaudeTokenUsageFragileQuota();
 }
 
 export function selectContentionDetector(): ContentionDetector {
