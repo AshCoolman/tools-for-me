@@ -11,6 +11,7 @@ import { EventTail } from './components/EventTail';
 import { WorkEditor } from './components/WorkEditor';
 import { SuppressionsPanel } from './components/SuppressionsPanel';
 import { RunSummary } from './components/RunSummary';
+import { GatesPanel, useGatesBadge } from './components/GatesPanel';
 
 const ADD_TAB = '__add__';
 
@@ -122,6 +123,7 @@ export function App() {
 
   const activeUnit = units.find(u => u.name === activeTab);
   const isAddTab = activeTab === ADD_TAB;
+  const gatesBadge = useGatesBadge(activeTab && !isAddTab ? activeTab : null);
 
   return (
     <div className="frame">
@@ -239,6 +241,11 @@ export function App() {
                 onClick={() => setPanelTab('run')}
               >
                 RUN
+                {activeUnit && (
+                  <span className={activeUnit.latestStatus === 'failed' ? 'err' : activeUnit.latestStatus === 'completed' ? 'ok' : 'dim'}>
+                    {statusLabel(activeUnit.latestStatus)}
+                  </span>
+                )}
               </div>
               <div
                 className={`panel-tab${panelTab === 'events' ? ' active' : ''}`}
@@ -251,6 +258,7 @@ export function App() {
                 onClick={() => setPanelTab('gates')}
               >
                 GATES
+                {gatesBadge && <span className="ok">{gatesBadge}</span>}
               </div>
             </div>
             <div className="panel-body">
@@ -261,7 +269,7 @@ export function App() {
               ) : panelTab === 'events' ? (
                 <EventTail events={events} filterUnit={activeTab} />
               ) : (
-                <span className="dim">Gates panel — coming soon</span>
+                <GatesPanel unitName={activeTab} />
               )}
             </div>
           </div>

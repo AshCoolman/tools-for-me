@@ -1,4 +1,4 @@
-import { useEffect, useRef, type CSSProperties } from 'react';
+import { useEffect, useRef } from 'react';
 
 type EventEntry = {
   name: string;
@@ -13,6 +13,18 @@ type Props = {
   filterUnit?: string;
 };
 
+function formatTime(iso: string): string {
+  try { return new Date(iso).toLocaleTimeString(); }
+  catch { return iso; }
+}
+
+function eventColor(name: string): string {
+  if (name.includes('completed')) return 'var(--ok)';
+  if (name.includes('failed') || name.includes('blocked')) return 'var(--err)';
+  if (name.includes('started')) return 'var(--blue)';
+  return 'var(--fg)';
+}
+
 export function EventTail({ events, filterUnit }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -25,57 +37,38 @@ export function EventTail({ events, filterUnit }: Props) {
   }, [filtered.length]);
 
   if (filtered.length === 0) {
-    return <div style={{ color: '#666', fontSize: '0.75rem' }}>no events</div>;
+    return <span className="dim">no events</span>;
+  }
+
+  const groups = new Map<string, EventEntry[]>();
+  for (const ev of filtered) {
+    const key = ev.runId ?? '__ungrouped__';
+    const arr = groups.get(key);
+    if (arr) arr.push(ev);
+    else groups.set(key, [ev]);
   }
 
   return (
-    <div style={container}>
-      {filtered.map((ev, i) => (
-        <div key={i} style={row}>
-          <span style={ts}>{formatTs(ev.timestamp)}</span>
-          <span style={eventName(ev.name)}>{ev.name}</span>
-          {ev.orchestrationName && <span style={unit}>{ev.orchestrationName}</span>}
-          {ev.payload && Object.keys(ev.payload).length > 0 && (
-            <span style={payload}>{JSON.stringify(ev.payload)}</span>
+    <>
+      {[...groups.entries()].map(([runId, evs]) => (
+        <div key={runId}>
+          {runId !== '__ungrouped__' && (
+            <div className="event-group-header">
+              run {runId.slice(0, 7)} · {formatTime(evs[0]!.timestamp)}
+            </div>
           )}
+          {evs.map((ev, i) => (
+            <div key={i} className="event-row">
+              <span className="event-time">{formatTime(ev.timestamp)}</span>
+              <span className="event-name" style={{ color: eventColor(ev.name) }}>{ev.name}</span>
+              <span>
+                {ev.payload && Object.keys(ev.payload).length > 0 && JSON.stringify(ev.payload)}
+              </span>
+            </div>
+          ))}
         </div>
       ))}
       <div ref={bottomRef} />
-    </div>
+    </>
   );
 }
-
-function formatTs(iso: string): string {
-  try {
-    return new Date(iso).toLocaleTimeString();
-  } catch {
-    return iso;
-  }
-}
-
-function eventName(name: string): CSSProperties {
-  const color =
-    name.includes('completed') ? '#6d6' :
-    name.includes('failed') || name.includes('blocked') ? '#d66' :
-    name.includes('started') ? '#6bd' :
-    '#dd6';
-  return { color, fontSize: '0.75rem', fontWeight: 500 };
-}
-
-const container: CSSProperties = {
-  maxHeight: 250,
-  overflowY: 'auto',
-  fontSize: '0.75rem',
-  fontFamily: 'monospace',
-};
-
-const row: CSSProperties = {
-  display: 'flex',
-  gap: '0.6rem',
-  padding: '0.15rem 0',
-  borderBottom: '1px solid #2a2a2a',
-};
-
-const ts: CSSProperties = { color: '#666', minWidth: 70 };
-const unit: CSSProperties = { color: '#888', fontSize: '0.7rem' };
-const payload: CSSProperties = { color: '#555', fontSize: '0.65rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 300 };

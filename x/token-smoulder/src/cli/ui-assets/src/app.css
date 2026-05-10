@@ -197,6 +197,31 @@ body { font-family: var(--sans); color: var(--fg); }
 .warn { color: var(--warn); }
 .dim { color: var(--fg-dim); }
 
+/* Error block in RunPanel */
+.err-block {
+  display: block; margin: 4px 0 4px 16px; padding: 4px 8px;
+  background: rgba(244,135,113,0.08); border-left: 2px solid var(--err);
+  color: var(--err);
+}
+.err-source { font-weight: 600; font-size: 10px; margin-bottom: 2px; }
+
+/* Gates tab */
+.gate-row {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 2px 0; font-size: 11px;
+}
+.gate-name { color: var(--fg); font-weight: 500; min-width: 80px; }
+.gate-reason { color: var(--fg-dim); }
+
+/* Events tab */
+.event-group-header {
+  font-size: 10px; color: var(--fg-dim);
+  padding: 4px 0 2px; border-bottom: 1px solid var(--line-2); margin-bottom: 2px;
+}
+.event-row { display: flex; gap: 8px; padding: 1px 0; }
+.event-time { color: #555; width: 60px; flex-shrink: 0; }
+.event-name { font-weight: 500; flex-shrink: 0; min-width: 110px; }
+
 /* Statusbar */
 .statusbar {
   display: flex; align-items: center; gap: 14px;
