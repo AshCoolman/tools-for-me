@@ -31,14 +31,26 @@ function isDaemonRunning(): boolean {
   }
 }
 
+function isUiRunning(): boolean {
+  try {
+    const res = spawnSync('curl', ['-sf', '-o', '/dev/null', 'http://127.0.0.1:8788/api/units'], { timeout: 1000 });
+    return res.status === 0;
+  } catch {
+    return false;
+  }
+}
+
 const SERVICES: Entry[] = [
   { label: 'daemon', desc: 'Background dispatcher (30s tick)', cmd: [BIN, 'daemon'] },
+  { label: 'ui',     desc: 'Web UI at 127.0.0.1:8788',        cmd: [BIN, 'ui'] },
 ];
 
 const TASKS: Entry[] = [
   { label: 'typecheck', desc: 'Type-check src/',       cmd: ['yarn', 'typecheck'] },
   { label: 'test',      desc: 'Run vitest',            cmd: ['yarn', 'test'] },
   { label: 'lint',      desc: 'ESLint src/ tests/',    cmd: ['yarn', 'lint'] },
+  { label: 'build:ui',  desc: 'Build UI assets',       cmd: ['yarn', 'build:ui'] },
+  { label: 'ui:dev',    desc: 'Vite dev server',       cmd: ['yarn', 'ui:dev'] },
   { label: 'list',      desc: 'Show all work units',   cmd: [BIN, 'list'] },
   { label: 'events',    desc: 'Recent events (1h)',    cmd: [BIN, 'events', '--since', '1h'] },
 ];
@@ -51,19 +63,26 @@ async function main(): Promise<void> {
   }
 
   const daemonUp = isDaemonRunning();
+  const uiUp = isUiRunning();
+
+  const serviceStatus = (s: Entry): string => {
+    if (s.label === 'daemon') return daemonUp ? '●' : '○';
+    if (s.label === 'ui') return uiUp ? '●' : '○';
+    return '○';
+  };
 
   const picked = await select<Entry>({
     message: 'token-smoulder',
     choices: [
       new Separator('─── Services ───'),
       ...SERVICES.map(s => ({
-        name: `${s.label === 'daemon' && daemonUp ? '●' : '○'} ${s.label}`,
+        name: `${serviceStatus(s)} ${s.label}`,
         value: s,
         description: s.desc,
       })),
       new Separator('─── Tasks ───'),
       ...TASKS.map(t => ({
-        name: `  ${t.label}`,
+        name: t.label,
         value: t,
         description: t.desc,
       })),
