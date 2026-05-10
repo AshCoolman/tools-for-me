@@ -26,7 +26,7 @@ function startServer(extraEnv: Record<string, string> = {}): Promise<{ proc: Chi
     proc.stdout!.on('data', (chunk: Buffer) => {
       stdout += chunk.toString();
       const m = stdout.match(/(http:\/\/[^\s]+)/);
-      if (m) resolve({ proc, base: m[1] });
+      if (m?.[1]) resolve({ proc, base: m[1] });
     });
 
     proc.on('error', reject);

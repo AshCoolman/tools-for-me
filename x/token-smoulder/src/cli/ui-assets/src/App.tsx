@@ -11,6 +11,7 @@ import { Verdict, type AddVerdict } from './components/Verdict';
 import { EventTail } from './components/EventTail';
 import { WorkEditor } from './components/WorkEditor';
 import { SuppressionsPanel } from './components/SuppressionsPanel';
+import { RunSummary } from './components/RunSummary';
 
 type UnitItem = { name: string; riskClass: string; latestStatus: string | null };
 type QuotaSnap = { session: number; week: number };
@@ -70,13 +71,17 @@ export function App() {
       </div>
       <UnitBoard items={units} onRefresh={refreshUnits} selectedUnit={selectedUnit} onSelect={setSelectedUnit} />
       {selectedUnit && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
           <div>
-            <h2 style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', fontWeight: 500 }}>{selectedUnit} — work.md</h2>
+            <h2 style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', fontWeight: 500 }}>last run</h2>
+            <RunSummary unitName={selectedUnit} />
+          </div>
+          <div>
+            <h2 style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', fontWeight: 500 }}>work.md</h2>
             <WorkEditor unitName={selectedUnit} />
           </div>
           <div>
-            <h2 style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', fontWeight: 500 }}>{selectedUnit} — events</h2>
+            <h2 style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', fontWeight: 500 }}>events</h2>
             <EventTail events={events} filterUnit={selectedUnit} />
           </div>
         </div>
