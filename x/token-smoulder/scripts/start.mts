@@ -16,6 +16,8 @@ function fail(msg: string): never {
 }
 
 type Entry = { label: string; desc: string; cmd: string[] };
+type DevEntry = { label: 'dev'; desc: string; procs: Record<string, { cmd: string[] }> };
+type Choice = Entry | DevEntry;
 
 function isDaemonRunning(): boolean {
   const stateDir = process.env.TOKEN_SMOULDER_STATE_DIR
@@ -40,6 +42,15 @@ function isUiRunning(): boolean {
   }
 }
 
+const DEV: DevEntry = {
+  label: 'dev',
+  desc: 'daemon + ui (mprocs)',
+  procs: {
+    daemon: { cmd: [BIN, 'daemon'] },
+    ui:     { cmd: [BIN, 'ui'] },
+  },
+};
+
 const SERVICES: Entry[] = [
   { label: 'daemon', desc: 'Background dispatcher (30s tick)', cmd: [BIN, 'daemon'] },
   { label: 'ui',     desc: 'Web UI at 127.0.0.1:8788',        cmd: [BIN, 'ui'] },
@@ -54,6 +65,10 @@ const TASKS: Entry[] = [
   { label: 'list',      desc: 'Show all work units',   cmd: [BIN, 'list'] },
   { label: 'events',    desc: 'Recent events (1h)',    cmd: [BIN, 'events', '--since', '1h'] },
 ];
+
+function isDevEntry(c: Choice): c is DevEntry {
+  return 'procs' in c;
+}
 
 async function main(): Promise<void> {
   if (!process.stdin.isTTY) fail('TTY required — scripts/start is interactive');
@@ -71,10 +86,11 @@ async function main(): Promise<void> {
     return '○';
   };
 
-  const picked = await select<Entry>({
+  const picked = await select<Choice>({
     message: 'token-smoulder',
     choices: [
       new Separator('─── Services ───'),
+      { name: 'dev', value: DEV, description: DEV.desc },
       ...SERVICES.map(s => ({
         name: `${serviceStatus(s)} ${s.label}`,
         value: s,
@@ -88,6 +104,20 @@ async function main(): Promise<void> {
       })),
     ],
   });
+
+  if (isDevEntry(picked)) {
+    const hasMprocs = spawnSync('mprocs', ['--version'], { stdio: 'ignore' }).status === 0;
+    if (!hasMprocs) fail('mprocs not found — install: brew install mprocs');
+
+    const entries = Object.entries(picked.procs);
+    const names = entries.map(([k]) => k).join(',');
+    const cmds = entries.map(([, v]) => v.cmd.join(' '));
+    const result = spawnSync('mprocs', ['--names', names, ...cmds], {
+      stdio: 'inherit',
+      cwd: PKG_ROOT,
+    });
+    process.exit(result.status ?? 1);
+  }
 
   const result = spawnSync(picked.cmd[0], picked.cmd.slice(1), {
     stdio: 'inherit',
