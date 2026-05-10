@@ -45,13 +45,20 @@ export function App() {
     refreshUnits();
     refreshDaemon();
 
+    api.get<EventEntry[]>('/api/events?since=1h&limit=200')
+      .then(seed => setEvents(seed))
+      .catch(() => {});
+
     const disconnect = connectSse('/events', ['units', 'quota', 'external', 'event'], (event, data) => {
       try {
         const parsed = JSON.parse(data);
         if (event === 'units') setUnits(parsed.items);
         if (event === 'quota') setQuota({ session: parsed.session, week: parsed.week });
         if (event === 'external') setExternalActive(parsed.active);
-        if (event === 'event') setEvents(prev => [...prev.slice(-199), parsed]);
+        if (event === 'event') setEvents(prev => {
+          if (prev.some(e => e.timestamp === parsed.timestamp && e.name === parsed.name && e.orchestrationName === parsed.orchestrationName)) return prev;
+          return [...prev.slice(-199), parsed];
+        });
       } catch { /* ignore malformed */ }
     });
 
