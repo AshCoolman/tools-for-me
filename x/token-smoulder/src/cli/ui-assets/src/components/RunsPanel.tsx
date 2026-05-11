@@ -1,0 +1,384 @@
+import { useEffect, useState, useRef } from 'react';
+import { api } from '../lib/api';
+
+type Step = {
+  index: number;
+  prompt: string;
+  status: string;
+  error?: string;
+};
+
+type Decision = {
+  shouldRun: boolean;
+  reasons: string[];
+  failedReasons: string[];
+};
+
+type RunRecord = {
+  runId: string;
+  orchestrationName: string;
+  status: string;
+  riskClass: string;
+  startedAt: string;
+  endedAt?: string;
+  steps: Step[];
+  failureSignature?: string;
+  decision: Decision;
+};
+
+type EventEntry = {
+  name: string;
+  timestamp: string;
+  orchestrationName?: string;
+  runId?: string;
+};
+
+type Props = {
+  units: { name: string }[];
+  events: EventEntry[];
+  focusedUnit: string | null;
+};
+
+const RUN_EVENTS = new Set([
+  'run_started', 'prompt_started', 'prompt_completed',
+  'run_completed', 'run_failed', 'run_suppressed',
+]);
+
+function relativeTime(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime();
+  if (ms < 60_000) return 'now';
+  if (ms < 3_600_000) return `${Math.floor(ms / 60_000)}m`;
+  if (ms < 86_400_000) return `${Math.floor(ms / 3_600_000)}h`;
+  return `${Math.floor(ms / 86_400_000)}d`;
+}
+
+function formatDuration(startIso: string, endIso?: string): string {
+  if (!endIso) return '';
+  const ms = new Date(endIso).getTime() - new Date(startIso).getTime();
+  if (ms < 60_000) return `${(ms / 1000).toFixed(1)}s`;
+  return `${(ms / 60_000).toFixed(1)}m`;
+}
+
+function formatTime(iso: string): string {
+  try { return new Date(iso).toLocaleTimeString(); }
+  catch { return iso; }
+}
+
+function statusIcon(status: string): { char: string; cls: string } {
+  switch (status) {
+    case 'completed': return { char: '✓', cls: 'completed' };
+    case 'failed': return { char: '✗', cls: 'failed' };
+    case 'running': return { char: '●', cls: 'running' };
+    default: return { char: '○', cls: 'blocked' };
+  }
+}
+
+function stepStatusCls(status: string): string {
+  switch (status) {
+    case 'completed': return 'ok';
+    case 'failed': return 'fail';
+    case 'running': return 'active';
+    default: return 'pending';
+  }
+}
+
+function stepStatusChar(status: string): React.ReactNode {
+  switch (status) {
+    case 'completed': return '✓';
+    case 'failed': return '✗';
+    case 'running': return <span className="spinner">{'◡'}</span>;
+    case 'skipped': return '○';
+    default: return '○';
+  }
+}
+
+function friendlyGateName(raw: string): string {
+  const cleaned = raw
+    .replace(/^(pass|fail|gate)[:_-]\s*/i, '')
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/[_-]/g, ' ')
+    .trim()
+    .toLowerCase();
+  const colonIdx = cleaned.indexOf(':');
+  return colonIdx > 0 ? cleaned.slice(0, colonIdx).trim() : cleaned;
+}
+
+function Pipeline({ decision, steps }: { decision: Decision; steps: Step[] }) {
+  const passedCount = decision.reasons.length;
+  const failedCount = decision.failedReasons.length;
+  const totalGates = passedCount + failedCount;
+  const allPassed = failedCount === 0;
+
+  const threadWidth = allPassed
+    ? totalGates * 7 + 8
+    : passedCount * 7;
+
+  const threadClass = allPassed ? 'live' : 'blocked';
+  const stepsBlocked = !decision.shouldRun;
+
+  return (
+    <div className="pipeline">
+      <div
+        className={`thread ${threadClass}`}
+        style={{ width: `${threadWidth}px` }}
+      />
+      {Array.from({ length: passedCount }, (_, i) => (
+        <span key={`o${i}`} className="gate open" />
+      ))}
+      {Array.from({ length: failedCount }, (_, i) => (
+        <span key={`c${i}`} className="gate closed" />
+      ))}
+      <span className="pipe-gap" />
+      {steps.map((step, i) => {
+        let cls = 'pending';
+        if (stepsBlocked) {
+          cls = 'blocked';
+        } else {
+          switch (step.status) {
+            case 'completed': cls = 'done'; break;
+            case 'running': cls = 'active'; break;
+            case 'failed': cls = 'fail'; break;
+            default: cls = 'pending'; break;
+          }
+        }
+        return <span key={i} className={`step-seg ${cls}`} />;
+      })}
+    </div>
+  );
+}
+
+function RunDetail({ run }: { run: RunRecord }) {
+  const isFailed = run.status === 'failed';
+  const isRunning = run.status === 'running';
+  const detailClass = [
+    'run-detail',
+    isFailed && 'detail-failed',
+    isRunning && 'detail-running',
+  ].filter(Boolean).join(' ');
+
+  const totalSteps = run.steps.length;
+
+  return (
+    <div className={detailClass}>
+      <div className="detail-meta">
+        <span><span className="label">run</span> {run.runId.slice(0, 8)}</span>
+        <span><span className="label">risk</span> {run.riskClass}</span>
+        <span><span className="label">started</span> {formatTime(run.startedAt)}</span>
+        {run.endedAt && (
+          <span><span className="label">duration</span> {formatDuration(run.startedAt, run.endedAt)}</span>
+        )}
+      </div>
+      <div className="detail-section-label">steps</div>
+      {run.steps.map(step => (
+        <div key={step.index}>
+          <div className="step-row">
+            <span className="step-idx">{step.index + 1}/{totalSteps}</span>
+            <span className={`d-step-status ${stepStatusCls(step.status)}`}>
+              {stepStatusChar(step.status)}
+            </span>
+            <span className="step-prompt">"{step.prompt}"{step.status === 'skipped' ? ' — skipped' : ''}</span>
+          </div>
+          {step.error && <div className="step-error">{step.error}</div>}
+        </div>
+      ))}
+      <div className="detail-section-label">gates</div>
+      {run.decision.reasons.map((r, i) => (
+        <div key={`p${i}`} className="gate-row">
+          <span className="gate-name">{friendlyGateName(r)}</span>
+          <span className="ok">{'✓'}</span>
+        </div>
+      ))}
+      {run.decision.failedReasons.map((r, i) => (
+        <div key={`f${i}`} className="gate-row">
+          <span className="gate-name">{friendlyGateName(r)}</span>
+          <span className="err">{'✗'} {r}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RunRow({ run, pinned, expanded, onTogglePin, onToggleExpand }: {
+  run: RunRecord;
+  pinned: boolean;
+  expanded: boolean;
+  onTogglePin: (id: string, e: React.MouseEvent) => void;
+  onToggleExpand: (id: string) => void;
+}) {
+  const isFailed = run.status === 'failed';
+  const isRunning = run.status === 'running';
+
+  const rowClasses = [
+    'run-row',
+    isFailed && 'is-failed',
+    isRunning && 'is-running',
+    expanded && 'selected',
+  ].filter(Boolean).join(' ');
+
+  const icon = statusIcon(run.status);
+  const failedStep = run.steps.find(s => s.status === 'failed');
+  const errorText = failedStep?.error || run.failureSignature || '';
+  const gateError = !run.decision.shouldRun && run.decision.failedReasons.length > 0
+    ? run.decision.failedReasons[0]
+    : '';
+  const displayError = errorText || gateError;
+
+  return (
+    <>
+      <div className={rowClasses} onClick={() => onToggleExpand(run.runId)}>
+        <span className={`run-status ${icon.cls}`}>{icon.char}</span>
+        <span className="run-unit">{run.orchestrationName}</span>
+        <Pipeline decision={run.decision} steps={run.steps} />
+        <span className="run-risk">{run.riskClass}</span>
+        {displayError ? (
+          <span className="run-error">{displayError}</span>
+        ) : (
+          <span className="run-spacer" />
+        )}
+        <span className="run-time">{relativeTime(run.startedAt)}</span>
+        <span className="run-duration">{formatDuration(run.startedAt, run.endedAt)}</span>
+        <span
+          className={`run-pin${pinned ? ' pinned' : ''}`}
+          title={pinned ? 'Unpin' : 'Pin'}
+          onClick={(e) => onTogglePin(run.runId, e)}
+        >
+          {'📌'}
+        </span>
+      </div>
+      {expanded && <RunDetail run={run} />}
+    </>
+  );
+}
+
+export function RunsPanel({ units, events, focusedUnit }: Props) {
+  const [runs, setRuns] = useState<RunRecord[]>([]);
+  const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'all' | string>('all');
+  const prevEventsLen = useRef(0);
+  const fetchedUnits = useRef(new Set<string>());
+
+  const fetchUnitRuns = (name: string) =>
+    api.get<RunRecord[]>(`/api/units/${encodeURIComponent(name)}/runs`)
+      .catch(() => [] as RunRecord[]);
+
+  useEffect(() => {
+    const newUnits = units.filter(u => !fetchedUnits.current.has(u.name));
+    if (newUnits.length === 0) return;
+    for (const u of newUnits) fetchedUnits.current.add(u.name);
+
+    Promise.all(newUnits.map(u => fetchUnitRuns(u.name))).then(results => {
+      const newRuns = results.flat();
+      setRuns(prev => {
+        const merged = [...prev, ...newRuns];
+        merged.sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
+        return merged;
+      });
+    });
+  }, [units]);
+
+  useEffect(() => {
+    const newLen = events.length;
+    if (newLen <= prevEventsLen.current) {
+      prevEventsLen.current = newLen;
+      return;
+    }
+    const newEvents = events.slice(prevEventsLen.current);
+    prevEventsLen.current = newLen;
+
+    const toRefetch = new Set<string>();
+    for (const ev of newEvents) {
+      if (RUN_EVENTS.has(ev.name) && ev.orchestrationName) {
+        toRefetch.add(ev.orchestrationName);
+      }
+    }
+    for (const name of toRefetch) {
+      fetchUnitRuns(name).then(updated => {
+        setRuns(prev => {
+          const without = prev.filter(r => r.orchestrationName !== name);
+          const merged = [...without, ...updated];
+          merged.sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
+          return merged;
+        });
+      });
+    }
+  }, [events]);
+
+  useEffect(() => {
+    if (focusedUnit) setFilter(focusedUnit);
+  }, [focusedUnit]);
+
+  const togglePin = (runId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPinnedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(runId)) next.delete(runId);
+      else next.add(runId);
+      return next;
+    });
+  };
+
+  const toggleExpand = (runId: string) => {
+    setExpandedId(prev => prev === runId ? null : runId);
+  };
+
+  const filtered = filter === 'all'
+    ? runs
+    : runs.filter(r => r.orchestrationName === filter || pinnedIds.has(r.runId));
+
+  const pinned = filtered.filter(r => pinnedIds.has(r.runId));
+  const unpinned = filtered.filter(r => !pinnedIds.has(r.runId));
+  const unitNames = [...new Set(runs.map(r => r.orchestrationName))].sort();
+
+  return (
+    <>
+      <div className="runs-panel-header">
+        <span className="panel-title">RUNS</span>
+        <span className="sep">|</span>
+        <button
+          className={`filter${filter === 'all' ? ' active' : ''}`}
+          onClick={() => setFilter('all')}
+        >
+          all
+        </button>
+        {unitNames.map(name => (
+          <button
+            key={name}
+            className={`filter${filter === name ? ' active' : ''}`}
+            onClick={() => setFilter(name)}
+          >
+            {name}
+          </button>
+        ))}
+      </div>
+      <div className="runs-list">
+        {pinned.map(run => (
+          <RunRow
+            key={run.runId}
+            run={run}
+            pinned={true}
+            expanded={expandedId === run.runId}
+            onTogglePin={togglePin}
+            onToggleExpand={toggleExpand}
+          />
+        ))}
+        {pinned.length > 0 && unpinned.length > 0 && <div className="pin-divider" />}
+        {unpinned.map(run => (
+          <RunRow
+            key={run.runId}
+            run={run}
+            pinned={false}
+            expanded={expandedId === run.runId}
+            onTogglePin={togglePin}
+            onToggleExpand={toggleExpand}
+          />
+        ))}
+        {filtered.length === 0 && (
+          <div style={{ padding: '8px 12px', fontSize: '11px', color: '#555' }}>
+            No runs
+          </div>
+        )}
+      </div>
+    </>
+  );
+}

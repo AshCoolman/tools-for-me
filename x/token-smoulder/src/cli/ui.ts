@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { Router } from './ui-server/router.js';
 import { readJson, json } from './ui-server/router.js';
 import { SseHub } from './ui-server/sse.js';
-import { getUnits, getUnitState, postUnitRun, postUnitUnlock, postUnitClearSuppression, getSuppressions, getUnitCheck } from './ui-server/handlers/units.js';
+import { getUnits, getUnitState, getUnitRuns, postUnitRun, postUnitUnlock, postUnitClearSuppression, getSuppressions, getUnitCheck } from './ui-server/handlers/units.js';
 import { getQuota, getExternal } from './ui-server/handlers/quota.js';
 import { getDaemonStatus, postDaemonStart, postDaemonStop } from './ui-server/handlers/daemon.js';
 import { getPrefs, putPrefs } from './ui-server/handlers/prefs.js';
@@ -68,6 +68,7 @@ export async function uiCommand(opts: UiOptions): Promise<number> {
 
   router.on('GET', '/api/units', getUnits);
   router.on('GET', '/api/units/:name/state', getUnitState);
+  router.on('GET', '/api/units/:name/runs', getUnitRuns);
   router.on('GET', '/api/units/:name/check', getUnitCheck);
   router.on('POST', '/api/units/:name/run', postUnitRun);
   router.on('POST', '/api/units/:name/unlock', postUnitUnlock);

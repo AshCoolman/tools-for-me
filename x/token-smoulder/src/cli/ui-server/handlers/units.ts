@@ -7,6 +7,8 @@ import { unlockInner } from '../../unlock.js';
 import { clearSuppressionInner } from '../../clear-suppression.js';
 import { suppressionsInner } from '../../suppressions.js';
 import { checkDecision } from '../../check.js';
+import { FsStorage } from '../../../adapters/storage/fs.js';
+import { findStateDir } from '../../orchestration.js';
 
 export const getUnits: RouteHandler = async (_req, res) => {
   const result = await listInner();
@@ -81,6 +83,14 @@ export const postUnitClearSuppression: RouteHandler = async (req, res, params) =
 export const getSuppressions: RouteHandler = async (_req, res) => {
   const records = await suppressionsInner();
   json(res, 200, records);
+};
+
+export const getUnitRuns: RouteHandler = async (_req, res, params) => {
+  const name = params['name'] ?? '';
+  const stateDir = await findStateDir();
+  const storage = new FsStorage(stateDir);
+  const runs = await storage.listRuns(name);
+  json(res, 200, runs);
 };
 
 export const getUnitCheck: RouteHandler = async (_req, res, params) => {

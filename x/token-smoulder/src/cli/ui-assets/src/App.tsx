@@ -1,23 +1,60 @@
 import './app.css';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { connectSse } from './lib/sse';
 import { api } from './lib/api';
 import { ExternalDot } from './components/ExternalDot';
 import { Sidebar, statusColor, statusLabel } from './components/Sidebar';
 import { AddTab } from './components/AddTab';
-import { EventTail } from './components/EventTail';
 import { WorkEditor } from './components/WorkEditor';
-import { RunSummary } from './components/RunSummary';
-import { GatesPanel, useGatesBadge } from './components/GatesPanel';
+import { RunsPanel } from './components/RunsPanel';
 
 const ADD_TAB = '__add__';
+const LS_SIDEBAR = 'ts:sidebar-width';
+const LS_PANEL = 'ts:panel-height';
+
+function readLS(key: string, fallback: number): number {
+  try { const v = localStorage.getItem(key); return v ? Number(v) : fallback; }
+  catch { return fallback; }
+}
 
 type UnitItem = { name: string; riskClass: string; latestStatus: string | null };
 type QuotaSnap = { session: number; week: number };
 type DaemonStatus = { running: boolean; pid: number | null };
 type EventEntry = { name: string; timestamp: string; orchestrationName?: string; runId?: string; payload?: Record<string, unknown> };
 type SuppressionRecord = { key: string; orchestrationName: string; reason: string };
-type PanelTab = 'run' | 'events' | 'gates';
+function useResize(axis: 'x' | 'y', storageKey: string, fallback: number, min: number, max: number) {
+  const [size, setSize] = useState(() => readLS(storageKey, fallback));
+  const sizeRef = useRef(size);
+  useEffect(() => { sizeRef.current = size; }, [size]);
+
+  useEffect(() => {
+    try { localStorage.setItem(storageKey, String(size)); } catch {}
+  }, [size, storageKey]);
+
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    const startPos = axis === 'x' ? e.clientX : e.clientY;
+    const startSize = sizeRef.current;
+    const handle = e.currentTarget as HTMLElement;
+    handle.classList.add('active');
+
+    const onMove = (ev: MouseEvent) => {
+      const delta = axis === 'x'
+        ? ev.clientX - startPos
+        : startPos - ev.clientY;
+      setSize(Math.min(max, Math.max(min, startSize + delta)));
+    };
+    const onUp = () => {
+      handle.classList.remove('active');
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  }, [axis, min, max]);
+
+  return { size, onMouseDown };
+}
 
 export function App() {
   const [units, setUnits] = useState<UnitItem[]>([]);
@@ -29,8 +66,10 @@ export function App() {
 
   const [openTabs, setOpenTabs] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<string | null>(null);
-  const [panelTab, setPanelTab] = useState<PanelTab>('run');
   const [actionBusy, setActionBusy] = useState<string | null>(null);
+
+  const sidebar = useResize('x', LS_SIDEBAR, 210, 140, 400);
+  const panel = useResize('y', LS_PANEL, 200, 80, 500);
 
   const refreshUnits = useCallback(async () => {
     try {
@@ -119,7 +158,6 @@ export function App() {
 
   const activeUnit = units.find(u => u.name === activeTab);
   const isAddTab = activeTab === ADD_TAB;
-  const gatesBadge = useGatesBadge(activeTab && !isAddTab ? activeTab : null);
 
   return (
     <div className="frame">
@@ -153,7 +191,9 @@ export function App() {
           daemon={daemon}
           onRefreshDaemon={refreshDaemon}
           quota={quota}
+          width={sidebar.size}
         />
+        <div className="resize-h" onMouseDown={sidebar.onMouseDown} />
 
         <div className="main">
           <div className="tabbar">
@@ -204,44 +244,14 @@ export function App() {
             )}
           </div>
 
-          <div className="panel">
-            <div className="panel-tabs">
-              <div
-                className={`panel-tab${panelTab === 'run' ? ' active' : ''}`}
-                onClick={() => setPanelTab('run')}
-              >
-                RUN
-                {activeUnit && (
-                  <span className={activeUnit.latestStatus === 'failed' ? 'err' : activeUnit.latestStatus === 'completed' ? 'ok' : 'dim'}>
-                    {statusLabel(activeUnit.latestStatus)}
-                  </span>
-                )}
-              </div>
-              <div
-                className={`panel-tab${panelTab === 'events' ? ' active' : ''}`}
-                onClick={() => setPanelTab('events')}
-              >
-                EVENTS
-              </div>
-              <div
-                className={`panel-tab${panelTab === 'gates' ? ' active' : ''}`}
-                onClick={() => setPanelTab('gates')}
-              >
-                GATES
-                {gatesBadge && <span className="ok">{gatesBadge}</span>}
-              </div>
-            </div>
-            <div className="panel-body">
-              {!activeTab || isAddTab ? (
-                <span className="dim">No work item selected</span>
-              ) : panelTab === 'run' ? (
-                <RunSummary unitName={activeTab} />
-              ) : panelTab === 'events' ? (
-                <EventTail events={events} filterUnit={activeTab} />
-              ) : (
-                <GatesPanel unitName={activeTab} />
-              )}
-            </div>
+          <div className="resize-v" onMouseDown={panel.onMouseDown} />
+
+          <div className="panel" style={{ height: panel.size }}>
+            <RunsPanel
+              units={units}
+              events={events}
+              focusedUnit={activeTab && !isAddTab ? activeTab : null}
+            />
           </div>
         </div>
       </div>

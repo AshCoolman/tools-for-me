@@ -17,6 +17,7 @@ export type Storage = {
   saveRun(record: RunRecord): Promise<void>;
   loadLatestRun(orchestrationName: string): Promise<RunRecord | null>;
   loadRun(orchestrationName: string, runId: string): Promise<RunRecord | null>;
+  listRuns(orchestrationName: string): Promise<RunRecord[]>;
 
   acquireLock(scope: LockScope, owner: 'scheduler'): Promise<LockFile>;
   releaseLock(scope: LockScope): Promise<void>;

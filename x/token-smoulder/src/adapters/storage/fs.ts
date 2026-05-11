@@ -102,6 +102,25 @@ export class FsStorage implements Storage {
     return readJson<RunRecord>(join(this.runsDir(orchestrationName), `${runId}.json`));
   }
 
+  async listRuns(orchestrationName: string): Promise<RunRecord[]> {
+    const dir = this.runsDir(orchestrationName);
+    let entries: string[];
+    try {
+      entries = await readdir(dir);
+    } catch (e: unknown) {
+      if ((e as NodeJS.ErrnoException).code === 'ENOENT') return [];
+      throw e;
+    }
+    const out: RunRecord[] = [];
+    for (const name of entries) {
+      if (!name.endsWith('.json') || name === 'latest.json') continue;
+      const rec = await readJson<RunRecord>(join(dir, name));
+      if (rec !== null) out.push(rec);
+    }
+    out.sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
+    return out;
+  }
+
   async acquireLock(scope: LockScope, owner: 'scheduler'): Promise<LockFile> {
     const p = lockPath(this.root, scope);
     await ensureDir(dirname(p));
