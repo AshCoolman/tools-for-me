@@ -1,0 +1,44 @@
+#!/bin/bash
+# usage-statusline — Claude Code statusline wrapper.
+# Forwards stdin to the upstream rate-limit statusline, then appends a
+# context-window sparkline (3 bars covering the last ~60 minutes).
+#
+# Usage:
+#   Configured as statusLine.command in ~/.claude/settings.json
+set -euo pipefail
+
+SCRIPT_DIR="$(CDPATH="" cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+UPSTREAM="${CLAUDE_STATUSLINE_UPSTREAM:-$SCRIPT_DIR/../../claude-token-usage-fragile/scripts/usage-statusline}"
+
+input="$(cat)"
+
+rate_output="$(printf '%s' "$input" | "$UPSTREAM" "$@" 2>/dev/null || true)"
+
+ctx_tokens="$(printf '%s' "$input" | jq -r '.context_window.total_input_tokens // empty')"
+
+CTX_HISTORY="${TMPDIR:-/tmp}/claude-ctx-sparkline"
+ctx_spark=""
+if [ -n "$ctx_tokens" ]; then
+  bucket=$(( $(date +%s) / 1200 ))
+  {
+    [ -f "$CTX_HISTORY" ] && grep -v "^${bucket}:" "$CTX_HISTORY" || true
+    printf '%d:%d\n' "$bucket" "$ctx_tokens"
+  } | tail -3 > "${CTX_HISTORY}.tmp" && mv "${CTX_HISTORY}.tmp" "$CTX_HISTORY"
+
+  while IFS=: read -r _ t; do
+    [ -z "$t" ] && continue
+    if   [ "$t" -gt 300000 ]; then ctx_spark+='\033[95m█\033[0m'
+    elif [ "$t" -gt 225000 ]; then ctx_spark+='\033[91m█\033[0m'
+    elif [ "$t" -gt 150000 ]; then ctx_spark+='\033[91m▇\033[0m'
+    elif [ "$t" -gt 116667 ]; then ctx_spark+='\033[33m▆\033[0m'
+    elif [ "$t" -gt 83333 ];  then ctx_spark+='\033[33m▅\033[0m'
+    elif [ "$t" -gt 50000 ];  then ctx_spark+='\033[33m▄\033[0m'
+    elif [ "$t" -gt 33333 ];  then ctx_spark+='\033[32m▃\033[0m'
+    elif [ "$t" -gt 16667 ];  then ctx_spark+='\033[32m▂\033[0m'
+    else                            ctx_spark+='\033[32m▁\033[0m'
+    fi
+  done < "$CTX_HISTORY"
+fi
+
+printf '%s' "$rate_output"
+[ -n "$ctx_spark" ] && printf ' %b' "$ctx_spark"

@@ -1,0 +1,19 @@
+{
+  "name": "@ashcoolman/claude-context-sparkline",
+  "version": "1.0.0",
+  "description": "Claude Code statusline wrapper — adds a 3-bar context-window sparkline (▁▂▃▄▅▆▇█) colored by token usage thresholds.",
+  "license": "MIT",
+  "author": "Ash Coolman <banquet.poll-4g@icloud.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AshCoolman/tools-for-me.git",
+    "directory": "x/claude-context-sparkline"
+  },
+  "homepage": "https://github.com/AshCoolman/tools-for-me/tree/main/x/claude-context-sparkline",
+  "bugs": "https://github.com/AshCoolman/tools-for-me/issues",
+  "keywords": ["claude", "claude-code", "statusline", "context-window", "sparkline", "bash"],
+  "private": true,
+  "scripts": {
+    "test": "echo 'no tests yet'"
+  }
+}
