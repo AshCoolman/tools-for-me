@@ -1,7 +1,7 @@
 # Spec: uh
 
 ## Status
-- **Phase:** tasks
+- **Phase:** done
 - **Owner:** Ash Coolman
 - **Created:** 2026-05-08
 - **Last advanced:** 2026-05-08 by `/mini-speckit-next`
@@ -269,6 +269,10 @@ Clean exit, no TUI, exit code 1.
 ## Implement
 - Task 1 — `f20c0a5`
 - Task 2 — `fd3480c`
+- Task 3 — `d69f38d`
+- Task 4 — `8398a75`
+- Task 5 — `22bcabc`
+- Task 6 — `5d3f4c1`
 
 ## Notes / open questions
 - **Decided:** lives at `tools/uh/` in this monorepo. Mirrored to a standalone read-only repo via subtree push.
