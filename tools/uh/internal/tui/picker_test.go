@@ -1,15 +1,14 @@
 package tui
 
 import (
+	"strings"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/AshCoolman/uh/internal/parser"
 )
 
-// testInvocations simulates "docker run" history — only one subcommand
-// so the TUI skips straight to flags phase.
-func testInvocations() []parser.Invocation {
+func testDockerRunInvocations() []parser.Invocation {
 	cmds := []string{
 		"docker run --rm -it -v $(pwd):/app node:18",
 		"docker run --rm -it -v $(pwd):/app postgres:15",
@@ -18,6 +17,24 @@ func testInvocations() []parser.Invocation {
 		"docker run --rm -p 3000:3000 -p 8080:80 node:18",
 	}
 	base := []string{"docker", "run"}
+	var invs []parser.Invocation
+	for _, c := range cmds {
+		invs = append(invs, parser.Parse(c, base))
+	}
+	return invs
+}
+
+func testGitInvocations() []parser.Invocation {
+	cmds := []string{
+		"git commit -m 'init'",
+		"git commit -m 'update'",
+		"git commit --amend",
+		"git push origin main",
+		"git push --force",
+		"git log --oneline",
+		"git log --oneline -5",
+	}
+	base := []string{"git"}
 	var invs []parser.Invocation
 	for _, c := range cmds {
 		invs = append(invs, parser.Parse(c, base))
@@ -41,139 +58,107 @@ func sendSpecial(m tea.Model, key tea.KeyType) tea.Model {
 	return m
 }
 
-func TestToggleBoolFlag(t *testing.T) {
-	m := New([]string{"docker", "run"}, testInvocations())
-
-	// first flag should be --rm (highest count)
-	if m.flags[0].rf.Name != "--rm" {
-		t.Fatalf("first flag = %q, want --rm", m.flags[0].rf.Name)
-	}
-
-	m2 := send(m, "x").(Model)
-	if !m2.flags[0].selected {
-		t.Error("--rm should be selected after x")
-	}
-	cmd := m2.buildCmd()
-	if cmd != "docker run --rm" {
-		t.Errorf("cmd = %q", cmd)
-	}
-
-	m3 := send(m2, "x").(Model)
-	if m3.flags[0].selected {
-		t.Error("--rm should be deselected after second x")
+func TestInitialCmdHasBase(t *testing.T) {
+	m := New([]string{"docker", "run"}, testDockerRunInvocations())
+	if !strings.HasPrefix(m.cmd, "docker run ") {
+		t.Errorf("cmd = %q, want prefix 'docker run '", m.cmd)
 	}
 }
 
-func TestStepIntoValueFlag(t *testing.T) {
-	m := New([]string{"docker", "run"}, testInvocations())
+func TestTypingAppendsToCmd(t *testing.T) {
+	m := New([]string{"docker", "run"}, testDockerRunInvocations())
+	m2 := send(m, "-", "-", "r", "m").(Model)
+	if !strings.HasSuffix(m2.cmd, "--rm") {
+		t.Errorf("cmd = %q, want suffix '--rm'", m2.cmd)
+	}
+}
 
-	// find -v flag index
-	vi := -1
-	for i, f := range m.flags {
-		if f.rf.Name == "-v" {
-			vi = i
-			break
+func TestSpaceTypesSpace(t *testing.T) {
+	m := New([]string{"docker", "run"}, testDockerRunInvocations())
+	m2 := send(m, "a").(Model)
+	m3 := sendSpecial(m2, tea.KeySpace).(Model)
+	m4 := send(m3, "b").(Model)
+	if !strings.HasSuffix(m4.cmd, "a b") {
+		t.Errorf("cmd = %q, want suffix 'a b'", m4.cmd)
+	}
+}
+
+func TestTabCompletesBoolFlag(t *testing.T) {
+	m := New([]string{"docker", "run"}, testDockerRunInvocations())
+	// type partial to filter to --rm
+	m2 := send(m, "-", "-", "r", "m").(Model)
+	m3 := sendSpecial(m2, tea.KeyTab).(Model)
+	if !strings.Contains(m3.cmd, "--rm ") {
+		t.Errorf("cmd = %q, want '--rm ' after tab", m3.cmd)
+	}
+}
+
+func TestEnterCompletesBoolFlag(t *testing.T) {
+	m := New([]string{"docker", "run"}, testDockerRunInvocations())
+	m2 := send(m, "-", "-", "r", "m").(Model)
+	m3 := sendSpecial(m2, tea.KeyEnter).(Model)
+	if !strings.Contains(m3.cmd, "--rm ") {
+		t.Errorf("cmd = %q, want '--rm ' after enter", m3.cmd)
+	}
+}
+
+func TestUsedFlagsExcluded(t *testing.T) {
+	m := New([]string{"docker", "run"}, testDockerRunInvocations())
+	// complete --rm
+	m2 := send(m, "-", "-", "r", "m").(Model)
+	m3 := sendSpecial(m2, tea.KeyTab).(Model)
+
+	sugg := m3.suggestions()
+	for _, s := range sugg {
+		if s.Name == "--rm" {
+			t.Error("--rm should be excluded from suggestions after use")
 		}
 	}
-	if vi < 0 {
-		t.Fatal("-v not found")
-	}
+}
 
-	// move cursor to -v
-	cur := m
-	for i := 0; i < vi; i++ {
-		cur = send(cur, "j").(Model)
-	}
-
-	// step in
-	cur = send(cur, "enter").(Model)
-	if !cur.inSub {
-		t.Fatal("should be in sub")
-	}
-
-	// select first value
-	cur = send(cur, "enter").(Model)
-	if cur.inSub {
-		t.Error("should have stepped out")
-	}
-	if !cur.flags[vi].selected {
-		t.Error("-v should be selected")
+func TestValueFlagShowsValues(t *testing.T) {
+	m := New([]string{"docker", "run"}, testDockerRunInvocations())
+	// filter to -v
+	m2 := send(m, "-", "v").(Model)
+	m3 := sendSpecial(m2, tea.KeyTab).(Model)
+	if m3.showValues < 0 {
+		t.Error("should be in value picker after tab on value flag")
 	}
 }
 
-func TestEscDiscardsSubSelection(t *testing.T) {
-	m := New([]string{"docker", "run"}, testInvocations())
-
-	vi := -1
-	for i, f := range m.flags {
-		if f.rf.Name == "-v" {
-			vi = i
-			break
-		}
+func TestValuePickerSelectsValue(t *testing.T) {
+	m := New([]string{"docker", "run"}, testDockerRunInvocations())
+	m2 := send(m, "-", "v").(Model)
+	m3 := sendSpecial(m2, tea.KeyTab).(Model)
+	if m3.showValues < 0 {
+		t.Fatal("should be in value picker")
 	}
-
-	cur := m
-	for i := 0; i < vi; i++ {
-		cur = send(cur, "j").(Model)
+	m4 := sendSpecial(m3, tea.KeyEnter).(Model)
+	if m4.showValues >= 0 {
+		t.Error("should have left value picker")
 	}
-
-	cur = send(cur, "enter").(Model)
-	cur = sendSpecial(cur, tea.KeyEsc).(Model)
-
-	if cur.inSub {
-		t.Error("should have stepped out")
-	}
-	if cur.flags[vi].selected {
-		t.Error("-v should not be selected after esc")
+	// cmd should contain -v and a value
+	if !strings.Contains(m4.cmd, "-v ") {
+		t.Errorf("cmd = %q, want '-v' with value", m4.cmd)
 	}
 }
 
-func TestRepeatableToggle(t *testing.T) {
-	m := New([]string{"docker", "run"}, testInvocations())
-
-	pi := -1
-	for i, f := range m.flags {
-		if f.rf.Name == "-p" {
-			pi = i
-			break
-		}
+func TestValuePickerEscRemovesFlag(t *testing.T) {
+	m := New([]string{"docker", "run"}, testDockerRunInvocations())
+	m2 := send(m, "-", "v").(Model)
+	m3 := sendSpecial(m2, tea.KeyTab).(Model)
+	m4 := sendSpecial(m3, tea.KeyEsc).(Model)
+	if m4.showValues >= 0 {
+		t.Error("should have left value picker")
 	}
-	if pi < 0 {
-		t.Fatal("-p not found")
-	}
-
-	cur := m
-	for i := 0; i < pi; i++ {
-		cur = send(cur, "j").(Model)
-	}
-
-	cur = send(cur, "enter").(Model)
-	if !cur.inSub {
-		t.Fatal("should be in sub")
-	}
-
-	// toggle first value
-	cur = send(cur, " ").(Model)
-	if len(cur.flags[pi].chosenMulti) != 1 {
-		t.Fatalf("chosenMulti = %v", cur.flags[pi].chosenMulti)
-	}
-
-	// toggle second
-	cur = send(cur, "j", " ").(Model)
-	if len(cur.flags[pi].chosenMulti) != 2 {
-		t.Fatalf("chosenMulti = %v", cur.flags[pi].chosenMulti)
-	}
-
-	// enter to keep
-	cur = send(cur, "enter").(Model)
-	if cur.inSub {
-		t.Error("should have stepped out")
+	if strings.Contains(m4.cmd, "-v") {
+		t.Errorf("cmd = %q, -v should be removed after esc in value picker", m4.cmd)
 	}
 }
 
-func TestExecuteAction(t *testing.T) {
-	m := New([]string{"docker", "run"}, testInvocations())
-	m2 := send(m, "x", "e").(Model)
+func TestCtrlXProducesExecute(t *testing.T) {
+	m := New([]string{"docker", "run"}, testDockerRunInvocations())
+	m2 := sendSpecial(m, tea.KeyCtrlX).(Model)
 	if !m2.done {
 		t.Error("should be done")
 	}
@@ -182,139 +167,102 @@ func TestExecuteAction(t *testing.T) {
 	}
 }
 
-func TestCopyAction(t *testing.T) {
-	m := New([]string{"docker", "run"}, testInvocations())
-	m2 := send(m, "x", "c").(Model)
+func TestCtrlYProducesCopy(t *testing.T) {
+	m := New([]string{"docker", "run"}, testDockerRunInvocations())
+	m2 := sendSpecial(m, tea.KeyCtrlY).(Model)
+	if !m2.done {
+		t.Error("should be done")
+	}
 	if m2.result.Action != ActionCopy {
 		t.Errorf("action = %v, want Copy", m2.result.Action)
 	}
 }
 
-func TestEmptyInvocations(t *testing.T) {
-	m := New([]string{"docker"}, nil)
-	cmd := m.buildCmd()
-	if cmd != "docker" {
-		t.Errorf("cmd = %q", cmd)
+func TestEscQuits(t *testing.T) {
+	m := New([]string{"docker", "run"}, testDockerRunInvocations())
+	m2 := sendSpecial(m, tea.KeyEsc).(Model)
+	if !m2.done {
+		t.Error("should be done")
+	}
+	if m2.result.Action != ActionQuit {
+		t.Errorf("action = %v, want Quit", m2.result.Action)
 	}
 }
 
-// testSubcmdInvocations simulates "git" history with multiple subcommands
-func testSubcmdInvocations() []parser.Invocation {
-	cmds := []string{
-		"git commit -m 'init'",
-		"git commit -m 'update'",
-		"git commit --amend",
-		"git push origin main",
-		"git push --force",
-		"git log --oneline",
-		"git log --oneline -5",
+func TestBackspaceRemovesChar(t *testing.T) {
+	m := New([]string{"docker", "run"}, testDockerRunInvocations())
+	m2 := send(m, "a", "b", "c").(Model)
+	m3 := sendSpecial(m2, tea.KeyBackspace).(Model)
+	if strings.HasSuffix(m3.cmd, "abc") {
+		t.Errorf("cmd = %q, backspace should have removed last char", m3.cmd)
 	}
-	base := []string{"git"}
-	var invs []parser.Invocation
-	for _, c := range cmds {
-		invs = append(invs, parser.Parse(c, base))
+	if !strings.HasSuffix(m3.cmd, "ab") {
+		t.Errorf("cmd = %q, want suffix 'ab'", m3.cmd)
 	}
-	return invs
 }
 
-func TestSubcmdPhase(t *testing.T) {
-	m := New([]string{"git"}, testSubcmdInvocations())
+func TestArrowsNavigateSuggestions(t *testing.T) {
+	m := New([]string{"docker", "run"}, testDockerRunInvocations())
+	if m.cursor != 0 {
+		t.Fatalf("initial cursor = %d", m.cursor)
+	}
+	m2 := sendSpecial(m, tea.KeyDown).(Model)
+	if m2.cursor != 1 {
+		t.Errorf("cursor after down = %d, want 1", m2.cursor)
+	}
+	m3 := sendSpecial(m2, tea.KeyUp).(Model)
+	if m3.cursor != 0 {
+		t.Errorf("cursor after up = %d, want 0", m3.cursor)
+	}
+}
 
+func TestSubcmdPhaseDetected(t *testing.T) {
+	m := New([]string{"git"}, testGitInvocations())
 	if m.phase != phaseSubcmd {
 		t.Fatal("should start in subcmd phase")
 	}
 	if len(m.subcmds) != 3 {
 		t.Fatalf("subcmds = %d, want 3", len(m.subcmds))
 	}
-	// commit should be first (3 invocations)
-	if m.subcmds[0].Text != "commit" {
-		t.Errorf("first subcmd = %q, want commit", m.subcmds[0].Text)
-	}
 }
 
 func TestSubcmdDrillDown(t *testing.T) {
-	m := New([]string{"git"}, testSubcmdInvocations())
-
-	// select "commit" (first item, enter)
-	m2 := send(m, "enter").(Model)
-
-	if m2.phase != phaseFlags {
-		t.Fatal("should be in flags phase after drill-down")
+	m := New([]string{"git"}, testGitInvocations())
+	m2 := sendSpecial(m, tea.KeyEnter).(Model)
+	if m2.phase != phaseInput {
+		t.Fatal("should be in input phase after drill-down")
 	}
-
-	// baseTokens should now include "commit"
-	if len(m2.baseTokens) != 2 || m2.baseTokens[1] != "commit" {
-		t.Errorf("baseTokens = %v", m2.baseTokens)
-	}
-
-	// should have flags from git commit only (-m, --amend)
-	hasM := false
-	hasOneline := false
-	for _, f := range m2.flags {
-		if f.rf.Name == "-m" {
-			hasM = true
-		}
-		if f.rf.Name == "--oneline" {
-			hasOneline = true
-		}
-	}
-	if !hasM {
-		t.Error("-m should be present for git commit")
-	}
-	if hasOneline {
-		t.Error("--oneline should NOT be present (that's git log)")
+	if !strings.HasPrefix(m2.cmd, "git commit ") {
+		t.Errorf("cmd = %q, want prefix 'git commit '", m2.cmd)
 	}
 }
 
-func TestSubcmdBackNavigation(t *testing.T) {
-	m := New([]string{"git"}, testSubcmdInvocations())
-
-	// drill into "commit"
-	m2 := send(m, "enter").(Model)
-	if m2.phase != phaseFlags {
-		t.Fatal("should be in flags phase")
-	}
-	if len(m2.baseTokens) != 2 {
-		t.Fatalf("baseTokens = %v", m2.baseTokens)
-	}
-
-	// press esc to go back
-	m3 := sendSpecial(m2, tea.KeyEsc).(Model)
-	if m3.phase != phaseSubcmd {
-		t.Fatal("should be back in subcmd phase")
-	}
-	if len(m3.baseTokens) != 1 || m3.baseTokens[0] != "git" {
-		t.Errorf("baseTokens should be restored to [git], got %v", m3.baseTokens)
-	}
-	if len(m3.subcmds) != 3 {
-		t.Errorf("subcmds should still have 3, got %d", len(m3.subcmds))
-	}
-}
-
-func TestBuildFlagViewResetsTyping(t *testing.T) {
-	m := New([]string{"docker", "run"}, testInvocations())
-	m.typing = true
-	m.input = "foo"
-	m.buildFlagView(testInvocations())
-	if m.typing {
-		t.Error("typing should be reset")
-	}
-	if m.input != "" {
-		t.Error("input should be reset")
+func TestSubcmdEscQuits(t *testing.T) {
+	m := New([]string{"git"}, testGitInvocations())
+	m2 := sendSpecial(m, tea.KeyEsc).(Model)
+	if !m2.done {
+		t.Error("esc in subcmd phase should quit")
 	}
 }
 
 func TestSingleSubcmdSkipsPhase(t *testing.T) {
-	m := New([]string{"docker", "run"}, testInvocations())
-	if m.phase != phaseFlags {
-		t.Error("should skip subcmd phase when only one subcommand")
+	m := New([]string{"docker", "run"}, testDockerRunInvocations())
+	if m.phase != phaseInput {
+		t.Error("should skip subcmd phase when single subcommand")
 	}
 }
 
-func TestEscDoesNothingWithoutDrillDown(t *testing.T) {
-	m := New([]string{"docker", "run"}, testInvocations())
-	m2 := sendSpecial(m, tea.KeyEsc).(Model)
-	if m2.phase != phaseFlags {
-		t.Error("esc should do nothing when there was no subcmd phase")
+func TestEmptyInvocations(t *testing.T) {
+	m := New([]string{"docker"}, nil)
+	if strings.TrimSpace(m.cmd) != "docker" {
+		t.Errorf("cmd = %q", m.cmd)
+	}
+}
+
+func TestResultCommandTrimmed(t *testing.T) {
+	m := New([]string{"docker", "run"}, testDockerRunInvocations())
+	m2 := sendSpecial(m, tea.KeyCtrlX).(Model)
+	if strings.HasSuffix(m2.result.Command, " ") {
+		t.Errorf("result command has trailing space: %q", m2.result.Command)
 	}
 }
