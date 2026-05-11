@@ -1,7 +1,7 @@
 BINARY := uh
 GO     := go
 
-.PHONY: all build test clean setup
+.PHONY: all build test clean setup install uninstall
 
 all: build
 
@@ -15,6 +15,13 @@ build:
 
 test:
 	$(GO) test ./...
+
+install: build
+	mkdir -p $(HOME)/bin
+	install -m 755 $(BINARY) $(HOME)/bin/$(BINARY)
+
+uninstall:
+	rm -f $(HOME)/bin/$(BINARY)
 
 clean:
 	rm -f $(BINARY)

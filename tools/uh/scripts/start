@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+set -euo pipefail
+umask 077
+
+UH_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+
+case "${1:-}" in
+  -h|--help)
+    cat <<'USAGE'
+tools/uh/scripts/start — run uh dev commands
+
+Usage:
+  ./tools/uh/scripts/start           interactive menu (TTY required)
+  ./tools/uh/scripts/start demo      run uh TUI demo
+  ./tools/uh/scripts/start build     build the uh binary
+  ./tools/uh/scripts/start test      run tests
+  ./tools/uh/scripts/start setup     verify mise + Go
+  ./tools/uh/scripts/start install   build and install to ~/bin
+USAGE
+    exit 0
+    ;;
+esac
+
+command -v mise >/dev/null 2>&1 || {
+  printf 'FAIL: mise not found — install with: curl https://mise.run | sh\n' >&2
+  exit 1
+}
+
+eval "$(mise activate bash 2>/dev/null)" || true
+cd "$UH_DIR"
+mise trust --yes >/dev/null 2>&1 || true
+mise install --yes >/dev/null 2>&1
+
+command -v go >/dev/null 2>&1 || {
+  printf 'FAIL: go not on PATH after mise install — check .mise.toml\n' >&2
+  exit 1
+}
+
+case "${1:-}" in
+  setup)
+    printf 'PASS: mise + go %s\n' "$(go version | awk '{print $3}')"
+    ;;
+  build)
+    go build -o uh .
+    printf 'PASS: built %s/uh\n' "$UH_DIR"
+    ;;
+  test)
+    go test ./...
+    ;;
+  demo)
+    exec go run ./cmd/demo/
+    ;;
+  install)
+    go build -o uh .
+    mkdir -p "$HOME/bin"
+    install -m 755 uh "$HOME/bin/uh"
+    rm -f uh
+    printf 'PASS: installed %s/bin/uh\n' "$HOME"
+    ;;
+  "")
+    [ -t 0 ] || { printf 'FAIL: no command — requires TTY for menu\n' >&2; exit 1; }
+    printf 'uh dev commands:\n'
+    select cmd in demo build test setup install quit; do
+      case "$cmd" in
+        demo)    exec go run ./cmd/demo/ ;;
+        build)   go build -o uh . && printf 'PASS: built %s/uh\n' "$UH_DIR" ;;
+        test)    go test ./... ;;
+        setup)   printf 'PASS: mise + go %s\n' "$(go version | awk '{print $3}')" ;;
+        install) go build -o uh . && mkdir -p "$HOME/bin" && install -m 755 uh "$HOME/bin/uh" && rm -f uh && printf 'PASS: installed %s/bin/uh\n' "$HOME" ;;
+        quit)    exit 0 ;;
+        *)       printf 'FAIL: invalid selection\n' >&2 ;;
+      esac
+      break
+    done
+    ;;
+  *)
+    printf 'FAIL: unknown command — %s\n' "$1" >&2
+    exit 1
+    ;;
+esac
