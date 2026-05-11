@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"reflect"
 	"strings"
 
 	"github.com/AshCoolman/uh/internal/history"
@@ -21,20 +22,24 @@ type opts struct {
 	baseTokens  []string
 }
 
-// parseArgs extracts uh's own flags from anywhere in argv,
-// leaving the rest as base tokens. This lets users write
-// `uh git --dry-run` instead of `uh --dry-run git`.
+// parseArgs extracts uh's own flags from the FRONT of argv only.
+// Once the first non-flag arg appears, everything after it
+// (including flags) becomes base tokens.
+//   uh --dry-run git --oneline  → dryRun=true, base=["git","--oneline"]
+//   uh git --dry-run            → dryRun=false, base=["git","--dry-run"]
 func parseArgs(args []string) opts {
 	var o opts
 	var rest []string
-
-	known := map[string]bool{
-		"--dry-run": true, "--version": true,
-		"--history-file": true, "-h": true, "--help": true,
-	}
+	seenBase := false
 
 	for i := 0; i < len(args); i++ {
 		a := args[i]
+
+		if seenBase {
+			rest = append(rest, a)
+			continue
+		}
+
 		switch {
 		case a == "--dry-run":
 			o.dryRun = true
@@ -46,9 +51,8 @@ func parseArgs(args []string) opts {
 		case a == "-h" || a == "--help":
 			usage()
 			os.Exit(0)
-		case strings.HasPrefix(a, "-") && known[a]:
-			// already handled above
 		default:
+			seenBase = true
 			rest = append(rest, a)
 		}
 	}
@@ -87,6 +91,22 @@ func main() {
 		fmt.Fprintf(os.Stderr, "uh: %v\n", err)
 		os.Exit(1)
 	}
+
+	// skeleton fallback: if primary results are sparse, widen the search
+	// by stripping positional values from base tokens (keep first token + flags).
+	// baseTokens is NOT changed — the parser strips by count, so the wildcard
+	// position is consumed as a base token regardless of its actual value.
+	// Only tokens AFTER that position appear as suggestions.
+	skelBase := skeletonBase(baseTokens)
+	if len(lines) < 10 && !reflect.DeepEqual(skelBase, baseTokens) {
+		skelLines, err := history.Read(histPath, skelBase)
+		if err == nil && len(skelLines) > len(lines) {
+			lines = skelLines
+			fmt.Fprintf(os.Stderr, "uh: widened to %s * (%d matches)\n",
+				strings.Join(skelBase, " "), len(lines))
+		}
+	}
+
 	if len(lines) == 0 {
 		fmt.Fprintf(os.Stderr, "uh: no history entries found for %q\n", strings.Join(baseTokens, " "))
 		os.Exit(1)
@@ -120,6 +140,22 @@ func main() {
 	case tui.ActionExecute:
 		execute(result.Command)
 	}
+}
+
+// skeletonBase reduces base tokens to first token + flags only,
+// dropping positional values. Used for fallback search when primary
+// results are sparse.
+func skeletonBase(tokens []string) []string {
+	if len(tokens) <= 1 {
+		return tokens
+	}
+	out := []string{tokens[0]}
+	for _, t := range tokens[1:] {
+		if strings.HasPrefix(t, "-") {
+			out = append(out, t)
+		}
+	}
+	return out
 }
 
 func dumpSpace(baseTokens []string, space model.OptionSpace, total int) {
@@ -195,24 +231,26 @@ func usage() {
 
 Usage:
   uh <command...>                        interactive command builder from history
-  uh <command...> --dry-run              print option space summary, no TUI
-  uh <command...> --history-file <path>  override history file
+  uh --dry-run <command...>              print option space summary, no TUI
+  uh --history-file <path> <command...>  override history file
+
+  Flags for uh must come BEFORE the command. Everything after the
+  first non-flag argument is treated as the command to search for.
 
 TUI keys:
-  (e)xecute    run the command directly
-  (c)opy       copy to clipboard
-  (i)nsert     edit the full command
-  [enter]      step into flag values
-  [x]          toggle flag on/off
-  [esc]        back / cancel
-  (q)uit       exit without action
+  [tab/enter]  complete suggestion
+  [↑↓]         navigate suggestions
+  ^x           execute the command
+  ^y           copy to clipboard
+  [esc]        quit
 
 Examples:
   uh git                       all git commands
   uh docker compose            multi-token: "docker compose" invocations
-  uh curl --dry-run            see flags/values without TUI
+  uh claude --resume           "claude --resume" invocations
+  uh --dry-run git             see flags/values without TUI
 
-Flags:
+Flags (must precede the command):
   --dry-run              print option space, no TUI
   --history-file <path>  override auto-detected history file
   --version              print version and exit
