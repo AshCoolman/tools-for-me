@@ -123,7 +123,7 @@ Revert commits. No data migration, no schema changes.
 - **Budget:** short
 
 ## Implement
-All 5 tasks shipped in a single commit (SHA logged after commit).
+All 5 tasks shipped in `79598e6`.
 
 ## Notes / open questions
 - The gate bollard mockup shows partial/continuous gate values (e.g. time-based gates approaching open). This is deferred from first pass but the CSS/component structure should accommodate it without refactoring.
