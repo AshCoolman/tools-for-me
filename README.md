@@ -11,6 +11,7 @@ A Yarn workspaces monorepo. Packages live under `x/*` and standalone Go tools un
 | [`@ashcoolman/leaf-toolkit`](x/leaf-toolkit) | Partition a codebase into bite-sized leaves, rank by priority, drive AI/agent work loops against them with concurrency-safe tool wrappers. |
 | [`@ashcoolman/claude-context-dashboard`](x/claude-context-dashboard) | Local dashboard for Claude Code sessions — per-session context fullness and token usage, scanned from `~/.claude/projects` JSONL logs. |
 | [`@ashcoolman/claude-token-usage-fragile`](x/claude-token-usage-fragile) | Claude Code statusline hook — shows 5h/7d token usage percentage, POSTs snapshots to a local dashboard. |
+| [`@ashcoolman/claude-context-sparkline`](x/claude-context-sparkline) | Claude Code statusline wrapper — adds a 3-bar context-window sparkline colored by token usage thresholds. |
 | [`@ashcoolman/mini-speckit`](x/mini-speckit) | Lightweight, opt-in specify-plan-tasks-implement lifecycle for single-doc deliverables. Lower-ceremony alternative to full Spec Kit. |
 
 ## Tools
@@ -29,6 +30,7 @@ Standalone Go CLIs. Each has its own `go.mod` — no Node/Yarn dependency.
 ├── x/                    # workspace packages (Node/TS)
 │   ├── leaf-toolkit/
 │   ├── claude-context-dashboard/
+│   ├── claude-context-sparkline/
 │   ├── claude-token-usage-fragile/
 │   └── mini-speckit/
 ├── tools/                # standalone CLIs (Go)
