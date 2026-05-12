@@ -11,9 +11,11 @@ type Props = {
   activeTab: string | null;
   onOpenTab: (name: string) => void;
   onOpenAddTab: () => void;
+  onClearSuppression: (key: string) => void;
   daemon: { running: boolean };
   onRefreshDaemon: () => void;
   quota: QuotaSnap | null;
+  width: number;
 };
 
 function statusColor(status: string | null): string {
@@ -31,12 +33,12 @@ function statusLabel(status: string | null): string {
   return status;
 }
 
-export function Sidebar({ units, suppressions, activeTab, onOpenTab, onOpenAddTab, daemon, onRefreshDaemon, quota }: Props) {
+export function Sidebar({ units, suppressions, activeTab, onOpenTab, onOpenAddTab, onClearSuppression, daemon, onRefreshDaemon, quota, width }: Props) {
   const getSuppression = (name: string) =>
     suppressions.find(s => s.orchestrationName === name);
 
   return (
-    <aside className="sidebar">
+    <aside className="sidebar" style={{ width }}>
       <h6>work</h6>
 
       {units.map(item => {
@@ -55,7 +57,15 @@ export function Sidebar({ units, suppressions, activeTab, onOpenTab, onOpenAddTa
               </span>
             </div>
             {suppression && (
-              <div className="stopped-reason">{suppression.reason}</div>
+              <div className="stopped-block">
+                <div className="stopped-reason">Stopped: repeated failure</div>
+                <button
+                  className="stopped-clear"
+                  onClick={(e) => { e.stopPropagation(); onClearSuppression(suppression.key); }}
+                >
+                  Clear &amp; retry
+                </button>
+              </div>
             )}
           </div>
         );

@@ -117,6 +117,12 @@ export function App() {
     return disconnect;
   }, [refreshUnits, refreshDaemon, refreshSuppressions]);
 
+  useEffect(() => {
+    if (units.length > 0 && openTabs.length === 0) {
+      openTab(units[0].name);
+    }
+  }, [units]);
+
   const openTab = (name: string) => {
     setOpenTabs(prev => prev.includes(name) ? prev : [...prev, name]);
     setActiveTab(name);
@@ -138,13 +144,33 @@ export function App() {
     setActiveTab(newName);
   };
 
+  const [runResult, setRunResult] = useState<'ok' | 'fail' | null>(null);
+
   const runUnit = async (name: string) => {
     setActionBusy('run');
+    setRunResult(null);
+    let failed = false;
     try {
-      await api.post(`/api/units/${encodeURIComponent(name)}/run`);
-    } catch { /* ignore */ }
+      const res = await api.post<{ status?: string }>(`/api/units/${encodeURIComponent(name)}/run`);
+      const s = res && typeof res === 'object' && 'status' in res ? res.status : '';
+      if (s === 'completed' || s === 'dry-run') {
+        setRunResult('ok');
+      } else {
+        failed = true;
+        setRunResult('fail');
+      }
+    } catch {
+      failed = true;
+      setRunResult('fail');
+    }
     setActionBusy(null);
     refreshUnits();
+    setEvents(prev => [...prev, {
+      name: failed ? 'run_failed' : 'run_completed',
+      timestamp: new Date().toISOString(),
+      orchestrationName: name,
+    }]);
+    setTimeout(() => setRunResult(null), 8000);
   };
 
   const unlockUnit = async (name: string) => {
@@ -166,11 +192,11 @@ export function App() {
         <span className="spacer" />
         <ExternalDot active={externalActive} />
         <button
-          className="btn primary"
+          className={`btn primary${runResult === 'fail' ? ' btn-fail' : ''}${runResult === 'ok' ? ' btn-ok' : ''}`}
           disabled={!activeUnit || actionBusy !== null}
           onClick={() => activeUnit && runUnit(activeUnit.name)}
         >
-          {actionBusy === 'run' ? 'Running...' : 'Run'}
+          {actionBusy === 'run' ? 'Running...' : runResult === 'fail' ? '✗ Failed' : runResult === 'ok' ? '✓ Done' : 'Run'}
         </button>
         <button
           className="btn ghost"
@@ -188,6 +214,11 @@ export function App() {
           activeTab={activeTab}
           onOpenTab={openTab}
           onOpenAddTab={() => openTab(ADD_TAB)}
+          onClearSuppression={async (key: string) => {
+            await api.post(`/api/units/_/clear-suppression`, { key }).catch(() => {});
+            refreshSuppressions();
+            refreshUnits();
+          }}
           daemon={daemon}
           onRefreshDaemon={refreshDaemon}
           quota={quota}

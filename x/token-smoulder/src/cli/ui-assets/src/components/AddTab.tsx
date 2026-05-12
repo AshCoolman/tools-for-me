@@ -115,44 +115,51 @@ export function AddTab({ onConverted, onRefreshUnits }: Props) {
     submit(verdict.name);
   };
 
+  const lintOk = verdict && !('boundary' in verdict.lint) && verdict.lint.ok;
+  const lintIssues = verdict && !('boundary' in verdict.lint) && 'ok' in verdict.lint && !verdict.lint.ok ? verdict.lint.issues : [];
+  const lintError = verdict && 'boundary' in verdict.lint;
+
+  const checkReady = verdict && !('boundary' in verdict.check) && !('skipped' in verdict.check) && (verdict.check as CheckDecision).shouldRun;
+  const checkBlocked = verdict && !('boundary' in verdict.check) && !('skipped' in verdict.check) && !(verdict.check as CheckDecision).shouldRun;
+  const checkError = verdict && 'boundary' in verdict.check;
+  const checkSkipped = verdict && 'skipped' in verdict.check;
+
   return (
     <div className="add-content">
       <h3>Add new work</h3>
+      <p>Describe a task to automate. The system creates a definition, policy, and executor for it.</p>
 
-      <form onSubmit={handleSubmit}>
+      <form className="add-form" onSubmit={handleSubmit}>
         <input
           className="add-input-lg"
           type="text"
           value={idea}
           onChange={e => setIdea(e.target.value)}
           onPaste={handlePaste}
-          placeholder="type an idea or paste multi-line text..."
+          placeholder="e.g. generate a /deploy slash command"
           disabled={busy}
+          autoFocus
         />
         <button className="add-submit-lg" type="submit" disabled={busy || !idea.trim()}>
-          {busy ? 'adding...' : 'add'}
+          {busy ? 'adding...' : 'Add'}
         </button>
       </form>
 
+      {error && <div className="add-error err">{error}</div>}
+
       <div
-        className="add-drop"
+        className={`add-drop${dragging ? ' add-drop--active' : ''}`}
         onDragOver={e => { e.preventDefault(); setDragging(true); }}
         onDragEnter={e => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
-        style={{
-          borderColor: dragging ? 'var(--ok)' : undefined,
-          background: dragging ? 'rgba(115,201,145,0.05)' : undefined,
-        }}
       >
-        drop a file here or paste multi-line text above
+        or drop a file here
       </div>
-
-      {error && <div className="err" style={{ fontSize: '11px', marginTop: 8 }}>{error}</div>}
 
       {sources.length > 0 && (
         <div className="add-sources">
-          <div className="add-sources-label">import from</div>
+          <div className="add-sources-label">Suggestions from your project</div>
           {sources.map((s, i) => (
             <span key={i} className="source-chip" onClick={() => handleSourceClick(s)} title={s.path}>
               {s.title}
@@ -162,57 +169,55 @@ export function AddTab({ onConverted, onRefreshUnits }: Props) {
       )}
 
       {verdict && (
-        <div style={{ marginTop: 16, fontSize: '11px' }}>
-          <div style={{ marginBottom: 4 }}>
-            <span className="dim">name: </span>{verdict.name}
+        <div className="verdict-card">
+          <div className="verdict-header">
+            <span className={verdict.scaffolded ? 'ok' : ''}>{verdict.scaffolded ? 'Created' : 'Verified'}</span>
+            <span className="verdict-name">{verdict.name}</span>
           </div>
-          {verdict.inferred && (
-            <div style={{ marginBottom: 4 }}>
-              <span className="dim">risk: </span>
-              <span>{verdict.inferred.riskClass}</span>
-              <span className="dim"> ({verdict.inferred.signal})</span>
+
+          <div className="verdict-grid">
+            {verdict.inferred && (
+              <div className="verdict-row">
+                <span className="verdict-label">risk</span>
+                <span>{verdict.inferred.riskClass} <span className="dim">({verdict.inferred.signal})</span></span>
+              </div>
+            )}
+            <div className="verdict-row">
+              <span className="verdict-label">allowed</span>
+              <span>{verdict.policy.allowlist.join(', ') || <span className="dim">none</span>}</span>
             </div>
-          )}
-          <div style={{ marginBottom: 4 }}>
-            <span className="dim">policy: </span>
-            safeRiskClass([{verdict.policy.allowlist.join(', ')}])
+            <div className="verdict-row">
+              <span className="verdict-label">lint</span>
+              <span>
+                {lintError && <span className="err">error</span>}
+                {lintOk && <span className="ok">clean</span>}
+                {lintIssues.length > 0 && <span className="warn">{lintIssues.length} issue{lintIssues.length !== 1 ? 's' : ''}</span>}
+              </span>
+            </div>
+            {lintIssues.map((issue, i) => (
+              <div key={i} className="verdict-row">
+                <span className="verdict-label" />
+                <span className="err">[{issue.rule}] {issue.message}</span>
+              </div>
+            ))}
+            <div className="verdict-row">
+              <span className="verdict-label">ready</span>
+              <span>
+                {checkReady && <span className="ok">yes</span>}
+                {checkBlocked && <span className="err">no — policy blocks</span>}
+                {checkError && <span className="err">error</span>}
+                {checkSkipped && <span className="dim">skipped</span>}
+              </span>
+            </div>
+            <div className="verdict-row">
+              <span className="verdict-label">next</span>
+              <span>{verdict.next}</span>
+            </div>
           </div>
-          <div style={{ marginBottom: 4 }}>
-            <span className="dim">lint: </span>
-            {'boundary' in verdict.lint
-              ? <span className="err">boundary error</span>
-              : verdict.lint.ok
-                ? <span className="ok">clean</span>
-                : <span className="warn">{verdict.lint.issues.length} issue{verdict.lint.issues.length !== 1 ? 's' : ''}</span>
-            }
-          </div>
-          {'boundary' in verdict.lint || ('ok' in verdict.lint && !verdict.lint.ok && verdict.lint.issues.map((issue, i) => (
-            <div key={i} className="err" style={{ paddingLeft: 48 }}>[{issue.rule}] {issue.message}</div>
-          )))}
-          <div style={{ marginBottom: 4 }}>
-            <span className="dim">check: </span>
-            {'boundary' in verdict.check
-              ? <span className="err">boundary error</span>
-              : 'skipped' in verdict.check
-                ? <span className="dim">skipped</span>
-                : verdict.check.shouldRun
-                  ? <span className="ok">pass</span>
-                  : <span className="err">blocked</span>
-            }
-          </div>
-          <div style={{ marginBottom: 4 }}>
-            <span className="dim">next: </span>{verdict.next}
-          </div>
+
           {widenClass && (
-            <button
-              onClick={handleWiden}
-              style={{
-                marginTop: 4, fontSize: '10px', padding: '2px 8px',
-                background: 'var(--bg-3)', color: 'var(--ok)',
-                border: '1px solid var(--ok)', borderRadius: 3, cursor: 'pointer',
-              }}
-            >
-              allow {widenClass}
+            <button className="add-submit-lg verdict-action" onClick={handleWiden}>
+              Allow risk class: {widenClass}
             </button>
           )}
         </div>
