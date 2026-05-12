@@ -110,3 +110,4 @@ _(pending)_
 
 - Never silently bridge mini-speckit into the full speckit workflow.
 - Never operate on multi-file speckit directories with this skill.
+- Never invoke or suggest `speckit-*` commands. The only valid next step from a mini-speckit command is another mini-speckit command (`/mini-speckit-specify`, `/mini-speckit-next`) or stop. See `SHARED.md` § Discipline.

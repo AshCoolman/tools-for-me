@@ -70,3 +70,22 @@ A candidate falls to **score 0.05** (bare-idea floor) regardless of how much tex
 - If you find an unsafe pattern out of scope, log it in the spec's `## Notes / open questions` block rather than fixing inline.
 - Never skip git hooks (`--no-verify`).
 - Never amend a published commit.
+
+---
+
+## Discipline
+
+mini-speckit and full speckit are deliberately disjoint systems. The
+only valid next step from any mini-speckit command is another
+mini-speckit command (`/mini-speckit-specify`, `/mini-speckit-next`)
+or stop.
+
+Never:
+- invoke `/speckit.*` from a mini-speckit command
+- suggest `/speckit.*` as a "fallback" or "heavier-weight" option
+- name `/mini-speckit-plan`, `/mini-speckit-tasks`,
+  `/mini-speckit-implement`, or any other rung-named command — they
+  do not exist; only `/mini-speckit-next` advances rungs
+
+When the next mini-speckit step isn't obvious, stop. Do not paper
+over the gap with a command from another system.

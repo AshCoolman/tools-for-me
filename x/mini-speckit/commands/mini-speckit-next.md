@@ -72,5 +72,5 @@ If no mini-speckit-format specs exist in the repo, stop with: `No mini-speckit s
 ## Notes
 
 - This command is intentionally lightweight and low-ceremony.
-- Never invoke `speckit-*` skills from this command.
+- Never invoke or suggest `speckit-*` commands. See `SHARED.md` § Discipline. The only next step from this command is another `/mini-speckit-next` invocation, `/mini-speckit-specify` for a new spec, or stop. Do not invent `/mini-speckit-plan`, `/mini-speckit-tasks`, etc. — `/mini-speckit-next` is the only rung-advancing command.
 - One rung per invocation. When implementing, one task per invocation.

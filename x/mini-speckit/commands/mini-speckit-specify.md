@@ -72,3 +72,4 @@ _(pending)_
 
 - This command is intentionally cheap. Bias toward creating the spec instead of interrogating the user.
 - If the request obviously outgrows mini-speckit, say so and recommend full speckit instead of forcing it.
+- Never invoke or suggest `speckit-*` commands. See `SHARED.md` § Discipline. The next step after this command is `/mini-speckit-next` (or stop). Do not name `/speckit.specify`, `/mini-speckit-plan`, or any other non-mini-speckit command as a next step.
