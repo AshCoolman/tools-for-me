@@ -1,7 +1,7 @@
 #!/usr/bin/env -S npx tsx
 
 import { Command } from 'commander';
-import { select, Separator } from '@inquirer/prompts';
+import { select, checkbox } from '@inquirer/prompts';
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -15,9 +15,7 @@ function fail(msg: string): never {
   process.exit(1);
 }
 
-type Entry = { label: string; desc: string; cmd: string[] };
-type DevEntry = { label: 'dev'; desc: string; procs: Record<string, { cmd: string[] }> };
-type Choice = Entry | DevEntry;
+type Entry = { label: string; desc: string; cmd: string[]; after?: string };
 
 function isDaemonRunning(): boolean {
   const stateDir = process.env.TOKEN_SMOULDER_STATE_DIR
@@ -42,15 +40,6 @@ function isUiRunning(): boolean {
   }
 }
 
-const DEV: DevEntry = {
-  label: 'dev',
-  desc: 'daemon + ui (mprocs)',
-  procs: {
-    daemon: { cmd: [BIN, 'daemon'] },
-    ui:     { cmd: [BIN, 'ui'] },
-  },
-};
-
 const SERVICES: Entry[] = [
   { label: 'daemon', desc: 'Background dispatcher (30s tick)', cmd: [BIN, 'daemon'] },
   { label: 'ui',     desc: 'Web UI at 127.0.0.1:8788',        cmd: [BIN, 'ui'] },
@@ -59,6 +48,8 @@ const SERVICES: Entry[] = [
 const TASKS: Entry[] = [
   { label: 'typecheck', desc: 'Type-check src/',       cmd: ['yarn', 'typecheck'] },
   { label: 'test',      desc: 'Run vitest',            cmd: ['yarn', 'test'] },
+  { label: 'test:e2e',  desc: 'Playwright e2e suite',  cmd: ['yarn', 'playwright', 'test'],
+    after: 'View report: yarn playwright show-report' },
   { label: 'lint',      desc: 'ESLint src/ tests/',    cmd: ['yarn', 'lint'] },
   { label: 'build:ui',  desc: 'Build UI assets',       cmd: ['yarn', 'build:ui'] },
   { label: 'ui:dev',    desc: 'Vite dev server',       cmd: ['yarn', 'ui:dev'] },
@@ -66,69 +57,96 @@ const TASKS: Entry[] = [
   { label: 'events',    desc: 'Recent events (1h)',    cmd: [BIN, 'events', '--since', '1h'] },
 ];
 
-function isDevEntry(c: Choice): c is DevEntry {
-  return 'procs' in c;
+async function servicesMenu(): Promise<void> {
+  const daemonUp = isDaemonRunning();
+  const uiUp = isUiRunning();
+
+  const serviceStatus = (label: string): string => {
+    if (label === 'daemon') return daemonUp ? '●' : '○';
+    if (label === 'ui') return uiUp ? '●' : '○';
+    return '○';
+  };
+
+  const selected = await checkbox<Entry>({
+    message: 'services',
+    choices: SERVICES.map(s => ({
+      name: `${serviceStatus(s.label)} ${s.label}`,
+      value: s,
+      description: s.desc,
+    })),
+  });
+
+  if (selected.length === 0) return;
+
+  if (selected.length === 1) {
+    const s = selected[0];
+    const result = spawnSync(s.cmd[0], s.cmd.slice(1), { stdio: 'inherit', cwd: PKG_ROOT });
+    process.exit(result.status ?? 1);
+  }
+
+  const hasMprocs = spawnSync('mprocs', ['--version'], { stdio: 'ignore' }).status === 0;
+  if (!hasMprocs) fail('mprocs not found — install: brew install mprocs');
+
+  const names = selected.map(s => s.label).join(',');
+  const cmds = selected.map(s => s.cmd.join(' '));
+  const result = spawnSync('mprocs', ['--names', names, ...cmds], { stdio: 'inherit', cwd: PKG_ROOT });
+  process.exit(result.status ?? 1);
 }
 
-async function main(): Promise<void> {
-  if (!process.stdin.isTTY) fail('TTY required — scripts/start is interactive');
+async function tasksMenu(): Promise<void> {
+  const task = await select<Entry>({
+    message: 'tasks',
+    choices: TASKS.map(t => ({
+      name: t.label,
+      value: t,
+      description: t.desc,
+    })),
+  });
 
+  const result = spawnSync(task.cmd[0], task.cmd.slice(1), { stdio: 'inherit', cwd: PKG_ROOT });
+  if (task.after) process.stdout.write(`\n${task.after}\n`);
+  process.exit(result.status ?? 1);
+}
+
+const ALL_ENTRIES = [...SERVICES, ...TASKS];
+
+function runEntry(entry: Entry): never {
+  const result = spawnSync(entry.cmd[0], entry.cmd.slice(1), { stdio: 'inherit', cwd: PKG_ROOT });
+  if (entry.after) process.stdout.write(`\n${entry.after}\n`);
+  process.exit(result.status ?? 1);
+}
+
+async function main(label?: string): Promise<void> {
   if (!existsSync(join(PKG_ROOT, 'node_modules'))) {
     fail('node_modules missing — run: yarn install');
   }
 
-  const daemonUp = isDaemonRunning();
-  const uiUp = isUiRunning();
+  if (label) {
+    const entry = ALL_ENTRIES.find(e => e.label === label);
+    if (!entry) {
+      const valid = ALL_ENTRIES.map(e => e.label).join(', ');
+      fail(`unknown label '${label}' — valid: ${valid}`);
+    }
+    runEntry(entry);
+  }
 
-  const serviceStatus = (s: Entry): string => {
-    if (s.label === 'daemon') return daemonUp ? '●' : '○';
-    if (s.label === 'ui') return uiUp ? '●' : '○';
-    return '○';
-  };
+  if (!process.stdin.isTTY) fail('TTY required — scripts/start is interactive');
 
-  const picked = await select<Choice>({
+  const menu = await select<'services' | 'tasks'>({
     message: 'token-smoulder',
     choices: [
-      new Separator('─── Services ───'),
-      { name: 'dev', value: DEV, description: DEV.desc },
-      ...SERVICES.map(s => ({
-        name: `${serviceStatus(s)} ${s.label}`,
-        value: s,
-        description: s.desc,
-      })),
-      new Separator('─── Tasks ───'),
-      ...TASKS.map(t => ({
-        name: t.label,
-        value: t,
-        description: t.desc,
-      })),
+      { name: 'Services', value: 'services' },
+      { name: 'Tasks',    value: 'tasks' },
     ],
   });
 
-  if (isDevEntry(picked)) {
-    const hasMprocs = spawnSync('mprocs', ['--version'], { stdio: 'ignore' }).status === 0;
-    if (!hasMprocs) fail('mprocs not found — install: brew install mprocs');
-
-    const entries = Object.entries(picked.procs);
-    const names = entries.map(([k]) => k).join(',');
-    const cmds = entries.map(([, v]) => v.cmd.join(' '));
-    const result = spawnSync('mprocs', ['--names', names, ...cmds], {
-      stdio: 'inherit',
-      cwd: PKG_ROOT,
-    });
-    process.exit(result.status ?? 1);
-  }
-
-  const result = spawnSync(picked.cmd[0], picked.cmd.slice(1), {
-    stdio: 'inherit',
-    cwd: PKG_ROOT,
-  });
-
-  process.exit(result.status ?? 1);
+  if (menu === 'services') await servicesMenu();
+  if (menu === 'tasks') await tasksMenu();
 }
 
 new Command()
   .name('start')
   .description('Dev entry point for token-smoulder')
+  .argument('[label]', `run directly: ${ALL_ENTRIES.map(e => e.label).join(', ')}`)
   .action(main)
   .parse();

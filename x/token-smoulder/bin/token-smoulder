@@ -23,10 +23,12 @@ load_env() {
   fi
 }
 
-XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
-load_env "${PKG_ROOT}/.env"
-load_env "${XDG_CONFIG_HOME}/token-smoulder/.env"
-[ "${PWD}" != "${PKG_ROOT}" ] && load_env "${PWD}/.env"
+if [ -z "${TOKEN_SMOULDER_NO_DOTENV:-}" ]; then
+  XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
+  load_env "${PKG_ROOT}/.env"
+  load_env "${XDG_CONFIG_HOME}/token-smoulder/.env"
+  [ "${PWD}" != "${PKG_ROOT}" ] && load_env "${PWD}/.env"
+fi
 
 # Prefer the locally-installed tsx (works for both `npm i -g .` installs and
 # yarn-workspace dev), fall back to npx if missing.
