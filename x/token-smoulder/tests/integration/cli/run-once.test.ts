@@ -27,6 +27,7 @@ const baseEnv = (stateDir: string, pathPrefix: string) => ({
   TOKEN_SMOULDER_ORCH_DIR: FIX,
   TOKEN_SMOULDER_STATE_DIR: stateDir,
   TOKEN_SMOULDER_QUOTA_SOURCE: 'fake-pass',
+  TOKEN_SMOULDER_NO_DOTENV: '1',
   PATH: `${pathPrefix}:${process.env.PATH ?? ''}`,
 });
 

@@ -1,6 +1,6 @@
 import { FsStorage } from '../adapters/storage/fs.js';
-import { Dispatcher, type GateSet, type CapacityShortfall } from '../core/dispatcher.js';
-import { enoughQuota } from '../core/predicates/capacity.js';
+import { Dispatcher, type GateSet } from '../core/dispatcher.js';
+import { assertQuotaGateUsed } from '../core/predicates/capacity.js';
 import { noExternalActiveSessionsFor } from '../core/predicates/contention.js';
 import { safeRiskClass } from '../core/predicates/risk.js';
 import {
@@ -37,6 +37,7 @@ export async function checkDecision(
 
   const quota = selectQuotaSource();
   const contention = selectContentionDetector();
+  const quotaSource = { read: () => quota.read() };
 
   const policyCtx: PolicyContext = {
     orchestrationName: orch.name,
@@ -47,30 +48,20 @@ export async function checkDecision(
     workMd: orch.workMd,
     selectedSection: opts.section ?? 'Objective',
     storage,
+    quotaSource,
   };
 
   const valueGate = orch.policy(policyCtx);
+  assertQuotaGateUsed(quotaSource, orch.name);
 
   const gates: GateSet = {
-    capacity: enoughQuota('week', quota),
+    capacity: async () => ({ ok: true, reason: 'pass: capacity delegated to policy' }),
     contention: noExternalActiveSessionsFor(30 * 60_000, contention),
     value: valueGate,
     risk: safeRiskClass([...DEFAULT_ALLOWED], orch.riskClass),
   };
 
-  const capacityContext = async (): Promise<CapacityShortfall[]> => {
-    try {
-      const snap = await quota.read();
-      const out: CapacityShortfall[] = [];
-      if (snap.week <= 0.25) out.push({ scope: 'week', remaining: snap.week, threshold: 0.25 });
-      if (snap.session <= 0.25) out.push({ scope: 'session', remaining: snap.session, threshold: 0.25 });
-      return out;
-    } catch {
-      return [];
-    }
-  };
-
-  const dispatcher = new Dispatcher({ storage, gates, capacityContext });
+  const dispatcher = new Dispatcher({ storage, gates });
   const decision = await dispatcher.evaluate({
     orchestrationName: orch.name,
     workHash: orch.workHash,

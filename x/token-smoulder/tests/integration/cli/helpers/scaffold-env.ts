@@ -24,6 +24,7 @@ export async function makeScaffoldEnv(): Promise<ScaffoldEnv> {
     TOKEN_SMOULDER_ORCH_DIR: orchDir,
     TOKEN_SMOULDER_STATE_DIR: stateDir,
     TOKEN_SMOULDER_QUOTA_SOURCE: 'fake-pass',
+    TOKEN_SMOULDER_NO_DOTENV: '1',
   };
   return { rootDir, orchDir, stateDir, env };
 }
