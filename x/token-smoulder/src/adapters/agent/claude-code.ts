@@ -10,10 +10,19 @@ import type {
   AgentSessionStatus,
 } from './interface.js';
 
-const RESPONSE_SCHEMA = z.object({
-  text: z.string(),
-  needsInput: z.boolean(),
-  metadata: z.record(z.unknown()).optional(),
+const CLI_ENVELOPE = z.object({
+  result: z.string(),
+  is_error: z.boolean(),
+  stop_reason: z.string(),
+}).passthrough();
+
+const RESPONSE_SCHEMA = CLI_ENVELOPE.transform((env): AgentResponse => {
+  const { result, stop_reason, is_error, ...rest } = env;
+  return {
+    text: result,
+    needsInput: !is_error && stop_reason !== 'end_turn',
+    metadata: rest,
+  };
 });
 
 export type ClaudeCodeAgentOptions = {
@@ -24,6 +33,7 @@ export type ClaudeCodeAgentOptions = {
 type SessionState = {
   session: AgentSession;
   status: AgentSessionStatus;
+  activeChild?: import('node:child_process').ChildProcess;
 };
 
 export class ClaudeCodeAgent implements AgentClient {
@@ -33,7 +43,7 @@ export class ClaudeCodeAgent implements AgentClient {
 
   constructor(opts: ClaudeCodeAgentOptions = {}) {
     this.env = opts.env ?? process.env;
-    this.bin = opts.bin ?? 'claude';
+    this.bin = opts.bin ?? process.env.TOKEN_SMOULDER_AGENT_BIN ?? 'claude';
   }
 
   async startSession(args: { owner: AgentOwner; orchestrationName: string }): Promise<AgentSession> {
@@ -69,6 +79,7 @@ export class ClaudeCodeAgent implements AgentClient {
           stdio: ['pipe', 'pipe', 'pipe'],
         },
       );
+      state.activeChild = child;
       let stdout = '';
       let stderr = '';
       child.stdout.on('data', d => (stdout += d.toString()));
@@ -134,6 +145,9 @@ export class ClaudeCodeAgent implements AgentClient {
   async stopSession(args: { sessionId: string; reason: string }): Promise<void> {
     const state = this.sessions.get(args.sessionId);
     if (!state) return;
+    if (state.activeChild && !state.activeChild.killed) {
+      state.activeChild.kill('SIGTERM');
+    }
     state.status = 'completed';
     void args.reason;
   }

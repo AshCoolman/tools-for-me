@@ -28,7 +28,7 @@ set -e
 if [ "$TOKEN_SMOULDER_OWNER" != "scheduler" ]; then echo "missing env tag" >&2; exit 8; fi
 
 read -r prompt
-echo '{"text":"got: '"$prompt"'","needsInput":false}'
+echo '{"type":"result","subtype":"success","is_error":false,"result":"got: '"$prompt"'","stop_reason":"end_turn","session_id":"fake","duration_ms":100}'
 `,
     );
     const env = { ...process.env, PATH: `${dir}:${process.env.PATH ?? ''}` };
