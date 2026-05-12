@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { startServer, type ServerHandle } from './helpers';
+import { startServer, type ServerHandle } from './helpers.js';
 
 let server: ServerHandle;
 

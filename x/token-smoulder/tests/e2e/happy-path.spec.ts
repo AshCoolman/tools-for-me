@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { startServer, seedRunState, type ServerHandle } from './helpers';
+import { startServer, seedRunState, type ServerHandle } from './helpers.js';
 
 test.describe('sidebar and tabs', () => {
   let server: ServerHandle;
@@ -54,7 +54,7 @@ test.describe('sidebar and tabs', () => {
   });
 });
 
-test.describe('bottom panel', () => {
+test.describe('bottom panel — runs list', () => {
   let server: ServerHandle;
   let stateDir: string;
 
@@ -65,29 +65,39 @@ test.describe('bottom panel', () => {
   });
   test.afterAll(() => server?.cleanup());
 
-  test('RUN tab shows seeded run status', async ({ page }) => {
+  test('runs panel shows seeded run with error text', async ({ page }) => {
     await page.goto(server.baseURL);
-    await page.locator('.unit .name', { hasText: 'valid-readonly' }).click();
 
     const panel = page.locator('.panel');
-    await panel.locator('.panel-tab', { hasText: 'RUN' }).click();
-    await expect(panel.locator('.panel-body')).toContainText('simulated agent failure');
+    await expect(panel.locator('.runs-panel-header')).toContainText('RUNS');
+    await expect(panel.locator('.run-row', { hasText: 'valid-readonly' })).toBeVisible();
+    await expect(panel.locator('.run-error')).toContainText('simulated agent failure');
   });
 
-  test('switching panel tabs changes content', async ({ page }) => {
+  test('clicking a run row expands detail view', async ({ page }) => {
     await page.goto(server.baseURL);
-    await page.locator('.unit .name', { hasText: 'valid-readonly' }).click();
 
     const panel = page.locator('.panel');
+    const row = panel.locator('.run-row', { hasText: 'valid-readonly' });
+    await row.click();
 
-    await panel.locator('.panel-tab', { hasText: 'EVENTS' }).click();
-    await expect(panel.locator('.panel-tab.active')).toContainText('EVENTS');
+    await expect(panel.locator('.run-detail')).toBeVisible();
+    await expect(panel.locator('.run-detail')).toContainText('test prompt for e2e');
+  });
 
-    await panel.locator('.panel-tab', { hasText: 'GATES' }).click();
-    await expect(panel.locator('.panel-tab.active')).toContainText('GATES');
+  test('filter buttons switch between all and focused unit', async ({ page }) => {
+    await page.goto(server.baseURL);
 
-    await panel.locator('.panel-tab', { hasText: 'RUN' }).click();
-    await expect(panel.locator('.panel-tab.active')).toContainText('RUN');
+    const panel = page.locator('.panel');
+    const allBtn = panel.locator('.filter', { hasText: 'all' });
+    await expect(allBtn).toHaveClass(/active/);
+
+    await page.locator('.unit .name', { hasText: 'valid-readonly' }).click();
+    const unitBtn = panel.locator('.filter', { hasText: 'valid-readonly' });
+    await expect(unitBtn).toHaveClass(/active/);
+
+    await allBtn.click();
+    await expect(allBtn).toHaveClass(/active/);
   });
 });
 

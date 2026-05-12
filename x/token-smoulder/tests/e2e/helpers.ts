@@ -18,6 +18,7 @@ export function startServer(extraEnv: Record<string, string> = {}): Promise<Serv
         ...process.env,
         TOKEN_SMOULDER_ORCH_DIR: FIX,
         TOKEN_SMOULDER_QUOTA_SOURCE: 'fake-pass',
+        TOKEN_SMOULDER_NO_DOTENV: '1',
         ...extraEnv,
       },
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -42,6 +43,24 @@ export function startServer(extraEnv: Record<string, string> = {}): Promise<Serv
     });
     setTimeout(() => reject(new Error('server start timeout')), 10_000);
   });
+}
+
+export async function seedSuppression(stateDir: string, unitName: string): Promise<void> {
+  const dir = join(stateDir, 'suppressions');
+  await mkdir(dir, { recursive: true });
+  const record = {
+    key: 'e2e-suppression-key',
+    orchestrationName: unitName,
+    workHash: 'a'.repeat(64),
+    policyHash: 'b'.repeat(64),
+    executorHash: 'c'.repeat(64),
+    failingPromptIndex: 0,
+    failureSignature: 'simulated agent failure',
+    firstSeenAt: '2026-05-11T00:00:00.000Z',
+    count: 2,
+    reason: 'second identical failure',
+  };
+  await writeFile(join(dir, `${record.key}.json`), JSON.stringify(record));
 }
 
 export async function seedRunState(stateDir: string, unitName: string): Promise<void> {
@@ -71,5 +90,6 @@ export async function seedRunState(stateDir: string, unitName: string): Promise<
       evaluatedAt: '2026-05-11T00:00:00.000Z',
     },
   };
+  await writeFile(join(runsDir, `${record.runId}.json`), JSON.stringify(record));
   await writeFile(join(runsDir, 'latest.json'), JSON.stringify(record));
 }
