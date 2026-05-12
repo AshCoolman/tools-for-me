@@ -83,5 +83,6 @@ export async function unlockCommand(name: string | undefined, opts: UnlockOption
 }
 
 function describeScope(scope: LockScope): string {
-  return scope.scope === 'global' ? 'global' : `orchestration:${scope.orchestrationName}`;
+  if (scope.scope === 'orchestration') return `orchestration:${scope.orchestrationName}`;
+  return scope.scope;
 }

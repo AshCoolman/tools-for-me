@@ -39,7 +39,8 @@ export async function recordStaleLock(
 }
 
 function scopeLabel(scope: LockScope): string {
-  return scope.scope === 'global' ? 'global' : `orchestration:${scope.orchestrationName}`;
+  if (scope.scope === 'orchestration') return `orchestration:${scope.orchestrationName}`;
+  return scope.scope;
 }
 
 function lockEventBase(scope: LockScope, lock?: LockFile): Pick<Event, 'orchestrationName' | 'payload'> {

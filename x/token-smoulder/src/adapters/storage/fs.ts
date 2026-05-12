@@ -21,6 +21,7 @@ import type { Storage } from './interface.js';
 
 function lockPath(root: string, scope: LockScope): string {
   if (scope.scope === 'global') return join(root, 'locks', 'global.lock');
+  if (scope.scope === 'execution') return join(root, 'locks', 'execution.lock');
   return join(root, 'locks', `${scope.orchestrationName}.lock`);
 }
 

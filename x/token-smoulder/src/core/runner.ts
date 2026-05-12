@@ -8,6 +8,7 @@ import type { RunRecord } from '../adapters/storage/internal-types.js';
 import type { Work } from './work-parser.js';
 import { isPidAlive, releaseLock } from './locks.js';
 import { normalizeFailureSignature, recordFailure } from './suppression.js';
+import { loadPlaybook, matchError, interpretError } from './playbook.js';
 
 export type ExecutorPlan = {
   riskClass: RiskClass;
@@ -28,6 +29,7 @@ export function executeAgentWork(fn: Executor): Executor {
 export type RunnerOptions = {
   storage: Storage;
   agent: AgentClient;
+  stateDir?: string;
   contention?: ContentionDetector;
   contentionThresholdMs?: number;
   lockScope?: LockScope;
@@ -51,8 +53,22 @@ export type ResumeInput = {
 
 export type RunnerResult = { record: RunRecord };
 
+export class RunKilledError extends Error {
+  constructor() { super('killed by user'); this.name = 'RunKilledError'; }
+}
+
 export class Runner {
+  private _aborted = false;
+  private _sessionId?: string;
+
   constructor(private readonly opts: RunnerOptions) {}
+
+  abort(): void {
+    this._aborted = true;
+    if (this._sessionId) {
+      this.opts.agent.stopSession({ sessionId: this._sessionId, reason: 'killed' }).catch(() => {});
+    }
+  }
 
   async execute(input: RunInput): Promise<RunnerResult> {
     const { storage, agent } = this.opts;
@@ -150,9 +166,26 @@ export class Runner {
   ): Promise<RunnerResult> {
     const { storage, agent, contention, contentionThresholdMs, lockScope } = this.opts;
     const { steps } = record;
+    this._sessionId = sessionId;
 
     try {
       for (let i = fromIdx; i < steps.length; i++) {
+        if (this._aborted) {
+          for (let j = i; j < steps.length; j++) steps[j]!.status = 'skipped';
+          record.status = 'failed';
+          record.endedAt = new Date().toISOString();
+          record.failureSignature = 'killed by user';
+          await storage.saveRun(record);
+          await storage.appendEvent({
+            name: 'run_failed',
+            timestamp: record.endedAt,
+            orchestrationName: record.orchestrationName,
+            runId: record.runId,
+            payload: { runId: record.runId, reason: 'killed by user', failureSignature: 'killed by user' },
+          });
+          throw new RunKilledError();
+        }
+
         const step = steps[i]!;
 
         if (contention && contentionThresholdMs !== undefined) {
@@ -254,6 +287,21 @@ export class Runner {
           }
         } catch (e) {
           step.status = 'failed';
+          if (this._aborted) {
+            step.error = 'killed by user';
+            record.status = 'failed';
+            record.endedAt = new Date().toISOString();
+            record.failureSignature = 'killed by user';
+            await storage.saveRun(record);
+            await storage.appendEvent({
+              name: 'run_failed',
+              timestamp: record.endedAt,
+              orchestrationName: record.orchestrationName,
+              runId: record.runId,
+              payload: { runId: record.runId, reason: 'killed by user', failureSignature: 'killed by user' },
+            });
+            throw new RunKilledError();
+          }
           step.error = e instanceof Error ? e.message : String(e);
           const failureSignature = normalizeFailureSignature(step.error);
           record.status = 'failed';
@@ -279,6 +327,50 @@ export class Runner {
             failingPromptIndex: i,
             failureSignature,
           });
+          if (this.opts.stateDir) {
+            try {
+              const rules = await loadPlaybook(this.opts.stateDir);
+              const matched = matchError(step.error, rules);
+              if (matched) {
+                matched.hits++;
+                const { savePlaybook } = await import('./playbook.js');
+                await savePlaybook(this.opts.stateDir, rules);
+                record.interpretation = {
+                  ruleId: matched.id,
+                  explanation: matched.explanation,
+                  remediation: matched.remediation,
+                  status: 'matched',
+                };
+              } else {
+                record.interpretation = { ruleId: null, status: 'pending' };
+                const sd = this.opts.stateDir;
+                const errorText = step.error;
+                const failedStep = step;
+                void interpretError(sd, {
+                  error: errorText,
+                  orchestrationName: record.orchestrationName,
+                  gateResults: [
+                    ...record.decision.reasons,
+                    ...record.decision.failedReasons,
+                  ],
+                  stepPrompt: failedStep.prompt,
+                }).then(async (newRule) => {
+                  if (newRule) {
+                    record.interpretation = {
+                      ruleId: newRule.id,
+                      explanation: newRule.explanation,
+                      remediation: newRule.remediation,
+                      status: 'matched',
+                    };
+                    await storage.saveRun(record).catch(() => {});
+                  }
+                }).catch(() => {});
+              }
+              await storage.saveRun(record);
+            } catch {
+              // playbook matching is best-effort
+            }
+          }
           throw e;
         }
       }

@@ -22,6 +22,12 @@ export const RunRecordSchema = z.object({
   steps: z.array(PromptStepStateSchema),
   sessionId: z.string().optional(),
   failureSignature: z.string().optional(),
+  interpretation: z.object({
+    ruleId: z.string().nullable(),
+    explanation: z.string().optional(),
+    remediation: z.string().optional(),
+    status: z.enum(['matched', 'unmatched', 'pending']),
+  }).optional(),
   decision: DispatchDecisionSchema,
 });
 export type RunRecord = z.infer<typeof RunRecordSchema>;
@@ -47,7 +53,7 @@ export const LockFileSchema = z.object({
   hostname: z.string(),
   acquiredAt: IsoSchema,
   owner: z.string(),
-  scope: z.enum(['global', 'orchestration']),
+  scope: z.enum(['global', 'execution', 'orchestration']),
   orchestrationName: z.string().optional(),
 });
 export type LockFile = z.infer<typeof LockFileSchema>;
@@ -97,4 +103,5 @@ export type Event = z.infer<typeof EventSchema>;
 
 export type LockScope =
   | { scope: 'global' }
+  | { scope: 'execution' }
   | { scope: 'orchestration'; orchestrationName: string };

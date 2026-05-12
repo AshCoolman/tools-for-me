@@ -1,8 +1,8 @@
 import { ClaudeCodeAgent } from '../adapters/agent/claude-code.js';
 import { FsStorage } from '../adapters/storage/fs.js';
-import { Dispatcher, type CapacityShortfall, type GateSet } from '../core/dispatcher.js';
+import { Dispatcher, type GateSet } from '../core/dispatcher.js';
 import { acquireLock, LockContentionError, releaseLock } from '../core/locks.js';
-import { enoughQuota } from '../core/predicates/capacity.js';
+import { assertQuotaGateUsed } from '../core/predicates/capacity.js';
 import { noExternalActiveSessionsFor } from '../core/predicates/contention.js';
 import { safeRiskClass } from '../core/predicates/risk.js';
 import { Runner } from '../core/runner.js';
@@ -153,6 +153,7 @@ async function dispatchOne(
   const orch = await loadOrchestration(orchDir, name);
   const quota = selectQuotaSource();
   const contention = selectContentionDetector();
+  const quotaSource = { read: () => quota.read() };
 
   const policyCtx: PolicyContext = {
     orchestrationName: orch.name,
@@ -163,29 +164,20 @@ async function dispatchOne(
     workMd: orch.workMd,
     selectedSection: 'Objective',
     storage,
+    quotaSource,
   };
 
+  const valueGate = orch.policy(policyCtx);
+  assertQuotaGateUsed(quotaSource, orch.name);
+
   const gates: GateSet = {
-    capacity: enoughQuota('week', quota),
+    capacity: async () => ({ ok: true, reason: 'pass: capacity delegated to policy' }),
     contention: noExternalActiveSessionsFor(30 * 60_000, contention),
-    value: orch.policy(policyCtx),
+    value: valueGate,
     risk: safeRiskClass([...DEFAULT_ALLOWED], orch.riskClass),
   };
 
-  const capacityContext = async (): Promise<CapacityShortfall[]> => {
-    try {
-      const snap = await quota.read();
-      const out: CapacityShortfall[] = [];
-      if (snap.week <= 0.25) out.push({ scope: 'week', remaining: snap.week, threshold: 0.25 });
-      if (snap.session <= 0.25)
-        out.push({ scope: 'session', remaining: snap.session, threshold: 0.25 });
-      return out;
-    } catch {
-      return [];
-    }
-  };
-
-  const dispatcher = new Dispatcher({ storage, gates, capacityContext });
+  const dispatcher = new Dispatcher({ storage, gates });
   const decision = await dispatcher.evaluate({
     orchestrationName: orch.name,
     workHash: orch.workHash,
@@ -197,34 +189,48 @@ async function dispatchOne(
 
   if (!decision.shouldRun) return;
 
-  const scope: LockScope = { scope: 'orchestration', orchestrationName: orch.name };
-  let lock;
+  const execScope: LockScope = { scope: 'execution' };
+  let execLock;
   try {
-    lock = await acquireLock(storage, scope);
+    execLock = await acquireLock(storage, execScope);
   } catch (e) {
     if (e instanceof LockContentionError) return;
     throw e;
   }
 
   try {
-    const humanInput = await selectHumanInputChannel(stateDir);
-    const runner = new Runner({
-      storage,
-      agent: new ClaudeCodeAgent(),
-      contention,
-      contentionThresholdMs: 30 * 60_000,
-      lockScope: scope,
-      ...(humanInput ? { humanInput } : {}),
-    });
-    await runner.execute({
-      orchestrationName: orch.name,
-      workHash: orch.workHash,
-      policyHash: orch.policyHash,
-      executorHash: orch.executorHash,
-      decision,
-      plan: orch.plan,
-    });
+    const scope: LockScope = { scope: 'orchestration', orchestrationName: orch.name };
+    let lock;
+    try {
+      lock = await acquireLock(storage, scope);
+    } catch (e) {
+      if (e instanceof LockContentionError) return;
+      throw e;
+    }
+
+    try {
+      const humanInput = await selectHumanInputChannel(stateDir);
+      const runner = new Runner({
+        storage,
+        agent: new ClaudeCodeAgent(),
+        stateDir,
+        contention,
+        contentionThresholdMs: 30 * 60_000,
+        lockScope: scope,
+        ...(humanInput ? { humanInput } : {}),
+      });
+      await runner.execute({
+        orchestrationName: orch.name,
+        workHash: orch.workHash,
+        policyHash: orch.policyHash,
+        executorHash: orch.executorHash,
+        decision,
+        plan: orch.plan,
+      });
+    } finally {
+      await releaseLock(storage, scope, lock).catch(() => undefined);
+    }
   } finally {
-    await releaseLock(storage, scope, lock).catch(() => undefined);
+    await releaseLock(storage, execScope, execLock).catch(() => undefined);
   }
 }
