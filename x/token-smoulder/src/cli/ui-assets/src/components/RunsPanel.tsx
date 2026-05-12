@@ -14,6 +14,13 @@ type Decision = {
   failedReasons: string[];
 };
 
+type Interpretation = {
+  ruleId: string | null;
+  explanation?: string;
+  remediation?: string;
+  status: 'matched' | 'unmatched' | 'pending';
+};
+
 type RunRecord = {
   runId: string;
   orchestrationName: string;
@@ -23,6 +30,7 @@ type RunRecord = {
   endedAt?: string;
   steps: Step[];
   failureSignature?: string;
+  interpretation?: Interpretation;
   decision: Decision;
 };
 
@@ -67,7 +75,7 @@ function formatTime(iso: string): string {
 function statusIcon(status: string): { char: string; cls: string } {
   switch (status) {
     case 'completed': return { char: '✓', cls: 'completed' };
-    case 'failed': return { char: '✗', cls: 'failed' };
+    case 'failed': return { char: '!', cls: 'failed' };
     case 'running': return { char: '●', cls: 'running' };
     default: return { char: '○', cls: 'blocked' };
   }
@@ -181,6 +189,23 @@ function RunDetail({ run }: { run: RunRecord }) {
           {step.error && <div className="step-error">{step.error}</div>}
         </div>
       ))}
+      {run.interpretation?.explanation && (
+        <>
+          <div className="detail-section-label">interpretation</div>
+          <div className="interpretation">
+            <div className="interp-explanation">{run.interpretation.explanation}</div>
+            <div className="interp-remediation">{run.interpretation.remediation}</div>
+          </div>
+        </>
+      )}
+      {run.interpretation?.status === 'pending' && (
+        <>
+          <div className="detail-section-label">interpretation</div>
+          <div className="interpretation">
+            <span className="dim">interpreting error...</span>
+          </div>
+        </>
+      )}
       <div className="detail-section-label">gates</div>
       {run.decision.reasons.map((r, i) => (
         <div key={`p${i}`} className="gate-row">
@@ -198,12 +223,15 @@ function RunDetail({ run }: { run: RunRecord }) {
   );
 }
 
-function RunRow({ run, pinned, expanded, onTogglePin, onToggleExpand }: {
+function RunRow({ run, pinned, expanded, fresh, onTogglePin, onToggleExpand, onDismiss, onKill }: {
   run: RunRecord;
   pinned: boolean;
   expanded: boolean;
+  fresh: boolean;
   onTogglePin: (id: string, e: React.MouseEvent) => void;
   onToggleExpand: (id: string) => void;
+  onDismiss: (id: string, e: React.MouseEvent) => void;
+  onKill: (name: string, e: React.MouseEvent) => void;
 }) {
   const isFailed = run.status === 'failed';
   const isRunning = run.status === 'running';
@@ -213,6 +241,7 @@ function RunRow({ run, pinned, expanded, onTogglePin, onToggleExpand }: {
     isFailed && 'is-failed',
     isRunning && 'is-running',
     expanded && 'selected',
+    fresh && 'fresh',
   ].filter(Boolean).join(' ');
 
   const icon = statusIcon(run.status);
@@ -237,6 +266,22 @@ function RunRow({ run, pinned, expanded, onTogglePin, onToggleExpand }: {
         )}
         <span className="run-time">{relativeTime(run.startedAt)}</span>
         <span className="run-duration">{formatDuration(run.startedAt, run.endedAt)}</span>
+        {isRunning && (
+          <span
+            className="run-kill"
+            title="Kill"
+            onClick={(e) => onKill(run.orchestrationName, e)}
+          >
+            {'■'}
+          </span>
+        )}
+        <span
+          className="run-dismiss"
+          title="Dismiss"
+          onClick={(e) => onDismiss(run.runId, e)}
+        >
+          {'×'}
+        </span>
         <span
           className={`run-pin${pinned ? ' pinned' : ''}`}
           title={pinned ? 'Unpin' : 'Pin'}
@@ -255,6 +300,9 @@ export function RunsPanel({ units, events, focusedUnit }: Props) {
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | string>('all');
+  const [freshIds, setFreshIds] = useState<Set<string>>(new Set());
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+  const [showDismissed, setShowDismissed] = useState(false);
   const prevEventsLen = useRef(0);
   const fetchedUnits = useRef(new Set<string>());
 
@@ -298,14 +346,23 @@ export function RunsPanel({ units, events, focusedUnit }: Props) {
           const without = prev.filter(r => r.orchestrationName !== name);
           const merged = [...without, ...updated];
           merged.sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
+          const justFailed = updated.find(r => r.status === 'failed' && !prev.find(p => p.runId === r.runId && p.status === 'failed'));
+          if (justFailed) setExpandedId(justFailed.runId);
+          const newIds = updated.map(r => r.runId);
+          setFreshIds(prev => { const next = new Set(prev); newIds.forEach(id => next.add(id)); return next; });
+          setTimeout(() => setFreshIds(prev => { const next = new Set(prev); newIds.forEach(id => next.delete(id)); return next; }), 2000);
           return merged;
         });
       });
     }
   }, [events]);
 
+  const isFirstFocus = useRef(true);
   useEffect(() => {
-    if (focusedUnit) setFilter(focusedUnit);
+    if (focusedUnit) {
+      if (isFirstFocus.current) { isFirstFocus.current = false; return; }
+      setFilter(focusedUnit);
+    }
   }, [focusedUnit]);
 
   const togglePin = (runId: string, e: React.MouseEvent) => {
@@ -322,12 +379,35 @@ export function RunsPanel({ units, events, focusedUnit }: Props) {
     setExpandedId(prev => prev === runId ? null : runId);
   };
 
+  const kill = (orchestrationName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    api.post(`/api/units/${encodeURIComponent(orchestrationName)}/kill`).catch(() => {});
+  };
+
+  const dismiss = (runId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDismissedIds(prev => { const next = new Set(prev); next.add(runId); return next; });
+    if (expandedId === runId) setExpandedId(null);
+  };
+
+  const dismissAll = () => {
+    const ids = visible
+      .filter(r => !pinnedIds.has(r.runId) && r.status !== 'running')
+      .map(r => r.runId);
+    if (ids.length === 0) return;
+    setDismissedIds(prev => { const next = new Set(prev); ids.forEach(id => next.add(id)); return next; });
+    if (expandedId && ids.includes(expandedId)) setExpandedId(null);
+  };
+
   const filtered = filter === 'all'
     ? runs
     : runs.filter(r => r.orchestrationName === filter || pinnedIds.has(r.runId));
 
-  const pinned = filtered.filter(r => pinnedIds.has(r.runId));
-  const unpinned = filtered.filter(r => !pinnedIds.has(r.runId));
+  const visible = filtered.filter(r => !dismissedIds.has(r.runId));
+  const dismissed = filtered.filter(r => dismissedIds.has(r.runId));
+
+  const pinned = visible.filter(r => pinnedIds.has(r.runId));
+  const unpinned = visible.filter(r => !pinnedIds.has(r.runId));
   const unitNames = [...new Set(runs.map(r => r.orchestrationName))].sort();
 
   return (
@@ -350,6 +430,12 @@ export function RunsPanel({ units, events, focusedUnit }: Props) {
             {name}
           </button>
         ))}
+        {visible.filter(r => !pinnedIds.has(r.runId) && r.status !== 'running').length > 0 && (
+          <>
+            <span className="sep">|</span>
+            <button className="filter" onClick={dismissAll}>dismiss all</button>
+          </>
+        )}
       </div>
       <div className="runs-list">
         {pinned.map(run => (
@@ -358,8 +444,11 @@ export function RunsPanel({ units, events, focusedUnit }: Props) {
             run={run}
             pinned={true}
             expanded={expandedId === run.runId}
+            fresh={freshIds.has(run.runId)}
             onTogglePin={togglePin}
             onToggleExpand={toggleExpand}
+            onDismiss={dismiss}
+            onKill={kill}
           />
         ))}
         {pinned.length > 0 && unpinned.length > 0 && <div className="pin-divider" />}
@@ -369,15 +458,40 @@ export function RunsPanel({ units, events, focusedUnit }: Props) {
             run={run}
             pinned={false}
             expanded={expandedId === run.runId}
+            fresh={freshIds.has(run.runId)}
             onTogglePin={togglePin}
             onToggleExpand={toggleExpand}
+            onDismiss={dismiss}
+            onKill={kill}
           />
         ))}
-        {filtered.length === 0 && (
+        {visible.length === 0 && dismissed.length === 0 && (
           <div style={{ padding: '8px 12px', fontSize: '11px', color: '#555' }}>
             No runs
           </div>
         )}
+        {dismissed.length > 0 && (
+          <div
+            className="dismissed-bar"
+            onClick={() => setShowDismissed(prev => !prev)}
+          >
+            <span className="dismissed-count">{dismissed.length} dismissed</span>
+            <span className="dismissed-chevron">{showDismissed ? '▾' : '▸'}</span>
+          </div>
+        )}
+        {showDismissed && dismissed.map(run => (
+          <RunRow
+            key={run.runId}
+            run={run}
+            pinned={pinnedIds.has(run.runId)}
+            expanded={expandedId === run.runId}
+            fresh={false}
+            onTogglePin={togglePin}
+            onToggleExpand={toggleExpand}
+            onDismiss={dismiss}
+            onKill={kill}
+          />
+        ))}
       </div>
     </>
   );

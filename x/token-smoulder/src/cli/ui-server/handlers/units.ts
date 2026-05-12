@@ -2,13 +2,14 @@ import type { RouteHandler } from '../router.js';
 import { json, readJson } from '../router.js';
 import { listInner } from '../../list.js';
 import { stateInner } from '../../state.js';
-import { runInner } from '../../run.js';
+import { runInner, killActiveRun } from '../../run.js';
 import { unlockInner } from '../../unlock.js';
 import { clearSuppressionInner } from '../../clear-suppression.js';
 import { suppressionsInner } from '../../suppressions.js';
 import { checkDecision } from '../../check.js';
 import { FsStorage } from '../../../adapters/storage/fs.js';
 import { findStateDir } from '../../orchestration.js';
+import { ulid } from 'ulid';
 
 export const getUnits: RouteHandler = async (_req, res) => {
   const result = await listInner();
@@ -27,14 +28,38 @@ export const getUnitState: RouteHandler = async (_req, res, params) => {
 
 export const postUnitRun: RouteHandler = async (_req, res, params) => {
   const name = params['name'] ?? '';
+  const stateDir = await findStateDir();
+  const storage = new FsStorage(stateDir);
+  const active = await storage.listActiveSuppressions();
+  for (const s of active) {
+    if (s.orchestrationName === name) await storage.clearSuppression(s.key);
+  }
   const result = await runInner(name, { section: 'Objective' });
   switch (result.kind) {
     case 'completed':
       json(res, 200, { status: 'completed' });
       return;
-    case 'gate-failed':
+    case 'gate-failed': {
+      const now = new Date().toISOString();
+      const failedReason = result.decision.failedReasons[0] ?? 'gate check failed';
+      const zeroHash = '0'.repeat(64);
+      await storage.saveRun({
+        runId: ulid(),
+        orchestrationName: name,
+        status: 'failed',
+        riskClass: result.decision.riskClass,
+        workHash: result.decision.selectedWorkHash || zeroHash,
+        policyHash: zeroHash,
+        executorHash: zeroHash,
+        startedAt: now,
+        endedAt: now,
+        steps: [],
+        decision: result.decision,
+        failureSignature: failedReason,
+      });
       json(res, 200, { status: 'gate-failed', decision: result.decision });
       return;
+    }
     case 'lock-contention':
       json(res, 409, { error: 'lock contention', message: result.message });
       return;
@@ -91,6 +116,16 @@ export const getUnitRuns: RouteHandler = async (_req, res, params) => {
   const storage = new FsStorage(stateDir);
   const runs = await storage.listRuns(name);
   json(res, 200, runs);
+};
+
+export const postUnitKill: RouteHandler = async (_req, res, params) => {
+  const name = params['name'] ?? '';
+  const killed = killActiveRun(name);
+  if (killed) {
+    json(res, 200, { status: 'killing' });
+  } else {
+    json(res, 404, { error: `no active run for ${name}` });
+  }
 };
 
 export const getUnitCheck: RouteHandler = async (_req, res, params) => {

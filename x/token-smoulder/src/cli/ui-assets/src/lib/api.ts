@@ -5,7 +5,9 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
   if (!res.ok) {
-    throw new Error(`${method} ${path}: ${res.status} ${res.statusText}`);
+    let detail = res.statusText;
+    try { const b = await res.json(); detail = b.message || b.error || detail; } catch {}
+    throw new Error(detail);
   }
   return res.json() as Promise<T>;
 }
