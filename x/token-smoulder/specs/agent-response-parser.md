@@ -1,10 +1,10 @@
 # Spec: agent-response-parser
 
 ## Status
-- **Phase:** tasks
+- **Phase:** done
 - **Owner:** Ash
 - **Created:** 2026-05-12
-- **Last advanced:** 2026-05-12 by `/mini-speckit-next` (plan → tasks)
+- **Last advanced:** 2026-05-12 by `/mini-speckit-next` (tasks → done)
 - **Pillar:** stability
 - **Effort budget when ready to build:** short
 
@@ -73,7 +73,7 @@ The Zod schema uses `.passthrough()` on the outer object so new CLI fields don't
 - **Budget**: short
 
 ## Implement
-_(pending)_
+- Task 1: d6769a2 — RESPONSE_SCHEMA + fake binaries aligned to real CLI envelope
 
 ## Notes / open questions
 - Claude CLI JSON shape (observed): `{ type, subtype, is_error, result, stop_reason, session_id, duration_ms, ... }`

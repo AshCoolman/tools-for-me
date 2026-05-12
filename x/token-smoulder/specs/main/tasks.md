@@ -4,7 +4,7 @@ description: "Task list for Token Smoulder — local quota-aware work dispatcher
 
 # Tasks: Token Smoulder — local quota-aware work dispatcher
 
-**Input**: Design documents from `/Users/ashleycoleman/ac/_mono_public/x/token-smoulder/specs/main/`
+**Input**: Design documents from `./specs/main/`
 **Prerequisites**: plan.md (required), pm/PM.md (authoritative spec), scenarios.md (Given/When/Then user stories), research.md, data-model.md, contracts/, quickstart.md
 
 **Tests**: INCLUDED. The constitution mandates test-first for `src/**` and `scripts/**`, with slice-integration tests at adapter seams.
@@ -20,7 +20,7 @@ description: "Task list for Token Smoulder — local quota-aware work dispatcher
 
 ## Path Conventions
 
-Single project at repo root `/Users/ashleycoleman/ac/_mono_public/x/token-smoulder/`. Source under `src/`, tests under `tests/`, fixtures under `tests/fixtures/`.
+Single project at repo root `./`. Source under `src/`, tests under `tests/`, fixtures under `tests/fixtures/`.
 
 ---
 
@@ -29,14 +29,14 @@ Single project at repo root `/Users/ashleycoleman/ac/_mono_public/x/token-smould
 **Purpose**: Project initialization and basic structure.
 
 - [X] T001 Create source-tree directories per plan: `src/{core,core/predicates,adapters/{agent,quota,contention,input,clock,storage},cli,lib}`, `tests/{unit,integration,fixtures/orchestration}`, `orchestration/.gitkeep`, `.orchestration-state/.gitkeep`
-- [X] T002 Update `package.json` to declare `"bin": { "token-smoulder": "bin/token-smoulder" }`, dependencies, and scripts (`build`, `test`, `typecheck`, `lint`) at `/Users/ashleycoleman/ac/_mono_public/x/token-smoulder/package.json`
+- [X] T002 Update `package.json` to declare `"bin": { "token-smoulder": "bin/token-smoulder" }`, dependencies, and scripts (`build`, `test`, `typecheck`, `lint`) at `./package.json`
 - [X] T003 [P] Add runtime deps `commander@^12`, `zod@^3`, `@inquirer/prompts@^5`, `ulid@^2` via `yarn add`
 - [X] T004 [P] Add dev deps `vitest@^1`, `@types/node@^20`, `typescript@^5`, `eslint@^9`, `@typescript-eslint/parser`, `@typescript-eslint/eslint-plugin` via `yarn add -D`
-- [X] T005 [P] Configure strict TypeScript at `/Users/ashleycoleman/ac/_mono_public/x/token-smoulder/tsconfig.json` (`"strict": true`, `"module": "NodeNext"`, `"target": "ES2022"`, includes `src` + `tests`)
-- [X] T006 [P] Configure vitest at `/Users/ashleycoleman/ac/_mono_public/x/token-smoulder/vitest.config.ts` with `tests/**/*.test.ts` glob and `pool: 'forks'`
-- [X] T007 [P] Configure ESLint at `/Users/ashleycoleman/ac/_mono_public/x/token-smoulder/.eslintrc.cjs` per `/Users/ashleycoleman/ac/_mono_public/.dev/docs/code-style.md` (no error-swallowing, no collector barrels in app code, `unknown` at boundaries)
-- [X] T008 [P] Append to `/Users/ashleycoleman/ac/_mono_public/x/token-smoulder/.gitignore`: `.orchestration-state/`, `orchestration/*` (preserving `orchestration/.gitkeep`), `dist/`, `coverage/`
-- [X] T009 Create executable wrapper at `/Users/ashleycoleman/ac/_mono_public/x/token-smoulder/bin/token-smoulder` that runs `npx --package=tsx@<pinned> --yes -- tsx /Users/ashleycoleman/ac/_mono_public/x/token-smoulder/src/cli/index.ts "$@"`; `chmod +x`
+- [X] T005 [P] Configure strict TypeScript at `./tsconfig.json` (`"strict": true`, `"module": "NodeNext"`, `"target": "ES2022"`, includes `src` + `tests`)
+- [X] T006 [P] Configure vitest at `./vitest.config.ts` with `tests/**/*.test.ts` glob and `pool: 'forks'`
+- [X] T007 [P] Configure ESLint at `./.eslintrc.cjs` per `.dev/docs/code-style.md` (no error-swallowing, no collector barrels in app code, `unknown` at boundaries)
+- [X] T008 [P] Append to `./.gitignore`: `.orchestration-state/`, `orchestration/*` (preserving `orchestration/.gitkeep`), `dist/`, `coverage/`
+- [X] T009 Create executable wrapper at `./bin/token-smoulder` that runs `npx --package=tsx@<pinned> --yes -- tsx ./src/cli/index.ts "$@"`; `chmod +x`
 
 ---
 
@@ -210,7 +210,7 @@ Single project at repo root `/Users/ashleycoleman/ac/_mono_public/x/token-smould
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [X] T101 [P] Update `/Users/ashleycoleman/ac/_mono_public/x/token-smoulder/README.md` to point at `specs/main/quickstart.md` and the constitution
+- [X] T101 [P] Update `./README.md` to point at `specs/main/quickstart.md` and the constitution
 - [X] T102 [P] Run `npx tsc --noEmit` against full `src/` + `tests/`; fix any strict-mode issues without weakening types
 - [X] T103 [P] Run `npx eslint src tests` per `.dev/docs/code-style.md`; fix violations without disabling rules
 - [X] T104 [P] Smoke test: run quickstart.md end-to-end against `tests/fixtures/orchestration/valid-readonly/`; assert event sequence in `events.ndjson`

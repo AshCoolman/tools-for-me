@@ -129,7 +129,7 @@ machine code MUST declare one mechanical PASS/FAIL stop condition before the fir
 edit, confirm it currently FAILS, and re-run to confirm it PASSES after the edit.
 
 **Style and provenance**: The active code style is
-`/Users/ashleycoleman/ac/_mono_public/.dev/docs/code-style.md`. Notable rules: do not
+`.dev/docs/code-style.md` (repo root). Notable rules: do not
 swallow errors, preserve async semantics, treat `JSON.parse`/`fetch`/SDK calls as
 fallible boundaries, do not rename values as they cross boundaries, no collector
 barrels in app code.
@@ -161,6 +161,6 @@ the project owner.
 evaluates the proposed plan against the five Core Principles. Violations are listed
 in the plan's Complexity Tracking table with a written justification or the plan is
 revised. Runtime style guidance lives at
-`/Users/ashleycoleman/ac/_mono_public/.dev/docs/code-style.md`.
+`.dev/docs/code-style.md` (repo root).
 
 **Version**: 1.0.0 | **Ratified**: 2026-05-03 | **Last Amended**: 2026-05-03

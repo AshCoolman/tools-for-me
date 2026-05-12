@@ -1,10 +1,10 @@
 # Spec: web-ui-layout
 
 ## Status
-- **Phase:** implement
+- **Phase:** done
 - **Owner:** Ash
 - **Created:** 2026-05-10
-- **Last advanced:** 2026-05-10 by `/mini-speckit-next` (tasks → implement, Task 1)
+- **Last advanced:** 2026-05-10 by `/mini-speckit-next` (implement → done)
 - **Pillar:** DX
 - **Effort budget when ready to build:** medium
 
@@ -201,7 +201,11 @@ AddTab replaces AddDropZone + SourceShelf + Verdict. Full content-area tab with 
 - **Budget:** medium
 
 ## Implement
-- Task 1: (pending commit)
+- Task 1: 8405f8d
+- Task 2: dd2a16e
+- Task 3: 24cc3c0
+- Task 4: 250a736
+- Task 5: b63ee9e
 
 ## Notes / open questions
 - The 3-column layout was introduced in `specs/web-ui-clarity.md` Task 1. This spec supersedes that layout decision.

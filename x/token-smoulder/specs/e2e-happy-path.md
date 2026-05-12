@@ -1,10 +1,10 @@
 # Spec: e2e-happy-path
 
 ## Status
-- **Phase:** tasks
+- **Phase:** done
 - **Owner:** Ash
 - **Created:** 2026-05-11
-- **Last advanced:** 2026-05-11 by `/mini-speckit-next` (plan → tasks)
+- **Last advanced:** 2026-05-11 by `/mini-speckit-next` (implement → done)
 - **Pillar:** DX
 - **Effort budget when ready to build:** medium
 
@@ -119,7 +119,7 @@ Test that clicking "+" in the tabbar (or "Add new work" in sidebar) opens the ad
 - **Budget:** short
 
 ## Implement
-_(pending)_
+- Tasks 1-5: 43d73b6 (all tasks shipped in a single commit — small, cohesive suite)
 
 ## Notes / open questions
 - The existing `ui.test.ts` helper `startServer()` can be extracted or duplicated for the e2e suite.
