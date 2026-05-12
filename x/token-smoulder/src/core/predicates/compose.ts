@@ -37,6 +37,7 @@ export type PolicyContext = {
   storage: {
     loadLatestRun(orchestrationName: string): Promise<{ workHash: string; status: string } | null>;
   };
+  quotaSource: import('../../adapters/quota/interface.js').QuotaSource;
 };
 
 export type Policy = (ctx: PolicyContext) => Predicate;

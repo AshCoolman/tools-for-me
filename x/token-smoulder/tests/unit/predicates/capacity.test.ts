@@ -19,16 +19,16 @@ const snap = (overrides: Partial<QuotaSnapshot>): QuotaSnapshot => ({
 });
 
 describe('enoughQuota', () => {
-  it('passes when fraction above default threshold (0.25)', async () => {
-    const r = await enoughQuota('week', fakeQuota(snap({ week: 0.5 })))();
+  it('passes when fraction above threshold', async () => {
+    const r = await enoughQuota('week', fakeQuota(snap({ week: 0.5 })), 0.25)();
     expect(r.ok).toBe(true);
   });
 
-  it('fails when fraction below default threshold', async () => {
-    const r = await enoughQuota('week', fakeQuota(snap({ week: 0.1 })))();
+  it('fails when fraction below threshold', async () => {
+    const r = await enoughQuota('week', fakeQuota(snap({ week: 0.1 })), 0.25)();
     expect(r.ok).toBe(false);
-    expect(r.reason).toMatch(/0\.1/);
-    expect(r.reason).toMatch(/0\.25/);
+    expect(r.reason).toMatch(/0\.100/);
+    expect(r.reason).toMatch(/0\.250/);
   });
 
   it('returns false on BoundaryError (conservative failure)', async () => {
@@ -37,7 +37,7 @@ describe('enoughQuota', () => {
         throw new BoundaryError({ endpoint: 'q', args: {}, code: 1, original: 'x' });
       },
     };
-    const r = await enoughQuota('week', broken)();
+    const r = await enoughQuota('week', broken, 0.25)();
     expect(r.ok).toBe(false);
     expect(r.reason).toContain('boundary');
   });
