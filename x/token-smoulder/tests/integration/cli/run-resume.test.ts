@@ -18,7 +18,7 @@ const writeFakeClaude = async (dir: string) => {
     p,
     `#!/usr/bin/env bash
 read -r prompt
-echo '{"text":"ok","needsInput":false}'
+echo '{"type":"result","subtype":"success","is_error":false,"result":"ok","stop_reason":"end_turn","session_id":"fake","duration_ms":100}'
 `,
   );
   await chmod(p, 0o755);
