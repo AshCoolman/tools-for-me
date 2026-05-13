@@ -5,6 +5,22 @@ export type Work = {
   section(name: string): string;
 };
 
+export function list(section: string): string[] {
+  const items: string[] = [];
+  let buf = '';
+  for (const line of section.split('\n')) {
+    const m = /^\d+\.\s+(.*)/.exec(line);
+    if (m) {
+      if (buf) items.push(buf.trim());
+      buf = m[1]!;
+    } else if (buf && line.trim()) {
+      buf += ' ' + line.trim();
+    }
+  }
+  if (buf) items.push(buf.trim());
+  return items;
+}
+
 export function parseWork(md: string): Work {
   const sections = new Map<string, string>();
   const lines = md.split('\n');
