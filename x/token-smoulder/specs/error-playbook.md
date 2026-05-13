@@ -1,10 +1,10 @@
 # Spec: error-playbook
 
 ## Status
-- **Phase:** tasks
+- **Phase:** done
 - **Owner:** Ash
 - **Created:** 2026-05-12
-- **Last advanced:** 2026-05-12 by `/mini-speckit-next` (plan → tasks)
+- **Last advanced:** 2026-05-13 by `/mini-speckit-next` (tasks → done)
 - **Pillar:** DX / observability
 - **Effort budget when ready to build:** medium
 
@@ -118,11 +118,11 @@ type PlaybookRule = {
 - **Budget**: short
 
 ## Implement
-- Task 1: `src/core/playbook.ts` + `tests/unit/playbook.test.ts` — data model, matcher, I/O
-- Task 2: `src/core/runner.ts` + `src/adapters/storage/internal-types.ts` — match on failure, store interpretation
-- Task 3: `src/cli/ui-server/handlers/playbook.ts` + `src/cli/ui.ts` — CRUD API endpoints
-- Task 4: `src/core/playbook.ts` + `src/core/runner.ts` — Claude fallback (async interpret + auto-append rule)
-- Task 5: `src/cli/ui-assets/src/components/RunsPanel.tsx` + `src/cli/ui-assets/src/app.css` — render interpretation in RunDetail
+- Task 1: `4051722` — `src/core/playbook.ts` + `tests/unit/playbook.test.ts` — data model, matcher, I/O
+- Task 2: `671b56a` — `src/core/runner.ts` + `src/adapters/storage/internal-types.ts` — match on failure, store interpretation
+- Task 3: `4051722` — `src/cli/ui-server/handlers/playbook.ts` + `src/cli/ui.ts` — CRUD API endpoints
+- Task 4: `4051722` — `src/core/playbook.ts` + `src/core/runner.ts` — Claude fallback (async interpret + auto-append rule)
+- Task 5: `3fce2c2` — `src/cli/ui-assets/src/components/RunsPanel.tsx` + `src/cli/ui-assets/src/app.css` — render interpretation in RunDetail
 
 ## Notes / open questions
 - Playbook location: `state/error-playbook.json` (lives alongside locks, runs, events)
