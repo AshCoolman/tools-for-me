@@ -6,6 +6,7 @@ import type { HumanInputChannel } from '../adapters/input/interface.js';
 import type { DispatchDecision, PromptStepState, RiskClass } from './types.js';
 import type { RunRecord } from '../adapters/storage/internal-types.js';
 import type { Work } from './work-parser.js';
+export { list } from './work-parser.js';
 import { isPidAlive, releaseLock } from './locks.js';
 import { normalizeFailureSignature, recordFailure } from './suppression.js';
 import { loadPlaybook, matchError, interpretError } from './playbook.js';
@@ -17,6 +18,7 @@ export type ExecutorPlan = {
   constraints: string;
   promptFlow: string[];
   stopConditions: string[];
+  agentFlags?: string[];
 };
 
 export type ExecutorContext = { work: Work };
@@ -110,7 +112,7 @@ export class Runner {
     record.sessionId = session.sessionId;
     await storage.saveSession(session);
 
-    return this.runSteps(record, 0, session.sessionId);
+    return this.runSteps(record, 0, session.sessionId, input.plan.agentFlags);
   }
 
   async resume(input: ResumeInput): Promise<RunnerResult> {
@@ -156,13 +158,14 @@ export class Runner {
     previous.status = 'running';
     await storage.saveRun(previous);
 
-    return this.runSteps(previous, fromIdx, sessionId);
+    return this.runSteps(previous, fromIdx, sessionId, input.plan.agentFlags);
   }
 
   private async runSteps(
     record: RunRecord,
     fromIdx: number,
     sessionId: string,
+    agentFlags?: string[],
   ): Promise<RunnerResult> {
     const { storage, agent, contention, contentionThresholdMs, lockScope } = this.opts;
     const { steps } = record;
@@ -238,7 +241,7 @@ export class Runner {
 
         const t0 = Date.now();
         try {
-          const resp = await agent.sendPrompt({ sessionId, prompt: step.prompt });
+          const resp = await agent.sendPrompt({ sessionId, prompt: step.prompt, agentFlags });
           step.status = 'completed';
           step.completedAt = new Date().toISOString();
           await storage.saveRun(record);

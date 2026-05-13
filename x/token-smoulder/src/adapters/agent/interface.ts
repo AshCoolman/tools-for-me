@@ -24,7 +24,7 @@ export type AgentSessionStatus =
 
 export type AgentClient = {
   startSession(args: { owner: AgentOwner; orchestrationName: string }): Promise<AgentSession>;
-  sendPrompt(args: { sessionId: string; prompt: string }): Promise<AgentResponse>;
+  sendPrompt(args: { sessionId: string; prompt: string; agentFlags?: string[] }): Promise<AgentResponse>;
   getSessionStatus(args: { sessionId: string }): Promise<AgentSessionStatus>;
   stopSession(args: { sessionId: string; reason: string }): Promise<void>;
 };

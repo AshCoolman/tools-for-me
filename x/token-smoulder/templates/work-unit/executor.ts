@@ -1,4 +1,4 @@
-import { executeAgentWork } from '../../src/core/runner.js';
+import { executeAgentWork, list } from '../../src/core/runner.js';
 
 export const executor = executeAgentWork(({ work }) => ({
   riskClass: 'readonly',
@@ -7,4 +7,5 @@ export const executor = executeAgentWork(({ work }) => ({
   constraints: work.section('Constraints'),
   promptFlow: ['TODO(token-smoulder): replace with one or more concrete agent prompts'],
   stopConditions: ['fatal_error'],
+  agentFlags: ['--dangerously-skip-permissions'],
 }));

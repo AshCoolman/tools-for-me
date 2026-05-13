@@ -57,7 +57,7 @@ export class ClaudeCodeAgent implements AgentClient {
     return session;
   }
 
-  sendPrompt(args: { sessionId: string; prompt: string }): Promise<AgentResponse> {
+  sendPrompt(args: { sessionId: string; prompt: string; agentFlags?: string[] }): Promise<AgentResponse> {
     const state = this.sessions.get(args.sessionId);
     if (!state) {
       return Promise.reject(
@@ -73,7 +73,7 @@ export class ClaudeCodeAgent implements AgentClient {
     return new Promise<AgentResponse>((resolve, reject) => {
       const child = spawn(
         this.bin,
-        ['-p', '--output-format', 'json'],
+        [...(args.agentFlags ?? []), '-p', '--output-format', 'json'],
         {
           env: { ...this.env, TOKEN_SMOULDER_OWNER: 'scheduler' },
           stdio: ['pipe', 'pipe', 'pipe'],
