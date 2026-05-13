@@ -15,7 +15,8 @@
   },
   "workspaces": [
     "x/*",
-    "x/*/*"
+    "x/*/*",
+    "packages/*"
   ],
   "devDependencies": {
     "husky": "^9.1.0",
