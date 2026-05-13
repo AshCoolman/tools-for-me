@@ -41,8 +41,10 @@ function isUiRunning(): boolean {
 }
 
 const SERVICES: Entry[] = [
-  { label: 'daemon', desc: 'Background dispatcher (30s tick)', cmd: [BIN, 'daemon'] },
-  { label: 'ui',     desc: 'Web UI at 127.0.0.1:8788',        cmd: [BIN, 'ui'] },
+  { label: 'daemon',       desc: 'Background dispatcher (30s tick)',    cmd: [BIN, 'daemon'] },
+  { label: 'ui',           desc: 'Web UI at 127.0.0.1:8788',           cmd: [BIN, 'ui'] },
+  { label: 'daemon:watch', desc: 'Daemon with file-watch restart',     cmd: [BIN, '--watch', 'daemon'] },
+  { label: 'serve:watch',  desc: 'Web UI with file-watch restart',     cmd: [BIN, '--watch', 'ui'] },
 ];
 
 const TASKS: Entry[] = [

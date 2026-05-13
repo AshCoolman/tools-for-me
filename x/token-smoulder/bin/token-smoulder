@@ -30,11 +30,14 @@ if [ -z "${TOKEN_SMOULDER_NO_DOTENV:-}" ]; then
   [ "${PWD}" != "${PKG_ROOT}" ] && load_env "${PWD}/.env"
 fi
 
+WATCH=""
+if [ "${1:-}" = "--watch" ]; then WATCH=watch; shift; fi
+
 # Prefer the locally-installed tsx (works for both `npm i -g .` installs and
 # yarn-workspace dev), fall back to npx if missing.
 LOCAL_TSX="${PKG_ROOT}/node_modules/.bin/tsx"
 if [ -x "${LOCAL_TSX}" ]; then
-  exec "${LOCAL_TSX}" "${PKG_ROOT}/src/cli/index.ts" "$@"
+  exec "${LOCAL_TSX}" ${WATCH} "${PKG_ROOT}/src/cli/index.ts" "$@"
 else
-  exec npx --package=tsx@^4 --yes -- tsx "${PKG_ROOT}/src/cli/index.ts" "$@"
+  exec npx --package=tsx@^4 --yes -- tsx ${WATCH} "${PKG_ROOT}/src/cli/index.ts" "$@"
 fi
