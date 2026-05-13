@@ -318,7 +318,9 @@ export function RunsPanel({ units, events, focusedUnit }: Props) {
     Promise.all(newUnits.map(u => fetchUnitRuns(u.name))).then(results => {
       const newRuns = results.flat();
       setRuns(prev => {
-        const merged = [...prev, ...newRuns];
+        const byId = new Map(prev.map(r => [r.runId, r]));
+        for (const r of newRuns) byId.set(r.runId, r);
+        const merged = [...byId.values()];
         merged.sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
         return merged;
       });
@@ -343,8 +345,9 @@ export function RunsPanel({ units, events, focusedUnit }: Props) {
     for (const name of toRefetch) {
       fetchUnitRuns(name).then(updated => {
         setRuns(prev => {
-          const without = prev.filter(r => r.orchestrationName !== name);
-          const merged = [...without, ...updated];
+          const byId = new Map(prev.filter(r => r.orchestrationName !== name).map(r => [r.runId, r]));
+          for (const r of updated) byId.set(r.runId, r);
+          const merged = [...byId.values()];
           merged.sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
           const justFailed = updated.find(r => r.status === 'failed' && !prev.find(p => p.runId === r.runId && p.status === 'failed'));
           if (justFailed) setExpandedId(justFailed.runId);
