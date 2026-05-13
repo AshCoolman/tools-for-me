@@ -69,6 +69,12 @@ export function CodePane({ value, onChange, language, readOnly = false }: Props)
   const viewRef = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+  const valueRef = useRef(value);
+  valueRef.current = value;
+  const languageRef = useRef(language);
+  languageRef.current = language;
+  const readOnlyRef = useRef(readOnly);
+  readOnlyRef.current = readOnly;
 
   const createView = useCallback(() => {
     if (!containerRef.current) return;
@@ -80,17 +86,18 @@ export function CodePane({ value, onChange, language, readOnly = false }: Props)
       }
     });
 
+    const ro = readOnlyRef.current;
     const state = EditorState.create({
-      doc: value,
+      doc: valueRef.current,
       extensions: [
         theme,
         highlight,
         lineNumbers(),
         highlightActiveLine(),
-        langExtension(language),
+        langExtension(languageRef.current),
         keymap.of([...defaultKeymap, indentWithTab]),
-        EditorState.readOnly.of(readOnly),
-        EditorView.editable.of(!readOnly),
+        EditorState.readOnly.of(ro),
+        EditorView.editable.of(!ro),
         updateListener,
       ],
     });

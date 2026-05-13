@@ -89,7 +89,7 @@ test.describe('bottom panel — runs list', () => {
     await page.goto(server.baseURL);
 
     const panel = page.locator('.panel');
-    const allBtn = panel.locator('.filter', { hasText: 'all' });
+    const allBtn = panel.locator('.filter').filter({ hasText: /^all$/ });
     await expect(allBtn).toHaveClass(/active/);
 
     await page.locator('.unit .name', { hasText: 'valid-readonly' }).click();
