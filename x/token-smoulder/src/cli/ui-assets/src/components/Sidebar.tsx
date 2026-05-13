@@ -4,6 +4,18 @@ import { DaemonControls } from './DaemonControls';
 type UnitItem = { name: string; riskClass: string; latestStatus: string | null };
 type QuotaSnap = { session: number; week: number };
 type SuppressionRecord = { key: string; orchestrationName: string; reason: string };
+type ClaudeUsage = { fiveHour: number; sevenDay: number; scrapedAt: string };
+
+function timeAgo(iso: string): string {
+  if (!iso) return '';
+  const ms = Date.now() - new Date(iso).getTime();
+  if (ms < 60_000) return 'just now';
+  const mins = Math.floor(ms / 60_000);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return 'stale';
+}
 
 type Props = {
   units: UnitItem[];
@@ -15,6 +27,7 @@ type Props = {
   daemon: { running: boolean };
   onRefreshDaemon: () => void;
   quota: QuotaSnap | null;
+  claudeUsage: ClaudeUsage | null;
   width: number;
 };
 
@@ -33,7 +46,7 @@ function statusLabel(status: string | null): string {
   return status;
 }
 
-export function Sidebar({ units, suppressions, activeTab, onOpenTab, onOpenAddTab, onClearSuppression, daemon, onRefreshDaemon, quota, width }: Props) {
+export function Sidebar({ units, suppressions, activeTab, onOpenTab, onOpenAddTab, onClearSuppression, daemon, onRefreshDaemon, quota, claudeUsage, width }: Props) {
   const getSuppression = (name: string) =>
     suppressions.find(s => s.orchestrationName === name);
 
@@ -83,6 +96,13 @@ export function Sidebar({ units, suppressions, activeTab, onOpenTab, onOpenAddTa
 
       <div className="sidebar-footer">
         <DaemonControls running={daemon.running} onRefresh={onRefreshDaemon} />
+        {claudeUsage && (
+          <div className="claude-usage">
+            <span>5h:{Math.round(claudeUsage.fiveHour)}%</span>
+            <span>7d:{Math.round(claudeUsage.sevenDay)}%</span>
+            <span className="claude-usage-ago">{timeAgo(claudeUsage.scrapedAt)}</span>
+          </div>
+        )}
         {quota && (
           <>
             <QuotaGauge label="week" value={quota.week} />

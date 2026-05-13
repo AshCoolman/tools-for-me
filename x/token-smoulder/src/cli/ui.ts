@@ -7,6 +7,7 @@ import { readJson, json } from './ui-server/router.js';
 import { SseHub } from './ui-server/sse.js';
 import { getUnits, getUnitState, getUnitRuns, postUnitRun, postUnitKill, postUnitUnlock, postUnitClearSuppression, getSuppressions, getUnitCheck } from './ui-server/handlers/units.js';
 import { getQuota, getExternal } from './ui-server/handlers/quota.js';
+import { getClaudeUsage } from './ui-server/handlers/claude-usage.js';
 import { getDaemonStatus, postDaemonStart, postDaemonStop } from './ui-server/handlers/daemon.js';
 import { getPrefs, putPrefs } from './ui-server/handlers/prefs.js';
 import { postAdd, getSources, postWidenAllowlist } from './ui-server/handlers/add.js';
@@ -86,6 +87,7 @@ export async function uiCommand(opts: UiOptions): Promise<number> {
   router.on('POST', '/api/add', postAdd);
   router.on('GET', '/api/sources', getSources);
   router.on('POST', '/api/units/:name/widen-allowlist', postWidenAllowlist);
+  router.on('GET', '/api/claude-usage', getClaudeUsage);
   router.on('GET', '/api/playbook', getPlaybook);
   router.on('POST', '/api/playbook', postPlaybook);
   router.on('PUT', '/api/playbook/:id', putPlaybookRule);
@@ -225,8 +227,11 @@ export async function uiCommand(opts: UiOptions): Promise<number> {
   sse.start();
 
   let lastEventTs = new Date().toISOString();
+  let sseTick = 0;
+  const CLAUDE_USAGE_URL = process.env.TOKEN_SMOULDER_CLAUDE_USAGE_URL ?? 'http://127.0.0.1:8787/api/usage';
 
   const pollTimer = setInterval(async () => {
+    sseTick++;
     if (sse.size === 0) return;
     try {
       const units = await listInner();
@@ -241,6 +246,15 @@ export async function uiCommand(opts: UiOptions): Promise<number> {
       const active = await detector.isActiveWithin(30 * 60_000);
       sse.sendEvent('external', JSON.stringify({ active }));
     } catch { /* ignore */ }
+    if (sseTick % 30 === 1) {
+      try {
+        const resp = await fetch(CLAUDE_USAGE_URL, { signal: AbortSignal.timeout(2000) });
+        if (resp.ok) {
+          const data = await resp.json();
+          sse.sendEvent('claude-usage', JSON.stringify(data));
+        }
+      } catch { /* ignore */ }
+    }
     try {
       const result = await eventsInner({ since: '5s', limit: 50 });
       if (result.kind === 'ok') {

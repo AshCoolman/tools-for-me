@@ -132,6 +132,8 @@ body { font-family: var(--sans); color: var(--fg); }
 .gauge-bar { flex: 1; height: 4px; background: var(--bg-4); border-radius: 2px; overflow: hidden; }
 .gauge-fill { height: 100%; border-radius: 2px; }
 .quota-pct { min-width: 28px; text-align: right; }
+.claude-usage { display: flex; gap: 8px; font-size: 11px; color: var(--fg); padding: 4px 0 2px; font-family: var(--mono); }
+.claude-usage-ago { color: var(--fg-dim); font-size: 10px; }
 .daemon-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--fg-dim); }
 .daemon-btn {
   font-size: 10px; padding: 1px 8px; border-radius: 3px;

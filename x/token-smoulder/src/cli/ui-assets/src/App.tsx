@@ -22,6 +22,7 @@ type QuotaSnap = { session: number; week: number };
 type DaemonStatus = { running: boolean; pid: number | null };
 type EventEntry = { name: string; timestamp: string; orchestrationName?: string; runId?: string; payload?: Record<string, unknown> };
 type SuppressionRecord = { key: string; orchestrationName: string; reason: string };
+type ClaudeUsage = { fiveHour: number; sevenDay: number; scrapedAt: string };
 function useResize(axis: 'x' | 'y', storageKey: string, fallback: number, min: number, max: number) {
   const [size, setSize] = useState(() => readLS(storageKey, fallback));
   const sizeRef = useRef(size);
@@ -63,6 +64,7 @@ export function App() {
   const [daemon, setDaemon] = useState<DaemonStatus>({ running: false, pid: null });
   const [events, setEvents] = useState<EventEntry[]>([]);
   const [suppressions, setSuppressions] = useState<SuppressionRecord[]>([]);
+  const [claudeUsage, setClaudeUsage] = useState<ClaudeUsage | null>(null);
 
   const [openTabs, setOpenTabs] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<string | null>(null);
@@ -101,12 +103,27 @@ export function App() {
       .then(seed => setEvents(seed))
       .catch(() => {});
 
-    const disconnect = connectSse('/events', ['units', 'quota', 'external', 'event'], (event, data) => {
+    api.get<{ payload?: { session?: { percent?: number }; week?: { percent?: number }; scrapedAt?: string } }>('/api/claude-usage')
+      .then(data => {
+        const p = data.payload;
+        if (p?.session?.percent != null && p?.week?.percent != null) {
+          setClaudeUsage({ fiveHour: p.session.percent, sevenDay: p.week.percent, scrapedAt: p.scrapedAt ?? '' });
+        }
+      })
+      .catch(() => {});
+
+    const disconnect = connectSse('/events', ['units', 'quota', 'external', 'event', 'claude-usage'], (event, data) => {
       try {
         const parsed = JSON.parse(data);
         if (event === 'units') { setUnits(parsed.items); refreshSuppressions(); }
         if (event === 'quota') setQuota({ session: parsed.session, week: parsed.week });
         if (event === 'external') setExternalActive(parsed.active);
+        if (event === 'claude-usage') {
+          const p = parsed.payload;
+          if (p?.session?.percent != null && p?.week?.percent != null) {
+            setClaudeUsage({ fiveHour: p.session.percent, sevenDay: p.week.percent, scrapedAt: p.scrapedAt ?? '' });
+          }
+        }
         if (event === 'event') setEvents(prev => {
           if (prev.some(e => e.timestamp === parsed.timestamp && e.name === parsed.name && e.orchestrationName === parsed.orchestrationName)) return prev;
           return [...prev.slice(-199), parsed];
@@ -222,6 +239,7 @@ export function App() {
           daemon={daemon}
           onRefreshDaemon={refreshDaemon}
           quota={quota}
+          claudeUsage={claudeUsage}
           width={sidebar.size}
         />
         <div className="resize-h" onMouseDown={sidebar.onMouseDown} />
