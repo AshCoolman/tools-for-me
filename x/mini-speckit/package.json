@@ -12,7 +12,18 @@
   "homepage": "https://github.com/AshCoolman/tools-for-me/tree/main/x/mini-speckit",
   "bugs": "https://github.com/AshCoolman/tools-for-me/issues",
   "keywords": ["claude-code", "codex", "speckit", "spec", "lifecycle", "bash", "slash-command", "skill"],
-  "private": true,
+  "files": [
+    "bin/",
+    "commands/",
+    "gemini/",
+    "skills/",
+    "install.sh",
+    "NEXT.md.template",
+    "CONVENTIONS.md",
+    "SHARED.md",
+    "lifecycle.md",
+    "template.md"
+  ],
   "bin": {
     "mini-speckit": "bin/mini-speckit"
   },
