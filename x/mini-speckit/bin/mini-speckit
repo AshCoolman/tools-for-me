@@ -46,7 +46,7 @@ Claude entrypoints: /mini-speckit-specify to create a spec, /mini-speckit-next t
 Codex entrypoint: installed project skill at .codex/skills/mini-speckit
 Gemini entrypoints: /mini-speckit:specify and /mini-speckit:next, plus the installed project skill
 Repo setup: run mini-speckit install in the target repo
-Specs live at: specs/<name>.md
+Specs live at: specs/<name>/work.md
 Priority: checks NEXT.md at repo root for human-pinned priorities before scoring.
 Not appropriate for: multi-task, cross-file impact, env vars, public surface contracts.
 EOH

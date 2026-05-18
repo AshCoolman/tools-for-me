@@ -4,7 +4,7 @@ description: Create a new mini-speckit single-file spec from a short description
 
 # /mini-speckit-specify
 
-Create a new mini-speckit spec in `specs/*.md` from a short user description.
+Create a new mini-speckit spec in `specs/*/work.md` from a short user description.
 
 ## Use this for
 
@@ -19,9 +19,9 @@ Do **not** use this for:
 ## Steps
 
 1. Read the user's description.
-2. Choose a concise slug for `specs/<slug>.md`.
+2. Choose a concise slug for `specs/<slug>/work.md`.
 3. If that slug already exists, choose a nearby safe variant instead of blocking unless ambiguity is dangerous.
-4. Create `specs/<slug>.md` with this shape:
+4. Create `specs/<slug>/work.md` with this shape (create the directory first):
 
 ```md
 # Spec: <slug>

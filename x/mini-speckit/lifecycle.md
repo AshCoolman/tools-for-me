@@ -19,4 +19,4 @@ One rung per `/mini-speckit-next` invocation. No combining `specify + plan` in o
 
 ## Why these rungs
 
-The rung names match GitHub Spec Kit deliberately. Migration goes both ways without renaming the lifecycle: outgrow → `specs/<feature>/` (speckit-native), shrink/take-over → `specs/<feature>.md` (single-file). See `mini-speckit/README.md#migration`.
+The rung names match GitHub Spec Kit deliberately. Migration goes both ways without renaming the lifecycle: outgrow → `specs/<feature>/` (speckit-native), shrink/take-over → `specs/<feature>/work.md` (single-file). See `mini-speckit/README.md#migration`.

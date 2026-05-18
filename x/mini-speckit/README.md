@@ -62,7 +62,7 @@ Gemini:
 
 Specs live at:
 
-- `specs/<name>.md`
+- `specs/<name>/work.md`
 
 ## Uninstall from a repo
 

@@ -9,19 +9,19 @@ Advance an existing mini-speckit spec one rung at a time.
 ## Scope
 
 `/mini-speckit-next` only operates on:
-- single-file specs at `specs/<name>.md`
+- single-file specs at `specs/<name>/work.md`
 
 It does **not** operate on:
 - speckit-native specs under `specs/<feature>/`
 - `idea-files/*.md` or `IDEAS.md`
 
-If no mini-speckit-format specs exist in the repo, stop with: `No mini-speckit specs found at specs/*.md. To start one, run /mini-speckit-specify <description>.`
+If no mini-speckit-format specs exist in the repo, stop with: `No mini-speckit specs found at specs/*/work.md. To start one, run /mini-speckit-specify <description>.`
 
 ## Inventory and ranking
 
 1. Check `NEXT.md` first.
    - If the top item clearly points at a mini-speckit spec or task, honor it before scoring.
-2. Otherwise inventory `specs/*.md` only.
+2. Otherwise inventory `specs/*/work.md` only.
 3. Parse `## Status` `Phase:`.
 4. Apply hard demotions before scoring:
    - blocked on outside-team dependency

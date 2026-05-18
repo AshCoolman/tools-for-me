@@ -1,6 +1,6 @@
 ---
 name: mini-speckit
-description: Use when the user wants to create, advance, or manage a mini-speckit single-file spec in `specs/*.md`, mentions `mini-speckit`, or wants a lightweight alternative to full speckit for small work.
+description: Use when the user wants to create, advance, or manage a mini-speckit single-file spec in `specs/*/work.md`, mentions `mini-speckit`, or wants a lightweight alternative to full speckit for small work.
 ---
 
 # mini-speckit
@@ -9,7 +9,7 @@ This skill is the host-neutral mini-speckit workflow.
 
 Use it when the user:
 - wants to create a mini-speckit spec from a short description
-- wants to work on a mini-speckit spec in `specs/*.md`
+- wants to work on a mini-speckit spec in `specs/*/work.md`
 - mentions `mini-speckit`
 - wants to advance a single-file mini-speckit spec one rung
 - wants the next mini-speckit task implemented
@@ -28,9 +28,9 @@ Some hosts also expose explicit commands for this workflow:
 ### Creating a spec
 
 1. Read the user request.
-2. Choose a concise slug for `specs/<slug>.md`.
+2. Choose a concise slug for `specs/<slug>/work.md`.
 3. If the slug already exists, choose a nearby safe variant unless ambiguity is dangerous.
-4. Create `specs/<slug>.md`.
+4. Create `specs/<slug>/work.md` (create the directory first).
 5. Populate title, status metadata, and the `Specify` block.
 6. Keep it cheap and readable.
 7. Do not create `Plan` or `Tasks` unless the user asked for more than specify.
@@ -73,8 +73,8 @@ _(pending)_
 
 1. Check `NEXT.md` first.
    - If the top item clearly points at a mini-speckit spec or task, honor it before scoring.
-2. Otherwise inventory only top-level `specs/*.md`.
-3. Ignore `specs/<feature>/` full speckit directories.
+2. Otherwise inventory only `specs/*/work.md`.
+3. Ignore `specs/<feature>/` dirs that don't contain `work.md` — those are full speckit.
 4. Parse `## Status` and the `Phase:` value.
 5. Apply hard demotions before scoring:
    - blocked on outside-team dependency

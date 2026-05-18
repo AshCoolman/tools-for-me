@@ -11,7 +11,16 @@
   },
   "homepage": "https://github.com/AshCoolman/tools-for-me/tree/main/x/mini-speckit",
   "bugs": "https://github.com/AshCoolman/tools-for-me/issues",
-  "keywords": ["claude-code", "codex", "speckit", "spec", "lifecycle", "bash", "slash-command", "skill"],
+  "keywords": [
+    "claude-code",
+    "codex",
+    "speckit",
+    "spec",
+    "lifecycle",
+    "bash",
+    "slash-command",
+    "skill"
+  ],
   "files": [
     "bin/",
     "commands/",
@@ -28,9 +37,14 @@
     "mini-speckit": "bin/mini-speckit"
   },
   "scripts": {
-    "test": "echo 'no tests yet' && exit 0"
+    "test": "echo 'no tests yet' && exit 0",
+    "release": "npm publish"
   },
   "engines": {
     "node": ">=20"
-  }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "color": "#333333"
 }

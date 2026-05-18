@@ -6,7 +6,7 @@ Common rules `/mini-speckit-next` references. Slimmed copy scoped to what mini-s
 
 ## Inventory sources
 
-- `specs/*.md` (top-level, single-file, mini-speckit format) — the only artefacts `/mini-speckit-next` advances. Look for `## Status` with a `Phase:` line; files without that line are not mini-speckit specs.
+- `specs/*/work.md` (single-file, mini-speckit format) — the only artefacts `/mini-speckit-next` advances. Look for `## Status` with a `Phase:` line; files without that line are not mini-speckit specs.
 - `NEXT.md` at repo root — free-form human (+ auto) nominations; top of the list wins.
 - `git log --oneline -30` — recent direction; abandoned attempts.
 
