@@ -1,6 +1,6 @@
 {
   "name": "@ashcoolman/mini-speckit",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Lightweight specify-plan-tasks-implement lifecycle for trivially small, single-doc deliverables. A lower-ceremony alternative to full Spec Kit.",
   "license": "MIT",
   "author": "Ash Coolman <banquet.poll-4g@icloud.com>",

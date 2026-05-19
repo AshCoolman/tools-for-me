@@ -16,6 +16,7 @@ mini-speckit — lightweight spec lifecycle for single-doc deliverables
 
 Usage:
   mini-speckit --help       Show this help
+  mini-speckit --version    Print version
   mini-speckit --agents     Compact summary for AI agents
   mini-speckit install      Install host-native agent support into this repo
   mini-speckit uninstall    Remove host-native agent support from this repo
@@ -54,6 +55,7 @@ EOH
 
 case "${1:---help}" in
   -h|--help)    cmd_help ;;
+  -v|--version) node -e "process.stdout.write(require('$PKG_DIR/package.json').version + '\n')" ;;
   --agents)     cmd_agents ;;
   install)      exec "$PKG_DIR/install.sh" install "${2:-all}" ;;
   uninstall)    exec "$PKG_DIR/install.sh" uninstall "${2:-all}" ;;
