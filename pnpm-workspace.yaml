@@ -2,6 +2,10 @@ packages:
   - 'x/*'
   - 'x/*/*'
   - 'packages/*'
+
+overrides:
+  prettier: '2.8.8'
+
 minimumReleaseAge: 20160
 ignoreScripts: true
 nodeLinker: hoisted
