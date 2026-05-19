@@ -1,0 +1,7 @@
+packages:
+  - 'x/*'
+  - 'x/*/*'
+  - 'packages/*'
+minimumReleaseAge: 20160
+ignoreScripts: true
+nodeLinker: hoisted
