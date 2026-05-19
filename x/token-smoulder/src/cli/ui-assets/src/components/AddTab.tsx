@@ -32,9 +32,21 @@ type SourceCandidate = {
 type Props = {
   onConverted: (name: string) => void;
   onRefreshUnits: () => void;
+  unitsEmpty?: boolean;
 };
 
-export function AddTab({ onConverted, onRefreshUnits }: Props) {
+export function GhostWorkUnitCTA({ onClick }: { onClick: () => void }) {
+  return (
+    <div className="ghost-cta-wrap">
+      <button className="ghost-cta-card" onClick={onClick}>
+        <span className="ghost-cta-title">No work units yet</span>
+        <span className="ghost-cta-sub">add your first</span>
+      </button>
+    </div>
+  );
+}
+
+export function AddTab({ onConverted, onRefreshUnits, unitsEmpty = false }: Props) {
   const [idea, setIdea] = useState('');
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -126,6 +138,12 @@ export function AddTab({ onConverted, onRefreshUnits }: Props) {
 
   return (
     <div className="add-content">
+      {unitsEmpty && (
+        <div className="ghost-cta-banner">
+          <span className="ghost-cta-banner-dot">●</span>
+          <span>No work units yet — start by adding one below.</span>
+        </div>
+      )}
       <h3>Add new work</h3>
       <p>Describe a task to automate. The system creates a definition, policy, and executor for it.</p>
 

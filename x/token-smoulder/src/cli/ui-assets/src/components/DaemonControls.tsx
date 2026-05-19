@@ -25,8 +25,11 @@ export function DaemonControls({ running, onRefresh }: Props) {
   return (
     <>
       <div className="daemon-row">
+        <span className={`daemon-dot ${running ? 'running' : 'stopped'}`} />
         <span>daemon</span>
-        <span className="dim">{running ? 'running' : 'stopped'}</span>
+        <span className={`daemon-pill ${running ? 'running' : 'stopped'}`}>
+          {running ? 'running' : 'stopped'}
+        </span>
         <span style={{ flex: 1 }} />
         {running ? (
           <button className="daemon-btn" onClick={stop}>stop</button>
@@ -34,19 +37,18 @@ export function DaemonControls({ running, onRefresh }: Props) {
           <button className="daemon-btn" onClick={start}>start</button>
         )}
       </div>
-      {!running && (
-        <div className="daemon-row" style={{ marginTop: 4 }}>
-          <span>tick</span>
-          <input
-            className="tick-input"
-            type="number"
-            value={tick}
-            onChange={e => setTick(e.target.value)}
-            aria-label="tick interval in milliseconds"
-          />
-          <span className="dim">ms</span>
-        </div>
-      )}
+      <div className="daemon-row" style={{ marginTop: 4 }}>
+        <span>tick</span>
+        <input
+          className="tick-input"
+          type="number"
+          value={tick}
+          onChange={e => setTick(e.target.value)}
+          readOnly={running}
+          aria-label="tick interval in milliseconds"
+        />
+        <span className="dim">ms</span>
+      </div>
     </>
   );
 }

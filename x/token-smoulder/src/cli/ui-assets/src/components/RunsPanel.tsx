@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { api } from '../lib/api';
+import { friendlyGateName, RISK_HELP } from '../lib/help';
 
 type Step = {
   index: number;
@@ -45,6 +46,7 @@ type Props = {
   units: { name: string }[];
   events: EventEntry[];
   focusedUnit: string | null;
+  onSelectUnit?: (name: string) => void;
 };
 
 const RUN_EVENTS = new Set([
@@ -98,17 +100,6 @@ function stepStatusChar(status: string): React.ReactNode {
     case 'skipped': return '○';
     default: return '○';
   }
-}
-
-function friendlyGateName(raw: string): string {
-  const cleaned = raw
-    .replace(/^(pass|fail|gate)[:_-]\s*/i, '')
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/[_-]/g, ' ')
-    .trim()
-    .toLowerCase();
-  const colonIdx = cleaned.indexOf(':');
-  return colonIdx > 0 ? cleaned.slice(0, colonIdx).trim() : cleaned;
 }
 
 function Pipeline({ decision, steps }: { decision: Decision; steps: Step[] }) {
@@ -223,13 +214,15 @@ function RunDetail({ run }: { run: RunRecord }) {
   );
 }
 
-function RunRow({ run, pinned, expanded, fresh, onTogglePin, onToggleExpand, onDismiss, onKill }: {
+function RunRow({ run, pinned, expanded, fresh, focused, onTogglePin, onToggleExpand, onSelectUnit, onDismiss, onKill }: {
   run: RunRecord;
   pinned: boolean;
   expanded: boolean;
   fresh: boolean;
+  focused: boolean;
   onTogglePin: (id: string, e: React.MouseEvent) => void;
   onToggleExpand: (id: string) => void;
+  onSelectUnit?: (name: string) => void;
   onDismiss: (id: string, e: React.MouseEvent) => void;
   onKill: (name: string, e: React.MouseEvent) => void;
 }) {
@@ -241,6 +234,7 @@ function RunRow({ run, pinned, expanded, fresh, onTogglePin, onToggleExpand, onD
     isFailed && 'is-failed',
     isRunning && 'is-running',
     expanded && 'selected',
+    focused && 'focused',
     fresh && 'fresh',
   ].filter(Boolean).join(' ');
 
@@ -254,11 +248,17 @@ function RunRow({ run, pinned, expanded, fresh, onTogglePin, onToggleExpand, onD
 
   return (
     <>
-      <div className={rowClasses} onClick={() => onToggleExpand(run.runId)}>
+      <div
+        className={rowClasses}
+        onClick={() => { onToggleExpand(run.runId); onSelectUnit?.(run.orchestrationName); }}
+      >
         <span className={`run-status ${icon.cls}`}>{icon.char}</span>
         <span className="run-unit">{run.orchestrationName}</span>
         <Pipeline decision={run.decision} steps={run.steps} />
-        <span className="run-risk">{run.riskClass}</span>
+        <span
+          className="run-risk"
+          title={RISK_HELP[run.riskClass] ?? run.riskClass}
+        >{run.riskClass}</span>
         {displayError ? (
           <span className="run-error">{displayError}</span>
         ) : (
@@ -295,7 +295,7 @@ function RunRow({ run, pinned, expanded, fresh, onTogglePin, onToggleExpand, onD
   );
 }
 
-export function RunsPanel({ units, events, focusedUnit }: Props) {
+export function RunsPanel({ units, events, focusedUnit, onSelectUnit }: Props) {
   const [runs, setRuns] = useState<RunRecord[]>([]);
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -360,14 +360,6 @@ export function RunsPanel({ units, events, focusedUnit }: Props) {
     }
   }, [events]);
 
-  const isFirstFocus = useRef(true);
-  useEffect(() => {
-    if (focusedUnit) {
-      if (isFirstFocus.current) { isFirstFocus.current = false; return; }
-      setFilter(focusedUnit);
-    }
-  }, [focusedUnit]);
-
   const togglePin = (runId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setPinnedIds(prev => {
@@ -411,13 +403,18 @@ export function RunsPanel({ units, events, focusedUnit }: Props) {
 
   const pinned = visible.filter(r => pinnedIds.has(r.runId));
   const unpinned = visible.filter(r => !pinnedIds.has(r.runId));
-  const unitNames = [...new Set(runs.map(r => r.orchestrationName))].sort();
+  const unitNames = [...new Set<string>([
+    ...units.map(u => u.name),
+    ...runs.map(r => r.orchestrationName),
+  ])].sort();
+  const filteredUnitHasNoRuns = filter !== 'all' && !runs.some(r => r.orchestrationName === filter);
 
   return (
     <>
       <div className="runs-panel-header">
         <span className="panel-title">RUNS</span>
         <span className="sep">|</span>
+        <span className="filter-label">filter:</span>
         <button
           className={`filter${filter === 'all' ? ' active' : ''}`}
           onClick={() => setFilter('all')}
@@ -434,10 +431,7 @@ export function RunsPanel({ units, events, focusedUnit }: Props) {
           </button>
         ))}
         {visible.filter(r => !pinnedIds.has(r.runId) && r.status !== 'running').length > 0 && (
-          <>
-            <span className="sep">|</span>
-            <button className="filter" onClick={dismissAll}>dismiss all</button>
-          </>
+          <button className="filter dismiss-all-btn" onClick={dismissAll}>dismiss all</button>
         )}
       </div>
       <div className="runs-list">
@@ -448,8 +442,10 @@ export function RunsPanel({ units, events, focusedUnit }: Props) {
             pinned={true}
             expanded={expandedId === run.runId}
             fresh={freshIds.has(run.runId)}
+            focused={focusedUnit !== null && run.orchestrationName === focusedUnit}
             onTogglePin={togglePin}
             onToggleExpand={toggleExpand}
+            onSelectUnit={onSelectUnit}
             onDismiss={dismiss}
             onKill={kill}
           />
@@ -462,15 +458,17 @@ export function RunsPanel({ units, events, focusedUnit }: Props) {
             pinned={false}
             expanded={expandedId === run.runId}
             fresh={freshIds.has(run.runId)}
+            focused={focusedUnit !== null && run.orchestrationName === focusedUnit}
             onTogglePin={togglePin}
             onToggleExpand={toggleExpand}
+            onSelectUnit={onSelectUnit}
             onDismiss={dismiss}
             onKill={kill}
           />
         ))}
         {visible.length === 0 && dismissed.length === 0 && (
-          <div style={{ padding: '8px 12px', fontSize: '11px', color: '#555' }}>
-            No runs
+          <div className="placeholder runs-empty">
+            {filteredUnitHasNoRuns ? `${filter} has not run yet` : 'No runs'}
           </div>
         )}
         {dismissed.length > 0 && (
@@ -489,8 +487,10 @@ export function RunsPanel({ units, events, focusedUnit }: Props) {
             pinned={pinnedIds.has(run.runId)}
             expanded={expandedId === run.runId}
             fresh={false}
+            focused={focusedUnit !== null && run.orchestrationName === focusedUnit}
             onTogglePin={togglePin}
             onToggleExpand={toggleExpand}
+            onSelectUnit={onSelectUnit}
             onDismiss={dismiss}
             onKill={kill}
           />
