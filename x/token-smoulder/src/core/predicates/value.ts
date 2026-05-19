@@ -1,3 +1,5 @@
+import { stat } from 'node:fs/promises';
+import { join } from 'node:path';
 import type { Predicate } from '../types.js';
 
 export const TODO_SENTINEL = 'TODO(token-smoulder)';
@@ -55,6 +57,17 @@ export function queuedWorkExists(ctx: ValueCtx): Predicate {
       return { ok: false, reason: 'queuedWorkExists: current work already completed' };
     }
     return { ok: true, reason: 'queuedWorkExists' };
+  };
+}
+
+export function noBlockFile(unitDir: string): Predicate {
+  return async () => {
+    try {
+      await stat(join(unitDir, 'BLOCKED.md'));
+      return { ok: false, reason: 'noBlockFile: BLOCKED.md exists — human action required' };
+    } catch {
+      return { ok: true, reason: 'noBlockFile' };
+    }
   };
 }
 

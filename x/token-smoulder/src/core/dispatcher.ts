@@ -23,6 +23,7 @@ export type DispatchInput = {
   executorHash: string;
   riskClass: RiskClass;
   storageRoot: string;
+  force?: boolean;
 };
 
 export type DispatcherOptions = {
@@ -63,6 +64,26 @@ export class Dispatcher {
           suppressionKey: suppression.key,
           reason: suppression.reason,
         },
+      });
+      return decision;
+    }
+
+    if (input.force) {
+      const evaluatedAt = new Date().toISOString();
+      const decision: DispatchDecision = {
+        shouldRun: true,
+        orchestrationName: input.orchestrationName,
+        reasons: ['force:manual-override'],
+        failedReasons: [],
+        riskClass: input.riskClass,
+        selectedWorkHash: input.workHash,
+        evaluatedAt,
+      };
+      await storage.appendEvent({
+        name: 'dispatch_allowed',
+        timestamp: evaluatedAt,
+        orchestrationName: input.orchestrationName,
+        payload: { decisionId: ulid(), reasons: decision.reasons, failedReasons: [], forced: true },
       });
       return decision;
     }

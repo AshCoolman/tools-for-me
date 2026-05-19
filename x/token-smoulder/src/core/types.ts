@@ -59,3 +59,55 @@ export const PredicateResultSchema = z.union([
 export type PredicateResult = z.infer<typeof PredicateResultSchema>;
 
 export type Predicate = () => Promise<PredicateResult>;
+
+export const QueueStateSchema = z.enum([
+  'pending',
+  'running',
+  'done',
+  'cooldown',
+  'disabled',
+  'failed',
+  'suppressed',
+]);
+export type QueueState = z.infer<typeof QueueStateSchema>;
+
+export const LoopConfigSchema = z.object({
+  maxRunsPerDay: z.number().int().min(1),
+  cooldownMs: z.number().int().min(60_000),
+});
+export type LoopConfig = z.infer<typeof LoopConfigSchema>;
+
+export const QueueEntrySchema = z.object({
+  name: z.string().min(1),
+  enabled: z.boolean(),
+  lifecycle: z.enum(['once', 'loop']),
+  queueState: QueueStateSchema,
+  loopConfig: LoopConfigSchema.nullable(),
+  dailyRunCount: z.number().int().nonnegative(),
+  lastCompletedAt: z.string().nullable(),
+  cooldownUntil: z.string().nullable(),
+  lastWorkHash: z.string().nullable().optional(),
+});
+export type QueueEntry = z.infer<typeof QueueEntrySchema>;
+
+export const DailyBudgetSchema = z.object({
+  ceiling: z.number().min(0).max(1),
+  cycleDurationMs: z.number().int().positive(),
+  cycleStartedAt: z.string().nullable(),
+  snapshotAtCycleStart: z.number().nullable(),
+});
+export type DailyBudget = z.infer<typeof DailyBudgetSchema>;
+
+export const GateProximitySchema = z.object({
+  name: z.string().min(1),
+  passing: z.number().int().nonnegative(),
+  blocking: z.array(z.string()),
+  position: z.number().int().positive().nullable(),
+});
+export type GateProximity = z.infer<typeof GateProximitySchema>;
+
+export const QueueFileSchema = z.object({
+  entries: z.record(z.string(), QueueEntrySchema),
+  budget: DailyBudgetSchema,
+});
+export type QueueFile = z.infer<typeof QueueFileSchema>;

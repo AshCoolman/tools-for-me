@@ -27,7 +27,7 @@ export function killActiveRun(orchestrationName: string): boolean {
   return true;
 }
 
-export type RunOptions = { json: boolean; once: boolean; resume?: boolean; dryRun?: boolean; section?: string };
+export type RunOptions = { json: boolean; once: boolean; resume?: boolean; dryRun?: boolean; section?: string; force?: boolean };
 
 export type RunResult =
   | { kind: 'completed' }
@@ -40,7 +40,7 @@ export type RunResult =
 
 export async function runInner(
   name: string,
-  opts: { resume?: boolean; dryRun?: boolean; section?: string },
+  opts: { resume?: boolean; dryRun?: boolean; section?: string; force?: boolean },
 ): Promise<RunResult> {
   const orchDir = await findOrchestrationDir();
   const stateDir = await findStateDir();
@@ -130,6 +130,7 @@ export async function runInner(
     executorHash: orch.executorHash,
     riskClass: orch.riskClass,
     storageRoot: stateDir,
+    force: opts.force,
   });
 
   if (!decision.shouldRun) return { kind: 'gate-failed', decision };
@@ -189,7 +190,7 @@ export async function runInner(
 }
 
 export async function runCommand(name: string, opts: RunOptions): Promise<number> {
-  const result = await runInner(name, opts);
+  const result = await runInner(name, { resume: opts.resume, dryRun: opts.dryRun, section: opts.section, force: opts.force });
   switch (result.kind) {
     case 'completed':
       return 0;

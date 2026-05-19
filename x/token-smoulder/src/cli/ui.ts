@@ -5,13 +5,15 @@ import { fileURLToPath } from 'node:url';
 import { Router } from './ui-server/router.js';
 import { readJson, json } from './ui-server/router.js';
 import { SseHub } from './ui-server/sse.js';
-import { getUnits, getUnitState, getUnitRuns, postUnitRun, postUnitKill, postUnitUnlock, postUnitClearSuppression, getSuppressions, getUnitCheck } from './ui-server/handlers/units.js';
+import { getUnits, getUnitState, getUnitRuns, postUnitRun, postUnitForceRun, postUnitKill, postUnitUnlock, postUnitClearSuppression, patchQueueEntry, getSuppressions, getUnitCheck } from './ui-server/handlers/units.js';
 import { getQuota, getExternal } from './ui-server/handlers/quota.js';
 import { getClaudeUsage } from './ui-server/handlers/claude-usage.js';
 import { getDaemonStatus, postDaemonStart, postDaemonStop } from './ui-server/handlers/daemon.js';
 import { getPrefs, putPrefs } from './ui-server/handlers/prefs.js';
 import { postAdd, getSources, postWidenAllowlist } from './ui-server/handlers/add.js';
 import { getPlaybook, postPlaybook, putPlaybookRule, deletePlaybookRule } from './ui-server/handlers/playbook.js';
+import { postFileReveal, postFileOpen } from './ui-server/handlers/files.js';
+import { getQueue, getQueueBudget } from './ui-server/handlers/queue.js';
 import { listInner } from './list.js';
 import { eventsInner } from './events.js';
 import { findOrchestrationDir } from './orchestration.js';
@@ -73,9 +75,13 @@ export async function uiCommand(opts: UiOptions): Promise<number> {
   router.on('GET', '/api/units/:name/runs', getUnitRuns);
   router.on('GET', '/api/units/:name/check', getUnitCheck);
   router.on('POST', '/api/units/:name/run', postUnitRun);
+  router.on('POST', '/api/units/:name/force-run', postUnitForceRun);
   router.on('POST', '/api/units/:name/kill', postUnitKill);
   router.on('POST', '/api/units/:name/unlock', postUnitUnlock);
   router.on('POST', '/api/units/:name/clear-suppression', postUnitClearSuppression);
+  router.on('PATCH', '/api/queue/entries/:name', patchQueueEntry);
+  router.on('GET', '/api/queue', getQueue);
+  router.on('GET', '/api/queue/budget', getQueueBudget);
   router.on('GET', '/api/suppressions', getSuppressions);
   router.on('GET', '/api/quota', getQuota);
   router.on('GET', '/api/external', getExternal);
@@ -92,6 +98,8 @@ export async function uiCommand(opts: UiOptions): Promise<number> {
   router.on('POST', '/api/playbook', postPlaybook);
   router.on('PUT', '/api/playbook/:id', putPlaybookRule);
   router.on('DELETE', '/api/playbook/:id', deletePlaybookRule);
+  router.on('POST', '/api/units/:name/files/:file/reveal', postFileReveal);
+  router.on('POST', '/api/units/:name/files/:file/open', postFileOpen);
 
   router.on('GET', '/api/units/:name/work', async (_req, res, params) => {
     const name = params['name'] ?? '';

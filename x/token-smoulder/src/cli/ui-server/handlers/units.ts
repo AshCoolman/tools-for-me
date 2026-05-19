@@ -9,6 +9,9 @@ import { suppressionsInner } from '../../suppressions.js';
 import { checkDecision } from '../../check.js';
 import { FsStorage } from '../../../adapters/storage/fs.js';
 import { findStateDir } from '../../orchestration.js';
+import { loadQueue, saveQueue, disableEntry, enableEntry } from '../../../core/queue.js';
+import { checkBudget } from '../../../core/budget.js';
+import { selectQuotaSource } from '../../wiring.js';
 import { ulid } from 'ulid';
 
 export const getUnits: RouteHandler = async (_req, res) => {
@@ -98,6 +101,41 @@ export const postUnitUnlock: RouteHandler = async (_req, res, params) => {
   }
 };
 
+export const postUnitForceRun: RouteHandler = async (_req, res, params) => {
+  const name = params['name'] ?? '';
+  let budgetWarning: string | undefined;
+  try {
+    const stateDir = await findStateDir();
+    const queue = await loadQueue(stateDir);
+    const quota = selectQuotaSource();
+    const { status: budgetStatus } = await checkBudget(queue.budget, quota, Date.now());
+    if (budgetStatus.exhausted) {
+      budgetWarning = 'Daily budget is exhausted. Force-run proceeds but autonomous dispatch will remain paused.';
+    }
+  } catch { /* budget check failure doesn't block force-run */ }
+  const result = await runInner(name, { force: true, section: 'Objective' });
+  switch (result.kind) {
+    case 'completed':
+      json(res, 200, { status: 'completed', forced: true, ...(budgetWarning ? { warning: budgetWarning } : {}) });
+      return;
+    case 'gate-failed':
+      json(res, 200, { status: 'gate-failed', decision: result.decision });
+      return;
+    case 'lock-contention':
+      json(res, 409, { error: 'lock contention', message: result.message });
+      return;
+    case 'boundary-error':
+      json(res, 502, { error: 'boundary', message: result.message });
+      return;
+    case 'error':
+      json(res, 500, { error: result.message });
+      return;
+    default:
+      json(res, 200, { status: result.kind });
+      return;
+  }
+};
+
 export const postUnitClearSuppression: RouteHandler = async (req, res, params) => {
   const body = await readJson(req) as { key?: string };
   const key = body.key ?? params['name'] ?? '';
@@ -126,6 +164,28 @@ export const postUnitKill: RouteHandler = async (_req, res, params) => {
   } else {
     json(res, 404, { error: `no active run for ${name}` });
   }
+};
+
+export const patchQueueEntry: RouteHandler = async (req, res, params) => {
+  const name = params['name'] ?? '';
+  const body = await readJson(req) as { enabled?: boolean };
+  const stateDir = await findStateDir();
+  const queue = await loadQueue(stateDir);
+  const entry = queue.entries[name];
+  if (!entry) {
+    json(res, 404, { error: `no queue entry for ${name}` });
+    return;
+  }
+  if (typeof body.enabled === 'boolean') {
+    if (body.enabled && !entry.enabled) {
+      queue.entries[name] = enableEntry(entry, 'pending');
+    } else if (!body.enabled && entry.enabled) {
+      const { entry: disabled } = disableEntry(entry);
+      queue.entries[name] = disabled;
+    }
+  }
+  await saveQueue(stateDir, queue);
+  json(res, 200, queue.entries[name]);
 };
 
 export const getUnitCheck: RouteHandler = async (_req, res, params) => {

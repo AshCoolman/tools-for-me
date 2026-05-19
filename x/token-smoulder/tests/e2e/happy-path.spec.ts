@@ -85,7 +85,7 @@ test.describe('bottom panel — runs list', () => {
     await expect(panel.locator('.run-detail')).toContainText('test prompt for e2e');
   });
 
-  test('filter buttons switch between all and focused unit', async ({ page }) => {
+  test('clicking a filter chip switches active filter; focus does not auto-switch', async ({ page }) => {
     await page.goto(server.baseURL);
 
     const panel = page.locator('.panel');
@@ -93,11 +93,16 @@ test.describe('bottom panel — runs list', () => {
     await expect(allBtn).toHaveClass(/active/);
 
     await page.locator('.unit .name', { hasText: 'valid-readonly' }).click();
+    await expect(allBtn).toHaveClass(/active/);
+
     const unitBtn = panel.locator('.filter', { hasText: 'valid-readonly' });
+    await unitBtn.click();
     await expect(unitBtn).toHaveClass(/active/);
+    await expect(allBtn).not.toHaveClass(/active/);
 
     await allBtn.click();
     await expect(allBtn).toHaveClass(/active/);
+    await expect(unitBtn).not.toHaveClass(/active/);
   });
 });
 

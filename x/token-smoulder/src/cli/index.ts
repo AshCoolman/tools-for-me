@@ -51,6 +51,7 @@ async function main(argv: string[]): Promise<number> {
     .option('--resume', 'resume a previously paused/failed run', false)
     .option('--dry-run', 'print what would run without executing', false)
     .option('--json', 'emit JSON output', false)
+    .option('--force', 'bypass gate evaluation (still respects locks and suppression)', false)
     .option('--section <name>', 'work.md section to evaluate', 'Objective')
     .action(async (name: string, opts) => {
       process.exitCode = await runCommand(name, {
@@ -58,6 +59,7 @@ async function main(argv: string[]): Promise<number> {
         once: !!opts.once,
         resume: !!opts.resume,
         dryRun: !!opts.dryRun,
+        force: !!opts.force,
         section: opts.section,
       });
     });

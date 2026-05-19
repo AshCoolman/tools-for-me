@@ -89,6 +89,7 @@ export const EventNameSchema = z.enum([
   'quota_insufficient',
   'tick_overran',
   'policy_changed',
+  'budget_exhausted',
 ]);
 export type EventName = z.infer<typeof EventNameSchema>;
 
