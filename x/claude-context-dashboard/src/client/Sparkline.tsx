@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { scaleLinear, scaleTime } from "d3-scale";
-import { curveStepAfter, line as d3Line } from "d3-shape";
+import { curveMonotoneX, line as d3Line } from "d3-shape";
 
 export type SparkPoint = { t: number; ctx: number; cum: number };
 export type SparkSeverity = "ok" | "warn" | "high" | "crit";
@@ -76,7 +76,7 @@ export const RowSparkline = ({
     const ctxLine = d3Line<SparkPoint>()
       .x((d) => xs(d.t))
       .y((d) => yCtx(d.ctx))
-      .curve(curveStepAfter);
+      .curve(curveMonotoneX);
 
     const linePath = ctxLine(data) ?? "";
     const last = data[data.length - 1];
@@ -127,7 +127,7 @@ export const RowSparkline = ({
             d={paths.linePath}
             stroke={`url(#lf-${uid})`}
             fill="none"
-            strokeWidth={2}
+            strokeWidth={1.5}
           />
           <circle
             cx={paths.lastX}

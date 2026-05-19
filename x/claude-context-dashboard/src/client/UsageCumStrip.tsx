@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { scaleLinear, scaleTime } from "d3-scale";
-import { area as d3Area, curveStepAfter } from "d3-shape";
+import { area as d3Area, curveMonotoneX } from "d3-shape";
 import { useElementSize } from "./useElementSize.js";
 import { CHART_MARGIN_LEFT, CHART_MARGIN_RIGHT } from "./Chart.js";
 import { FeatureControlBar, useFeature } from "./Features.js";
@@ -230,7 +230,7 @@ export const UsageCumStrip = ({
         .x((d) => xs(d.t))
         .y0(centerY)
         .y1((d) => ySession(d.cum))
-        .curve(curveStepAfter),
+        .curve(curveMonotoneX),
     [xs, ySession, centerY],
   );
 
@@ -240,7 +240,7 @@ export const UsageCumStrip = ({
         .x((d) => xs(d.t))
         .y0(centerY)
         .y1((d) => yWeek(d.cum))
-        .curve(curveStepAfter),
+        .curve(curveMonotoneX),
     [xs, yWeek, centerY],
   );
 

@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type CSSProperties,
   type ReactNode,
@@ -165,8 +166,6 @@ const familyOf = (id: string): string => {
   }
   return parts[0];
 };
-const depthOf = (id: string): number => id.split(".").length - 1;
-
 const isVisible = (state: FeaturesState, id: string): boolean => {
   const parts = id.split(".");
   let acc = "";
@@ -259,78 +258,8 @@ export const useFeature = (id: string): boolean => {
   return isVisible(state, id);
 };
 
-export const FeatureControl = ({ id }: { id: string }) => {
-  const { state, editMode, setEnabled } = useFeaturesCtx();
-  const node = NODE_BY_ID.get(id);
-  if (!node || !editMode) return null;
-
-  const enabled = state[id] ?? node.defaultOn;
-  const family = familyOf(id);
-  const depth = depthOf(id);
-  const hue = FAMILY_HUE[family] ?? 220;
-  const sizeClass =
-    depth === 0
-      ? "feature-toggle--big"
-      : depth === 1
-      ? "feature-toggle--mid"
-      : "feature-toggle--small";
-
-  return (
-    <button
-      type="button"
-      className={`feature-toggle ${sizeClass} ${enabled ? "feature-toggle--on" : "feature-toggle--off"}`}
-      style={{ "--family-hue": hue } as CSSProperties}
-      onClick={(e) => {
-        e.stopPropagation();
-        if (node.forced) return;
-        setEnabled(id, !enabled);
-      }}
-      title={
-        node.forced
-          ? `${node.label} (always on)`
-          : `${node.label} — ${enabled ? "on" : "off"}`
-      }
-      disabled={node.forced}
-    >
-      <svg
-        className="feature-toggle__icon"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        {enabled ? (
-          <>
-            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
-            <circle cx="12" cy="12" r="3" />
-          </>
-        ) : (
-          <>
-            <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
-            <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c6.5 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
-            <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3.5 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
-            <line x1="2" y1="2" x2="22" y2="22" />
-          </>
-        )}
-      </svg>
-      <span className="feature-toggle__label">{node.label}</span>
-    </button>
-  );
-};
-
-export const FeatureControlBar = ({ ids, className = "" }: { ids: string[]; className?: string }) => {
-  const { editMode } = useFeaturesCtx();
-  if (!editMode) return null;
-  return (
-    <div className={`feature-control-bar ${className}`}>
-      {ids.map((id) => (
-        <FeatureControl key={id} id={id} />
-      ))}
-    </div>
-  );
+export const FeatureControlBar = (_props: { ids: string[]; className?: string }) => {
+  return null;
 };
 
 export const Feature = ({
@@ -363,10 +292,10 @@ export const Feature = ({
 
   return (
     <Tag
+      data-feature-id={id}
       className={`feature-edit feature-edit--${as} ${enabled ? "feature-edit--on" : "feature-edit--off"} ${className}`}
       style={styleVars}
     >
-      <FeatureControl id={id} />
       <Tag className="feature-edit__inner">{children}</Tag>
     </Tag>
   );
@@ -383,31 +312,169 @@ export const VisibilityButton = () => {
       aria-label="Edit visible components"
     >
       <svg
-        viewBox="0 0 24 24"
-        width="16"
-        height="16"
+        viewBox="0 0 14 14"
+        width="14"
+        height="14"
         fill="none"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
         aria-hidden="true"
       >
         {editMode ? (
           <>
-            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
-            <circle cx="12" cy="12" r="3" />
+            <path d="M1 7s2.5-4.5 6-4.5S13 7 13 7s-2.5 4.5-6 4.5S1 7 1 7z" />
+            <circle cx="7" cy="7" r="1.75" />
           </>
         ) : (
           <>
-            <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
-            <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c6.5 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
-            <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3.5 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
-            <line x1="2" y1="2" x2="22" y2="22" />
+            <path d="M5.45 5.45a1.75 1.75 0 1 0 2.47 2.47" />
+            <path d="M6.1 2.77A5.5 5.5 0 0 1 7 2.5c3.5 0 6 4.5 6 4.5a10 10 0 0 1-.97 1.56" />
+            <path d="M3.86 3.86A10 10 0 0 0 1 7s2.5 4.5 6 4.5a5.7 5.7 0 0 0 3.14-.86" />
+            <line x1="1" y1="1" x2="13" y2="13" />
           </>
         )}
       </svg>
     </button>
+  );
+};
+
+const SidebarNode = ({
+  node,
+  depth,
+}: {
+  node: FeatureNode;
+  depth: number;
+}) => {
+  const { state, setEnabled } = useFeaturesCtx();
+  const enabled = state[node.id] ?? node.defaultOn;
+  const family = familyOf(node.id);
+  const hue = FAMILY_HUE[family] ?? 220;
+
+  return (
+    <>
+      <button
+        type="button"
+        data-sidebar-id={node.id}
+        className={`vis-sidebar__item ${enabled ? "vis-sidebar__item--on" : "vis-sidebar__item--off"}`}
+        style={
+          {
+            "--family-hue": hue,
+            paddingLeft: 12 + depth * 14,
+          } as CSSProperties
+        }
+        onClick={() => !node.forced && setEnabled(node.id, !enabled)}
+        disabled={node.forced}
+      >
+        <span className="vis-sidebar__eye" aria-hidden>
+          {enabled ? "●" : "○"}
+        </span>
+        <span className="vis-sidebar__label">{node.label}</span>
+      </button>
+      {node.children?.map((child) => (
+        <SidebarNode key={child.id} node={child} depth={depth + 1} />
+      ))}
+    </>
+  );
+};
+
+const useConnectorLines = (
+  editMode: boolean,
+  svgRef: React.RefObject<SVGSVGElement | null>,
+  state: FeaturesState,
+) => {
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg || !editMode) return;
+
+    let rafId: number;
+    const NS = "http://www.w3.org/2000/svg";
+
+    const update = () => {
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+      for (const node of FLAT) {
+        const sidebarEl = document.querySelector(
+          `[data-sidebar-id="${node.id}"]`,
+        );
+        const featureEl = document.querySelector(
+          `[data-feature-id="${node.id}"]`,
+        );
+        if (!sidebarEl || !featureEl) continue;
+
+        const sRect = sidebarEl.getBoundingClientRect();
+        const fRect = featureEl.getBoundingClientRect();
+
+        if (fRect.bottom < 0 || fRect.top > window.innerHeight) continue;
+        if (sRect.bottom < 0 || sRect.top > window.innerHeight) continue;
+
+        const hue = FAMILY_HUE[familyOf(node.id)] ?? 220;
+        const color = `hsl(${hue}, 70%, 55%)`;
+
+        const sx = sRect.left;
+        const sy = sRect.top + sRect.height / 2;
+        const ex = fRect.right + 4;
+        const ey = Math.max(0, Math.min(window.innerHeight, fRect.top + fRect.height / 2));
+
+        const dx = (sx - ex) * 0.4;
+        const d = `M${sx},${sy} C${sx - dx},${sy} ${ex + dx},${ey} ${ex},${ey}`;
+
+        const path = document.createElementNS(NS, "path");
+        path.setAttribute("d", d);
+        path.setAttribute("fill", "none");
+        path.setAttribute("stroke", color);
+        path.setAttribute("stroke-width", "1");
+        path.setAttribute("stroke-opacity", "0.45");
+        svg.appendChild(path);
+      }
+
+      rafId = requestAnimationFrame(update);
+    };
+
+    rafId = requestAnimationFrame(update);
+    return () => cancelAnimationFrame(rafId);
+  }, [editMode, svgRef, state]);
+};
+
+export const VisibilitySidebar = () => {
+  const { state, editMode, resetDefaults } = useFeaturesCtx();
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  useConnectorLines(editMode, svgRef, state);
+
+  if (!editMode) return null;
+
+  return createPortal(
+    <>
+      <svg
+        ref={svgRef}
+        className="vis-lines"
+        style={{
+          position: "fixed",
+          inset: 0,
+          width: "100vw",
+          height: "100vh",
+          pointerEvents: "none",
+          zIndex: 49,
+        }}
+      />
+      <div className="vis-sidebar">
+        <div className="vis-sidebar__header">Visibility</div>
+        <div className="vis-sidebar__list">
+          {FEATURE_TREE.map((node) => (
+            <SidebarNode key={node.id} node={node} depth={0} />
+          ))}
+        </div>
+        <button
+          type="button"
+          className="vis-sidebar__reset"
+          onClick={resetDefaults}
+        >
+          Reset defaults
+        </button>
+      </div>
+    </>,
+    document.body,
   );
 };
 
@@ -527,17 +594,18 @@ export const SettingsButton = ({
         aria-label="Settings"
       >
         <svg
-          viewBox="0 0 24 24"
-          width="15"
-          height="15"
-          fill="currentColor"
+          viewBox="0 0 14 14"
+          width="14"
+          height="14"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
           aria-hidden="true"
         >
-          <path
-            fillRule="evenodd"
-            clipRule="evenodd"
-            d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 4.889c-.02.12-.115.26-.297.348a7.493 7.493 0 0 0-.986.57c-.166.115-.334.126-.45.083L6.3 5.508a1.875 1.875 0 0 0-2.282.819l-.922 1.597a1.875 1.875 0 0 0 .432 2.385l.84.692c.095.078.17.229.154.43a7.598 7.598 0 0 0 0 1.139c.015.2-.059.352-.153.43l-.841.692a1.875 1.875 0 0 0-.432 2.385l.922 1.597a1.875 1.875 0 0 0 2.282.818l1.019-.382c.115-.043.283-.031.45.082.312.214.641.405.985.57.182.088.277.228.297.35l.178 1.071c.151.904.933 1.567 1.85 1.567h1.844c.916 0 1.699-.663 1.85-1.567l.178-1.072c.02-.12.114-.26.297-.349.344-.165.673-.356.985-.57.167-.114.335-.125.45-.082l1.02.382a1.875 1.875 0 0 0 2.28-.819l.923-1.597a1.875 1.875 0 0 0-.432-2.385l-.84-.692c-.095-.078-.17-.229-.154-.43a7.614 7.614 0 0 0 0-1.139c-.016-.2.059-.352.153-.43l.84-.692c.708-.582.891-1.59.433-2.385l-.922-1.597a1.875 1.875 0 0 0-2.282-.818l-1.02.382c-.114.043-.282.031-.449-.083a7.49 7.49 0 0 0-.985-.57c-.183-.087-.277-.227-.297-.348l-.179-1.072a1.875 1.875 0 0 0-1.85-1.567h-1.843ZM12 15.75a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Z"
-          />
+          <circle cx="7" cy="7" r="2" />
+          <path d="M7 1v1.5M7 11.5V13M2.05 2.05l1.06 1.06M10.89 10.89l1.06 1.06M1 7h1.5M11.5 7H13M2.05 11.95l1.06-1.06M10.89 3.11l1.06-1.06" />
         </svg>
       </button>
       {open &&

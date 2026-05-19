@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DashboardData, SessionSummary, UsagePoint } from "../types.js";
-import { Feature, FeatureControlBar, SettingsButton, useFeaturesCtx, VisibilityButton } from "./Features.js";
+import { Feature, FeatureControlBar, SettingsButton, useFeaturesCtx, VisibilityButton, VisibilitySidebar } from "./Features.js";
 import { RollingChart } from "./RollingChart.js";
 import { SessionsPage } from "./SessionsPage.js";
 import { useSettings } from "./Settings.js";
@@ -323,9 +323,24 @@ export const App = () => {
   }, [state, settings.contextLimit]);
 
   return (
+    <>
+    <VisibilitySidebar />
     <div className="page">
       <div className="header">
         <div className="header__title">
+          <svg className="header__monogram" viewBox="0 0 22 22" width="38" height="38" aria-hidden="true">
+            <defs>
+              <clipPath id="mono-clip">
+                <rect width="22" height="22" rx="5" />
+              </clipPath>
+            </defs>
+            <g clipPath="url(#mono-clip)">
+              <rect className="mono-q mono-q--tl" x="0" y="0" width="11" height="11" />
+              <rect className="mono-q mono-q--tr" x="11" y="0" width="11" height="11" />
+              <rect className="mono-q mono-q--bl" x="0" y="11" width="11" height="11" />
+              <rect className="mono-q mono-q--br" x="11" y="11" width="11" height="11" />
+            </g>
+          </svg>
           <h1>Claude Context Dashboard</h1>
         </div>
         <span className="header-search-group">
@@ -452,5 +467,6 @@ export const App = () => {
       )}
 
     </div>
+    </>
   );
 };

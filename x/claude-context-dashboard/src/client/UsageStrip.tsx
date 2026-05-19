@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { scaleLinear, scaleTime } from "d3-scale";
-import { area as d3Area, curveStepAfter, line as d3Line } from "d3-shape";
+import { area as d3Area, curveMonotoneX, line as d3Line } from "d3-shape";
 import { useElementSize } from "./useElementSize.js";
 import { CHART_MARGIN_LEFT, CHART_MARGIN_RIGHT } from "./Chart.js";
 import { FeatureControlBar, useFeature } from "./Features.js";
@@ -128,7 +128,7 @@ export const UsageStrip = ({ usage, sessionIds, xDomain }: Props) => {
         .x((d) => xs(d.t))
         .y0((d) => yEventScale(d.layers[ki].y0))
         .y1((d) => yEventScale(d.layers[ki].y1))
-        .curve(curveStepAfter);
+        .curve(curveMonotoneX);
 
       return { key, color: USAGE_COLORS[key], path: areaGen(stacked) ?? "" };
     });
@@ -166,7 +166,7 @@ export const UsageStrip = ({ usage, sessionIds, xDomain }: Props) => {
     const lineGen = d3Line<{ t: number; cum: number }>()
       .x((d) => xs(d.t))
       .y((d) => yCumScale(d.cum))
-      .curve(curveStepAfter);
+      .curve(curveMonotoneX);
     return lineGen(cumPoints);
   }, [cumPoints, xs, yCumScale, innerWidth]);
 
@@ -201,9 +201,9 @@ export const UsageStrip = ({ usage, sessionIds, xDomain }: Props) => {
                 d={cumLinePath}
                 stroke="#a1a1aa"
                 fill="none"
-                strokeWidth={1.5}
+                strokeWidth={1}
                 strokeDasharray="4 3"
-                strokeOpacity={0.8}
+                strokeOpacity={0.7}
               />
             )}
             <line x1={0} x2={0} y1={0} y2={innerHeight} stroke="#3f3f46" strokeDasharray="4 3" />

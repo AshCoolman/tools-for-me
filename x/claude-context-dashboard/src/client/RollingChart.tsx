@@ -53,7 +53,6 @@ export const RollingChart = ({
   const [wrapRef, { width }] = useElementSize<HTMLDivElement>();
   const svgRef = useRef<SVGSVGElement>(null);
   const [hover, setHover] = useState<Point | null>(null);
-  const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
 
   const showPeak = useFeature("tokenUsage.peak");
   const showCum = useFeature("tokenUsage.cumulative");
@@ -188,7 +187,6 @@ export const RollingChart = ({
         const sx = ev.clientX - rect.left - MARGIN_LEFT;
         if (sx < 0 || sx > innerWidth) {
           setHover(null);
-          setCursor(null);
           return;
         }
         const t = xs.invert(sx).getTime();
@@ -200,7 +198,6 @@ export const RollingChart = ({
         else chosen = a ?? b ?? null;
         if (!chosen) return;
         setHover(chosen);
-        setCursor({ x: ev.clientX, y: ev.clientY });
       });
     },
     [data, xs, innerWidth],
@@ -219,7 +216,6 @@ export const RollingChart = ({
     }
     pendingRef.current = null;
     setHover(null);
-    setCursor(null);
   }, []);
 
   const ready = width > 0 && innerWidth > 0 && innerHeight > 0;
@@ -272,13 +268,13 @@ export const RollingChart = ({
                 d={cumPath}
                 stroke={cumColor}
                 fill="none"
-                strokeWidth={1.5}
+                strokeWidth={1}
                 strokeDasharray="3 3"
-                strokeOpacity={0.7}
+                strokeOpacity={0.6}
               />
             )}
             {showUsage && (
-              <path d={avgPath} stroke={avgColor} fill="none" strokeWidth={2} />
+              <path d={avgPath} stroke={avgColor} fill="none" strokeWidth={1} />
             )}
 
             {hover && (
@@ -288,28 +284,38 @@ export const RollingChart = ({
                   x2={xs(hover.t)}
                   y1={0}
                   y2={innerHeight}
-                  stroke="#52525b"
+                  stroke="#3f3f46"
                   strokeWidth={1}
                   pointerEvents="none"
                 />
                 <circle
                   cx={xs(hover.t)}
                   cy={ysAvg(hover.avg)}
-                  r={4}
+                  r={2.5}
                   fill={avgColor}
-                  stroke="#101114"
-                  strokeWidth={2}
+                  stroke="#18181b"
+                  strokeWidth={1}
                   pointerEvents="none"
                 />
                 <circle
                   cx={xs(hover.t)}
                   cy={ysCum(hover.cum)}
-                  r={3.5}
+                  r={2.5}
                   fill={cumColor}
-                  stroke="#101114"
-                  strokeWidth={2}
+                  stroke="#18181b"
+                  strokeWidth={1}
                   pointerEvents="none"
                 />
+                <text x={innerWidth + 8} y={ysAvg(hover.avg) + 3.5} fill={avgColor} fontSize={10} fontWeight={600} pointerEvents="none">
+                  {formatTickK(Math.round(hover.avg))}
+                </text>
+                <text x={-8} y={ysCum(hover.cum) + 3.5} fill={cumColor} fontSize={10} fontWeight={600} textAnchor="end" pointerEvents="none">
+                  {formatTickK(Math.round(hover.cum))}
+                </text>
+                <rect x={xs(hover.t) - 28} y={innerHeight + 6} width={56} height={16} rx={3} fill="#27272a" pointerEvents="none" />
+                <text x={xs(hover.t)} y={innerHeight + 18} fill="#e4e4e7" fontSize={10} textAnchor="middle" pointerEvents="none">
+                  {formatHover(hover.t)}
+                </text>
               </>
             )}
 
@@ -392,84 +398,7 @@ export const RollingChart = ({
         </svg>
       )}
 
-      {hover && cursor && (
-        <DualTooltip
-          cursor={cursor}
-          time={formatHover(hover.t)}
-          avgValue={formatNumber(Math.round(hover.avg))}
-          cumValue={formatNumber(Math.round(hover.cum))}
-          avgLabel={avgLabel}
-          cumLabel={cumLabel}
-          avgColor={avgColor}
-          cumColor={cumColor}
-        />
-      )}
     </div>
   );
 };
 
-const DualTooltip = ({
-  cursor,
-  time,
-  avgValue,
-  cumValue,
-  avgLabel,
-  cumLabel,
-  avgColor,
-  cumColor,
-}: {
-  cursor: { x: number; y: number };
-  time: string;
-  avgValue: string;
-  cumValue: string;
-  avgLabel: string;
-  cumLabel: string;
-  avgColor: string;
-  cumColor: string;
-}) => {
-  const ttRef = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState<{ left: number; top: number }>({
-    left: cursor.x + 16,
-    top: cursor.y + 16,
-  });
-  useEffect(() => {
-    const el = ttRef.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    let left = cursor.x + 16;
-    let top = cursor.y + 16;
-    if (left + r.width > vw - 8) left = cursor.x - r.width - 16;
-    if (top + r.height > vh - 8) top = vh - r.height - 8;
-    if (top < 8) top = 8;
-    if (left < 8) left = 8;
-    setPos({ left, top });
-  }, [cursor.x, cursor.y, time]);
-
-  return (
-    <div
-      ref={ttRef}
-      className="chart-tooltip chart-tooltip--simple"
-      style={{ left: pos.left, top: pos.top }}
-    >
-      <div className="chart-tooltip__time">{time}</div>
-      <div className="chart-tooltip__simple-row">
-        <span
-          className="chart-tooltip__swatch"
-          style={{ background: avgColor }}
-        />
-        <span className="chart-tooltip__simple-label">{avgLabel}</span>
-        <span className="chart-tooltip__simple-value">{avgValue}</span>
-      </div>
-      <div className="chart-tooltip__simple-row">
-        <span
-          className="chart-tooltip__swatch"
-          style={{ background: cumColor }}
-        />
-        <span className="chart-tooltip__simple-label">{cumLabel}</span>
-        <span className="chart-tooltip__simple-value">{cumValue}</span>
-      </div>
-    </div>
-  );
-};

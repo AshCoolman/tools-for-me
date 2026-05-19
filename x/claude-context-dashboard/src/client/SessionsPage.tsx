@@ -940,12 +940,9 @@ export const SessionsPage = ({
                       }}
                     />
                   )}
-                  <span className={`session-pct session-row__ctx-num ${sev}`}>
-                    {formatTokensK(session.contextTokens)}
-                  </span>
-                  <div className="session-row__content">
+                  <div className="session-row__status">
                     <span
-                      className={`active-dot${active ? "" : " active-dot--off"}${awaiting ? " active-dot--awaiting" : ""}`}
+                      className={`status-glyph status-glyph--${sev}${active ? "" : " status-glyph--off"}${awaiting ? " status-glyph--blink" : ""}`}
                       title={
                         awaiting
                           ? active
@@ -955,7 +952,12 @@ export const SessionsPage = ({
                             ? "Last event ≤ 5 min ago (heuristic)"
                             : "No events in the last 5 min"
                       }
-                    />
+                    >{awaiting ? "▌" : active ? "▶" : "⏸"}</span>
+                    <span className={`session-pct session-row__ctx-num ${sev}`}>
+                      {formatTokensK(session.contextTokens)}
+                    </span>
+                  </div>
+                  <div className="session-row__content">
                     <div className="session-row__info">
                       {showSmallTitle && (
                       <div className="session-name__primary">

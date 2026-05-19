@@ -7,7 +7,7 @@ import {
 } from "react";
 import { bisector } from "d3-array";
 import { scaleLinear, scaleTime } from "d3-scale";
-import { area as d3Area, curveBasis, curveStepAfter, line as d3Line } from "d3-shape";
+import { area as d3Area, curveBasis, curveMonotoneX, line as d3Line } from "d3-shape";
 import { useFeature } from "./Features.js";
 import { useSettings } from "./Settings.js";
 import { useElementSize } from "./useElementSize.js";
@@ -40,20 +40,6 @@ const severityFor = (
   if (tokens >= warn) return "warn";
   return "ok";
 };
-const SEVERITY_ORDER: Severity[] = ["crit", "high", "warn", "ok"];
-const BAND_LABEL: Record<Severity, string> = {
-  crit: "Critical",
-  high: "Large",
-  warn: "Medium",
-  ok: "Fast",
-};
-const BAND_COLOR: Record<Severity, string> = {
-  crit: "#ef4444",
-  high: "#f97316",
-  warn: "#eab308",
-  ok: "#22c55e",
-};
-
 type Band = { id: string; from: number; to: number; color: string };
 const buildBands = (warn: number, high: number, crit: number): Band[] => [
   { id: "ok", from: 0, to: warn, color: "#22c55e" },
@@ -67,31 +53,18 @@ const formatTickK = (n: number): string => {
   if (n >= 1_000) return `${Math.round(n / 1000)}k`;
   return String(n);
 };
-const formatNumber = (n: number): string => n.toLocaleString();
 const formatTimeShort = (t: number): string =>
   new Date(t).toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
   });
-const splitProjectPath = (
-  p: string,
-): { dir: string; name: string } => {
-  const idx = p.lastIndexOf("/");
-  if (idx < 0) return { dir: "", name: p };
-  return { dir: p.slice(0, idx + 1), name: p.slice(idx + 1) };
-};
 
 const bisect = bisector<SparkPoint, number>((d) => d.t).left;
 
 type HoverRow = {
   sessionId: string;
-  name: string;
-  project: string;
-  projectPath: string | null;
   color: string;
-  tail: string | null;
   ctx: number;
-  cum: number;
 };
 type HoverPayload = {
   t: number;
@@ -116,7 +89,6 @@ export const Chart = ({
   const [wrapRef, { width }] = useElementSize<HTMLDivElement>();
   const svgRef = useRef<SVGSVGElement>(null);
   const [hover, setHover] = useState<HoverPayload | null>(null);
-  const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
 
   const showBands = useFeature("activeSessions.contextChart.bands");
   const showThresholdLines = useFeature(
@@ -163,7 +135,7 @@ export const Chart = ({
       d3Line<SparkPoint>()
         .x((d) => xs(d.t))
         .y((d) => yCtxScale(d.ctx))
-        .curve(curveStepAfter),
+        .curve(curveMonotoneX),
     [xs, yCtxScale],
   );
   const cumLine = useMemo(
@@ -171,7 +143,7 @@ export const Chart = ({
       d3Line<SparkPoint>()
         .x((d) => xs(d.t))
         .y((d) => yCumScale(d.cum))
-        .curve(curveStepAfter),
+        .curve(curveMonotoneX),
     [xs, yCumScale],
   );
 
@@ -258,7 +230,6 @@ export const Chart = ({
         const sx = ev.clientX - rect.left - CHART_MARGIN_LEFT;
         if (sx < 0 || sx > innerWidth) {
           setHover(null);
-          setCursor(null);
           return;
         }
         const t = xs.invert(sx).getTime();
@@ -271,17 +242,11 @@ export const Chart = ({
           if (!sample) continue;
           rows.push({
             sessionId: l.sessionId,
-            name: l.name,
-            project: l.project,
-            projectPath: l.projectPath,
             color: l.color,
-            tail: l.tail,
             ctx: sample.ctx,
-            cum: sample.cum,
           });
         }
         setHover({ t, rows });
-        setCursor({ x: ev.clientX, y: ev.clientY });
       });
     },
     [lines, xs, innerWidth],
@@ -300,7 +265,6 @@ export const Chart = ({
     }
     pendingRef.current = null;
     setHover(null);
-    setCursor(null);
   }, []);
 
   const ready = width > 0 && innerWidth > 0 && innerHeight > 0;
@@ -411,9 +375,9 @@ export const Chart = ({
                       d={cumLine(l.data) ?? ""}
                       stroke={l.color}
                       fill="none"
-                      strokeWidth={1.5}
+                      strokeWidth={1}
                       strokeDasharray="6 4"
-                      strokeOpacity={0.9}
+                      strokeOpacity={0.7}
                     />
                   )}
                   {showContext && (
@@ -421,7 +385,7 @@ export const Chart = ({
                       d={ctxLine(l.data) ?? ""}
                       stroke={l.color}
                       fill="none"
-                      strokeWidth={2}
+                      strokeWidth={1}
                     />
                   )}
                 </g>
@@ -429,15 +393,32 @@ export const Chart = ({
             })}
 
             {hover && (
-              <line
-                x1={xs(hover.t)}
-                x2={xs(hover.t)}
-                y1={0}
-                y2={innerHeight}
-                stroke="#52525b"
-                strokeWidth={1}
-                pointerEvents="none"
-              />
+              <>
+                <line
+                  x1={xs(hover.t)}
+                  x2={xs(hover.t)}
+                  y1={0}
+                  y2={innerHeight}
+                  stroke="#3f3f46"
+                  strokeWidth={1}
+                  pointerEvents="none"
+                />
+                {hover.rows.map((row) => {
+                  const cy = yCtxScale(row.ctx);
+                  return (
+                    <g key={row.sessionId} pointerEvents="none">
+                      <circle cx={xs(hover.t)} cy={cy} r={2.5} fill={row.color} stroke="#18181b" strokeWidth={1} />
+                      <text x={innerWidth + 8} y={cy + 3.5} fill={row.color} fontSize={10} fontWeight={600}>
+                        {formatTickK(row.ctx)}
+                      </text>
+                    </g>
+                  );
+                })}
+                <rect x={xs(hover.t) - 28} y={innerHeight + 6} width={56} height={16} rx={3} fill="#27272a" />
+                <text x={xs(hover.t)} y={innerHeight + 18} fill="#e4e4e7" fontSize={10} textAnchor="middle">
+                  {formatTimeShort(hover.t)}
+                </text>
+              </>
             )}
 
             {weekendBlocks.map((b, i) => {
@@ -514,147 +495,6 @@ export const Chart = ({
         </svg>
       )}
 
-      {hover && cursor && hover.rows.length > 0 && (
-        <ChartHoverTooltip hover={hover} cursor={cursor} />
-      )}
-    </div>
-  );
-};
-
-const ChartHoverTooltip = ({
-  hover,
-  cursor,
-}: {
-  hover: HoverPayload;
-  cursor: { x: number; y: number };
-}) => {
-  const ttRef = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState<{ left: number; top: number }>({
-    left: cursor.x + 16,
-    top: cursor.y + 16,
-  });
-  const { settings } = useSettings();
-
-  useEffect(() => {
-    const el = ttRef.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    let left = cursor.x + 16;
-    let top = cursor.y + 16;
-    if (left + r.width > vw - 8) left = cursor.x - r.width - 16;
-    if (top + r.height > vh - 8) top = vh - r.height - 8;
-    if (top < 8) top = 8;
-    if (left < 8) left = 8;
-    setPos({ left, top });
-  }, [cursor.x, cursor.y, hover]);
-
-  const grouped = useMemo(() => {
-    const m = new Map<Severity, HoverRow[]>();
-    for (const r of hover.rows) {
-      const sev = severityFor(
-        r.ctx,
-        settings.severityWarn,
-        settings.severityHigh,
-        settings.severityCrit,
-      );
-      const arr = m.get(sev) ?? [];
-      arr.push(r);
-      m.set(sev, arr);
-    }
-    for (const arr of m.values()) {
-      arr.sort((a, b) => b.ctx - a.ctx);
-    }
-    return m;
-  }, [hover.rows, settings.severityWarn, settings.severityHigh, settings.severityCrit]);
-
-  const time = new Date(hover.t).toLocaleString([], {
-    month: "short",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-
-  return (
-    <div
-      ref={ttRef}
-      className="chart-tooltip"
-      style={{ left: pos.left, top: pos.top }}
-    >
-      <div className="chart-tooltip__time">{time}</div>
-      {SEVERITY_ORDER.map((sev) => {
-        const items = grouped.get(sev);
-        if (!items || items.length === 0) return null;
-        return (
-          <div className="chart-tooltip__band" key={sev}>
-            <div
-              className="chart-tooltip__band-label"
-              style={{ color: BAND_COLOR[sev] }}
-            >
-              {BAND_LABEL[sev]}
-            </div>
-            {items.map((r) => (
-              <ChartTooltipRow key={r.sessionId} row={r} sev={sev} />
-            ))}
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-
-const ChartTooltipRow = ({
-  row,
-  sev,
-}: {
-  row: HoverRow;
-  sev: Severity;
-}) => {
-  const path = row.projectPath ? splitProjectPath(row.projectPath) : null;
-  const shortId = row.sessionId.split("-")[0] ?? row.sessionId;
-  return (
-    <div className={`chart-tooltip__row chart-tooltip__row--${sev}`}>
-      <div className="chart-tooltip__row-head">
-        <span
-          className="chart-tooltip__swatch"
-          style={{ background: row.color }}
-        />
-        <span
-          className="chart-tooltip__project"
-          style={{ color: row.color }}
-        >
-          {path ? (
-            <>
-              <span className="chart-tooltip__project-dim">{path.dir}</span>
-              {path.name}
-            </>
-          ) : (
-            row.project
-          )}
-        </span>
-        <span className="chart-tooltip__short-id" style={{ color: row.color }}>
-          {shortId}
-        </span>
-      </div>
-      <div className="chart-tooltip__row-meta">
-        <span className="chart-tooltip__metric">
-          <span className="chart-tooltip__metric-label">ctx</span>
-          <span className="chart-tooltip__metric-value">
-            {formatNumber(row.ctx)}
-          </span>
-        </span>
-        <span className="chart-tooltip__metric chart-tooltip__metric--cum">
-          <span className="chart-tooltip__metric-label">cum</span>
-          <span className="chart-tooltip__metric-value">
-            {formatNumber(row.cum)}
-          </span>
-        </span>
-      </div>
-      {row.tail && (
-        <div className="chart-tooltip__tail">{row.tail}</div>
-      )}
     </div>
   );
 };
