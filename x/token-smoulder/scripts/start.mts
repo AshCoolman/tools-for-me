@@ -5,10 +5,13 @@ import { select, checkbox } from '@inquirer/prompts';
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
+import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
 const PKG_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const BIN = join(PKG_ROOT, 'bin', 'token-smoulder');
+const HARVEST = join(PKG_ROOT, 'scripts', 'harvest-ideas');
+const IDEAS_DIR = process.env.HARVEST_IDEAS_DIR || join(homedir(), 'ac', 'ideas');
 
 function fail(msg: string): never {
   process.stderr.write(`FAIL: ${msg}\n`);
@@ -57,6 +60,9 @@ const TASKS: Entry[] = [
   { label: 'ui:dev',    desc: 'Vite dev server',       cmd: ['yarn', 'ui:dev'] },
   { label: 'list',      desc: 'Show all work units',   cmd: [BIN, 'list'] },
   { label: 'events',    desc: 'Recent events (1h)',    cmd: [BIN, 'events', '--since', '1h'] },
+  { label: 'harvest',       desc: `Scan ${IDEAS_DIR} & show board`, cmd: [HARVEST, IDEAS_DIR] },
+  { label: 'harvest:board', desc: 'Show harvest board',             cmd: [HARVEST, 'board'] },
+  { label: 'harvest:pick',  desc: 'Pick an idea to specify',        cmd: [HARVEST, 'pick'] },
 ];
 
 async function servicesMenu(): Promise<void> {
