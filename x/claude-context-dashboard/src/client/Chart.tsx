@@ -276,6 +276,8 @@ export const Chart = ({
           ref={svgRef}
           width={width}
           height={height}
+          role="img"
+          aria-label="Context token usage chart"
           onMouseMove={onMove}
           onMouseLeave={onLeave}
         >
@@ -433,7 +435,9 @@ export const Chart = ({
                   height={6}
                   fill="#52525b"
                   pointerEvents="none"
-                />
+                >
+                  <title>Weekend</title>
+                </rect>
               );
             })}
 
@@ -491,6 +495,8 @@ export const Chart = ({
                 {formatTickK(v)}
               </text>
             ))}
+            <text x={-8} y={-4} fill="#71717a" fontSize={9} textAnchor="end">Cumulative</text>
+            <text x={innerWidth + 8} y={-4} fill="#a1a1aa" fontSize={9} textAnchor="start">Context</text>
           </g>
         </svg>
       )}
@@ -502,16 +508,16 @@ export const Chart = ({
 export const ChartLegend = ({ lines }: { lines: ChartLine[] }) => {
   if (lines.length === 0) return null;
   return (
-    <div className="chart-legend">
+    <ul className="chart-legend">
       {lines.map((l) => (
-        <div className="chart-legend__item" key={l.sessionId}>
+        <li className="chart-legend__item" key={l.sessionId}>
           <span
             className="chart-legend__swatch"
             style={{ background: l.color }}
           />
           <span className="chart-legend__name">{l.name}</span>
-        </div>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 };

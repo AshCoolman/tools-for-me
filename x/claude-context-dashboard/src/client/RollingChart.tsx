@@ -227,6 +227,8 @@ export const RollingChart = ({
           ref={svgRef}
           width={width}
           height={height}
+          role="img"
+          aria-label="Token usage rolling average chart"
           onMouseMove={onMove}
           onMouseLeave={onLeave}
         >
@@ -331,7 +333,9 @@ export const RollingChart = ({
                   height={6}
                   fill="#52525b"
                   pointerEvents="none"
-                />
+                >
+                  <title>Weekend</title>
+                </rect>
               );
             })}
 
@@ -394,6 +398,8 @@ export const RollingChart = ({
                 {formatTickK(v)}
               </text>
             ))}
+            <text x={-8} y={-4} fill="#71717a" fontSize={9} textAnchor="end">Cumulative</text>
+            <text x={innerWidth + 8} y={-4} fill="#a1a1aa" fontSize={9} textAnchor="start">Avg/hr</text>
           </g>
         </svg>
       )}

@@ -170,6 +170,7 @@ export const App = () => {
   const [state, setState] = useState<FetchState>({ status: "loading" });
   const [claudeStatus, setClaudeStatus] = useState<StatusSnapshot | null>(null);
   const [search, setSearch] = useState<string>("");
+  const searchRef = useRef<HTMLInputElement>(null);
   const { settings } = useSettings();
   const { limits, setLimits, parsed, setParsed } = useUsageLimits();
   const { start: weekStart, end: weekEnd } = useMemo(
@@ -258,6 +259,22 @@ export const App = () => {
     document.body.classList.toggle("edit-mode", editMode);
   }, [editMode]);
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const tag = (e.target as HTMLElement)?.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+      if (e.key === "Escape" && document.activeElement === searchRef.current) {
+        searchRef.current?.blur();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
   const matchingSessionIds = useMemo(() => {
     if (state.status !== "ready") return null;
     const tokens = search.toLowerCase().trim().split(/\s+/).filter(Boolean);
@@ -324,9 +341,10 @@ export const App = () => {
 
   return (
     <>
+    <a href="#main-content" className="skip-link">Skip to content</a>
     <VisibilitySidebar />
-    <div className="page">
-      <div className="header">
+    <main className="page" id="main-content">
+      <header className="header">
         <div className="header__title">
           <svg className="header__monogram" viewBox="0 0 22 22" width="38" height="38" aria-hidden="true">
             <defs>
@@ -356,11 +374,14 @@ export const App = () => {
                 ⌕
               </span>
               <input
+                ref={searchRef}
                 type="search"
+                aria-label="Filter sessions"
                 placeholder="Filter project, session id, or chat"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
+              {!search && <kbd className="header-search__kbd">/</kbd>}
             </span>
           </Feature>
         </span>
@@ -370,6 +391,8 @@ export const App = () => {
             target="_blank"
             rel="noreferrer"
             className={`status-chip status-chip--${statusTone(claudeStatus.indicator)}`}
+            role="status"
+            aria-live="polite"
             title={`status.claude.com — ${claudeStatus.description}`}
           >
             <span className="status-chip__dot" />
@@ -390,7 +413,7 @@ export const App = () => {
             />
           }
         />
-      </div>
+      </header>
 
       <Feature id="header.blurb">
         <p className="page-blurb">
@@ -399,8 +422,12 @@ export const App = () => {
         </p>
       </Feature>
 
+      {state.status === "loading" && (
+        <p className="loading-state">Loading session data...</p>
+      )}
+
       {state.status === "error" && (
-        <div className="card error">
+        <div className="card error" role="alert">
           <h2>Failed to load data</h2>
           <p>{state.message}</p>
         </div>
@@ -466,7 +493,7 @@ export const App = () => {
         </>
       )}
 
-    </div>
+    </main>
     </>
   );
 };

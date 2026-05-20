@@ -365,7 +365,7 @@ export const UsageCumStrip = ({
   return (
     <div ref={wrapRef} className="usage-strip">
       {ready && (
-        <svg width={width} height={STRIP_HEIGHT} aria-hidden="true">
+        <svg width={width} height={STRIP_HEIGHT} role="img" aria-label="Usage pace chart">
           <defs>
             <clipPath id={clipId}>
               <rect x={0} y={0} width={innerWidth} height={innerHeight} />
@@ -530,6 +530,20 @@ export const UsageCumStrip = ({
           </g>
         </svg>
       )}
+      <div className="usage-strip__legend">
+        <span className="usage-strip__legend-item">
+          <span className="usage-strip__legend-swatch" style={{ background: "#60a5fa" }} />
+          <span className="usage-strip__legend-label">Under pace</span>
+        </span>
+        <span className="usage-strip__legend-item">
+          <span className="usage-strip__legend-swatch" style={{ background: "#34d399" }} />
+          <span className="usage-strip__legend-label">On pace</span>
+        </span>
+        <span className="usage-strip__legend-item">
+          <span className="usage-strip__legend-swatch" style={{ background: "#f87171" }} />
+          <span className="usage-strip__legend-label">Over pace</span>
+        </span>
+      </div>
       <FeatureControlBar ids={["activeSessions.usage.session", "activeSessions.usage.weekly"]} />
     </div>
   );

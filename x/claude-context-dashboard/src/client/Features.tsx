@@ -48,7 +48,7 @@ export const FEATURE_TREE: FeatureNode[] = [
         children: [
           { id: "activeSessions.contextChart.yAxis", label: "Y-axis", defaultOn: true },
           { id: "activeSessions.contextChart.bands", label: "Threshold bands", defaultOn: true },
-          { id: "activeSessions.contextChart.thresholdLines", label: "Threshold lines", defaultOn: false },
+          { id: "activeSessions.contextChart.thresholdLines", label: "Threshold lines", defaultOn: true },
           { id: "activeSessions.contextChart.accumulator", label: "Accumulator plot", defaultOn: false },
           { id: "activeSessions.contextChart.context", label: "Context plot", defaultOn: true },
           { id: "activeSessions.contextChart.peak", label: "Peak indicator", defaultOn: false },
@@ -324,15 +324,15 @@ export const VisibilityButton = () => {
       >
         {editMode ? (
           <>
-            <path d="M1 7s2.5-4.5 6-4.5S13 7 13 7s-2.5 4.5-6 4.5S1 7 1 7z" />
-            <circle cx="7" cy="7" r="1.75" />
-          </>
-        ) : (
-          <>
             <path d="M5.45 5.45a1.75 1.75 0 1 0 2.47 2.47" />
             <path d="M6.1 2.77A5.5 5.5 0 0 1 7 2.5c3.5 0 6 4.5 6 4.5a10 10 0 0 1-.97 1.56" />
             <path d="M3.86 3.86A10 10 0 0 0 1 7s2.5 4.5 6 4.5a5.7 5.7 0 0 0 3.14-.86" />
             <line x1="1" y1="1" x2="13" y2="13" />
+          </>
+        ) : (
+          <>
+            <path d="M1 7s2.5-4.5 6-4.5S13 7 13 7s-2.5 4.5-6 4.5S1 7 1 7z" />
+            <circle cx="7" cy="7" r="1.75" />
           </>
         )}
       </svg>
@@ -357,6 +357,7 @@ const SidebarNode = ({
       <button
         type="button"
         data-sidebar-id={node.id}
+        aria-pressed={enabled}
         className={`vis-sidebar__item ${enabled ? "vis-sidebar__item--on" : "vis-sidebar__item--off"}`}
         style={
           {
@@ -458,7 +459,7 @@ export const VisibilitySidebar = () => {
           zIndex: 49,
         }}
       />
-      <div className="vis-sidebar">
+      <aside className="vis-sidebar" aria-label="Visibility controls">
         <div className="vis-sidebar__header">Visibility</div>
         <div className="vis-sidebar__list">
           {FEATURE_TREE.map((node) => (
@@ -472,7 +473,7 @@ export const VisibilitySidebar = () => {
         >
           Reset defaults
         </button>
-      </div>
+      </aside>
     </>,
     document.body,
   );
@@ -545,12 +546,13 @@ const LimitField = ({
   return (
     <div className="settings-row">
       <div className="settings-row__label">
-        <div className="settings-row__title">{label}</div>
+        <div className="settings-row__title" id={`settings-label-${fieldKey}`}>{label}</div>
         {hint && <div className="settings-row__hint">{hint}</div>}
       </div>
       <input
         type="number"
         className="settings-row__input"
+        aria-labelledby={`settings-label-${fieldKey}`}
         value={draft}
         min={1}
         step={1}
@@ -577,9 +579,23 @@ export const SettingsButton = ({
 
   useEffect(() => {
     if (!open) return;
+    const FOCUSABLE = 'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])';
+    const modal = document.querySelector('.modal') as HTMLElement | null;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") { setOpen(false); return; }
+      if (e.key === "Tab" && modal) {
+        const focusable = Array.from(modal.querySelectorAll<HTMLElement>(FOCUSABLE));
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
     };
+    if (modal) {
+      const first = modal.querySelector<HTMLElement>(FOCUSABLE);
+      first?.focus();
+    }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);

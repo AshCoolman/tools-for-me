@@ -190,6 +190,24 @@ button:hover {
     pointer-events: none;
 }
 
+.header-search__kbd {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: inherit;
+    font-size: 11px;
+    color: #52525b;
+    border: 1px solid #3f3f46;
+    border-radius: 4px;
+    padding: 1px 5px;
+    pointer-events: none;
+}
+
+.header-search input:focus ~ .header-search__kbd {
+    display: none;
+}
+
 .header-meta {
     color: #a1a1aa;
     font-size: 12px;
@@ -1242,6 +1260,11 @@ th {
     border-radius: 3px;
 }
 
+.color-swatch:focus-visible {
+    box-shadow: 0 0 0 2px hsl(220, 70%, 55%);
+    outline: none;
+}
+
 .color-swatch--session {
     border-style: dashed;
     opacity: 0.7;
@@ -1769,5 +1792,77 @@ body.edit-mode .page {
 .vis-sidebar__reset:hover {
     color: #f4f4f5;
     border-color: #52525b;
+}
+
+.window-label--suffix {
+    margin-left: -4px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: #a1a1aa;
+}
+
+.empty-state__heading {
+    font-size: 14px;
+    font-weight: 600;
+    color: #e4e4e7;
+    margin: 0 0 8px;
+}
+
+.empty-state__body {
+    font-size: 13px;
+    margin: 0;
+    line-height: 1.6;
+}
+
+.empty-state__body code {
+    font-size: 12px;
+    background: #27272a;
+    padding: 2px 5px;
+    border-radius: 3px;
+}
+
+.loading-state {
+    color: #71717a;
+    padding: 2rem 0;
+    text-align: center;
+    font-size: 0.875rem;
+}
+
+.skip-link {
+    position: absolute;
+    left: -9999px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+.skip-link:focus {
+    position: fixed;
+    top: 8px;
+    left: 8px;
+    z-index: 100;
+    width: auto;
+    height: auto;
+    padding: 8px 16px;
+    background: #18181b;
+    color: #e4e4e7;
+    border: 1px solid #3f3f46;
+    border-radius: 4px;
+    font-size: 0.875rem;
+}
+
+ul.chart-legend {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+h3.dismissed-panel__title {
+    margin: 0;
+    font-size: inherit;
+    font-weight: inherit;
 }
 

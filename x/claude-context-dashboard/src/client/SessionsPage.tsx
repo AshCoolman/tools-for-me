@@ -321,6 +321,12 @@ const Copyable = ({
       role="button"
       tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e: React.KeyboardEvent) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          void onClick(e as unknown as React.MouseEvent);
+        }
+      }}
       title={copied ? "Copied" : (title ?? "Click to copy")}
       className={`${className} copyable${copied ? " copyable--copied" : ""}`}
       style={style}
@@ -637,19 +643,13 @@ export const SessionsPage = ({
         <h2>Active sessions (last {windowLongLabel})</h2>
       )}
       <Feature id="activeSessions.blurb">
-        <p className="card-blurb">
-          Showing {shown} of {total} sessions with activity in the last{" "}
-          {windowLongLabel}. Solid = per-turn context tokens (left axis:
-          input + output + cache for that turn, or post-compact summary size);
-          approximate, can drop after /compact or smaller turns. Dashed =
-          cumulative API-billed tokens within this window (right axis: running
-          sum of input + output + cacheRead + cacheCreation); monotonically
-          increasing.
+        <p className="card-blurb" title="Solid = per-turn context tokens (left axis: input + output + cache for that turn, or post-compact summary size); approximate, can drop after /compact or smaller turns. Dashed = cumulative API-billed tokens within this window (right axis: running sum of input + output + cacheRead + cacheCreation); monotonically increasing.">
+          Showing {shown} of {total} sessions with activity in the last {windowLongLabel}.
         </p>
       </Feature>
       <Feature id="activeSessions.window">
-        <div className="window-buttons">
-          <span className="window-label">Window</span>
+        <div className="window-buttons" role="group" aria-label="Time range">
+          <span className="window-label">Range</span>
           {WINDOWS.map((w) => (
             <button
               key={w.label}
@@ -666,7 +666,7 @@ export const SessionsPage = ({
             inputMode="numeric"
             className={`window-days${!activeWindow ? " active" : ""}`}
             placeholder="days"
-            aria-label="Custom window in days"
+            aria-label="Custom range in days"
             value={dayInput}
             onChange={(e) => setDayInput(e.target.value)}
             onKeyDown={(e) => {
@@ -676,11 +676,12 @@ export const SessionsPage = ({
             }}
             onBlur={applyDays}
           />
+          <span className="window-label window-label--suffix" aria-hidden="true">d</span>
         </div>
       </Feature>
       <Feature id="activeSessions.contextChart">
         <Feature id="activeSessions.contextChart.yAxis">
-          <div className="window-buttons">
+          <div className="window-buttons" role="group" aria-label="Y-axis time range">
             <span className="window-label">Y-axis</span>
             {WINDOWS.map((w) => {
               const disabled = w.ms > windowMs;
@@ -699,7 +700,13 @@ export const SessionsPage = ({
           </div>
         </Feature>
         {lines.length === 0 ? (
-          <p>No sessions with activity in the last {windowLongLabel}.</p>
+          <div className="empty-state">
+            <p className="empty-state__heading">No sessions in the last {windowLongLabel}</p>
+            <p className="empty-state__body">
+              The dashboard scans Claude Code session logs from <code>~/.claude/projects/</code>.
+              Start a Claude Code session and it will appear here automatically.
+            </p>
+          </div>
         ) : (
           <>
             <Chart
@@ -746,7 +753,7 @@ export const SessionsPage = ({
 
       {(rows.length > 0 || dismissedEntries.length > 0) && (
         <Feature id="activeSessions.rows">
-          <div className="session-list">
+          <div className="session-list" role="list">
             <FeatureControlBar
               ids={[
                 "activeSessions.rows.bands",
@@ -790,9 +797,9 @@ export const SessionsPage = ({
             {showDismissed && dismissedEntries.length > 0 && (
               <div className="dismissed-panel">
                 <div className="dismissed-panel__header">
-                  <span className="dismissed-panel__title">
+                  <h3 className="dismissed-panel__title">
                     Dismissed sessions
-                  </span>
+                  </h3>
                   <button
                     type="button"
                     className="text-link"
@@ -908,7 +915,7 @@ export const SessionsPage = ({
                     <em>{band.blurb}</em>
                   </div>
                 )}
-                <div className={`session-row ${sev}`}>
+                <div className={`session-row ${sev}`} role="listitem">
                   {showSparkline && (
                     <RowSparkline
                       data={sparkData}
@@ -943,6 +950,8 @@ export const SessionsPage = ({
                   <div className="session-row__status">
                     <span
                       className={`status-glyph status-glyph--${sev}${active ? "" : " status-glyph--off"}${awaiting ? " status-glyph--blink" : ""}`}
+                      role="img"
+                      aria-label={awaiting ? "Awaiting reply" : active ? "Active" : "Idle"}
                       title={
                         awaiting
                           ? active
@@ -953,7 +962,7 @@ export const SessionsPage = ({
                             : "No events in the last 5 min"
                       }
                     >{awaiting ? "▌" : active ? "▶" : "⏸"}</span>
-                    <span className={`session-pct session-row__ctx-num ${sev}`}>
+                    <span className={`session-pct session-row__ctx-num ${sev}`} title="Estimated context window tokens" aria-label={`${formatTokensK(session.contextTokens)} context tokens`}>
                       {formatTokensK(session.contextTokens)}
                     </span>
                   </div>
@@ -1062,9 +1071,9 @@ export const SessionsPage = ({
                       )}
                       {showTags && (
                       <div className="session-row__meta">
-                        <span className="session-time">
+                        <time className="session-time" dateTime={session.lastSeen ?? ""}>
                           {formatTime(session.lastSeen)}
-                        </span>
+                        </time>
                         {active && (
                           <span className="session-tag session-tag--active">
                             active
