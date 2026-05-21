@@ -1,16 +1,28 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { api } from '../lib/api';
-import { CodePane } from './CodePane';
+import { CodePane, CodePaneHandle } from './CodePane';
+import { findPredicateRanges, gateForLine } from '../lib/predicate-map';
+
+export type WorkEditorHandle = {
+  scrollToGate(gate: string): void;
+};
 
 type Props = {
   unitName: string;
   file: 'work' | 'policy' | 'executor';
+  onFocusedGateChange?: (gate: string | null) => void;
 };
 
 const FILE_LABELS: Record<string, string> = {
   work: 'work.md',
   policy: 'policy.ts',
   executor: 'executor.ts',
+};
+
+const FILE_SUBTITLES: Record<string, string> = {
+  work: 'what the agent should do',
+  policy: 'when it’s safe to run',
+  executor: 'how to run it',
 };
 
 function apiPath(unitName: string, file: string): string {
@@ -35,13 +47,34 @@ function readWrap(unitName: string, file: string): boolean {
   }
 }
 
-export function WorkEditor({ unitName, file }: Props) {
+export const WorkEditor = forwardRef<WorkEditorHandle, Props>(function WorkEditor(
+  { unitName, file, onFocusedGateChange },
+  ref,
+) {
   const [content, setContent] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [wrap, setWrap] = useState<boolean>(() => readWrap(unitName, file));
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const codePaneRef = useRef<CodePaneHandle>(null);
+
+  const predicateRanges = useMemo(
+    () => (file === 'policy' && content ? findPredicateRanges(content) : []),
+    [file, content],
+  );
+
+  useImperativeHandle(ref, () => ({
+    scrollToGate(gate: string) {
+      const range = predicateRanges.find(r => r.gate === gate);
+      if (range) codePaneRef.current?.scrollToLine(range.startLine);
+    },
+  }), [predicateRanges]);
+
+  const handleCursorChange = useCallback((line: number) => {
+    if (file !== 'policy') return;
+    onFocusedGateChange?.(gateForLine(predicateRanges, line));
+  }, [file, predicateRanges, onFocusedGateChange]);
 
   useEffect(() => {
     setContent(null);
@@ -93,6 +126,7 @@ export function WorkEditor({ unitName, file }: Props) {
     <div className="pane">
       <div className="pane-header">
         <span className={`filename${editing ? ' filename--editing' : ''}`}>{label}</span>
+        <span className="pane-subtitle">{FILE_SUBTITLES[file]}</span>
         {editing && <span className="editing-chip">[editing]</span>}
         {!saved && <span className="saving-indicator">saving...</span>}
         <span className="pane-actions">
@@ -101,14 +135,14 @@ export function WorkEditor({ unitName, file }: Props) {
             title="Reveal in file manager"
             onClick={reveal}
           >
-            ↗
+            reveal
           </button>
           <button
             className="pane-icon-btn"
             title="Open in default editor"
             onClick={open}
           >
-            ↑
+            open
           </button>
           <button
             className={`pane-icon-btn wrap-btn${wrap ? ' active' : ''}`}
@@ -127,24 +161,26 @@ export function WorkEditor({ unitName, file }: Props) {
       </div>
       <div className="pane-body">
         {error && content === null && (
-          <span className="err" style={{ fontSize: '11px' }}>{error}</span>
+          <span className="pane-msg err">{error}</span>
         )}
         {content === null && !error && (
-          <span className="dim" style={{ fontSize: '11px' }}>loading...</span>
+          <span className="pane-msg dim">loading...</span>
         )}
         {content !== null && (
           <CodePane
+            ref={file === 'policy' ? codePaneRef : undefined}
             value={content}
             onChange={editing ? handleChange : undefined}
             language={langFor(file)}
             readOnly={!editing}
             wrap={wrap}
+            onCursorChange={file === 'policy' ? handleCursorChange : undefined}
           />
         )}
         {error && content !== null && (
-          <div className="err" style={{ fontSize: '10px', marginTop: 4 }}>{error}</div>
+          <div className="pane-msg-sm err">{error}</div>
         )}
       </div>
     </div>
   );
-}
+});

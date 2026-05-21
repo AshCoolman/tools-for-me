@@ -5,10 +5,7 @@ type Props = {
 
 export function ShortId({ value, chars = 7 }: Props) {
   return (
-    <span
-      title={value}
-      style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: '#888', cursor: 'default' }}
-    >
+    <span className="short-id" title={value}>
       {value.slice(0, chars)}
     </span>
   );

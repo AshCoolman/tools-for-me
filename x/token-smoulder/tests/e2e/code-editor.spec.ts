@@ -21,6 +21,8 @@ test.describe('code editor (CodeMirror)', () => {
 
   test('executor.ts pane renders CodeMirror with line numbers', async ({ page }) => {
     await page.goto(server.baseURL);
+    await page.evaluate(() => localStorage.setItem('ts:panes', JSON.stringify({ work: true, policy: true, executor: true })));
+    await page.reload();
     await page.locator('.unit .name', { hasText: 'valid-readonly' }).click();
 
     const execPane = page.locator('.pane').filter({ has: page.locator('.filename', { hasText: 'executor.ts' }) });
@@ -75,8 +77,10 @@ test.describe('code editor (CodeMirror)', () => {
     await expect(cmContent).toHaveAttribute('contenteditable', 'false', { timeout: 2_000 });
   });
 
-  test('all three panes have CodeMirror editors simultaneously', async ({ page }) => {
+  test('all three panes have CodeMirror editors when all panes enabled', async ({ page }) => {
     await page.goto(server.baseURL);
+    await page.evaluate(() => localStorage.setItem('ts:panes', JSON.stringify({ work: true, policy: true, executor: true })));
+    await page.reload();
     await page.locator('.unit .name', { hasText: 'valid-readonly' }).click();
 
     const panes = page.locator('.pane');

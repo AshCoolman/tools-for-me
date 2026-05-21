@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { EditorView, lineNumbers, highlightActiveLine, keymap } from '@codemirror/view';
 import { EditorState, Compartment } from '@codemirror/state';
 import { syntaxHighlighting, HighlightStyle, Language, LanguageSupport, defineLanguageFacet } from '@codemirror/language';
@@ -7,12 +7,17 @@ import { tags } from '@lezer/highlight';
 import { parser as mdParser } from '@lezer/markdown';
 import { parser as tsParser } from '@lezer/javascript';
 
+export type CodePaneHandle = {
+  scrollToLine(line: number): void;
+};
+
 type Props = {
   value: string;
   onChange?: (v: string) => void;
   language: 'markdown' | 'typescript';
   readOnly?: boolean;
   wrap?: boolean;
+  onCursorChange?: (line: number) => void;
 };
 
 function buildTheme(readOnly: boolean) {
@@ -70,12 +75,29 @@ function langExtension(lang: 'markdown' | 'typescript') {
   return lang === 'markdown' ? new LanguageSupport(mdLanguage) : new LanguageSupport(tsLanguage);
 }
 
-export function CodePane({ value, onChange, language, readOnly = false, wrap = true }: Props) {
+export const CodePane = forwardRef<CodePaneHandle, Props>(function CodePane(
+  { value, onChange, language, readOnly = false, wrap = true, onCursorChange },
+  ref,
+) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const wrapCompartmentRef = useRef<Compartment | null>(null);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+  const onCursorChangeRef = useRef(onCursorChange);
+  onCursorChangeRef.current = onCursorChange;
+
+  useImperativeHandle(ref, () => ({
+    scrollToLine(line: number) {
+      const view = viewRef.current;
+      if (!view) return;
+      const pos = view.state.doc.line(line).from;
+      view.dispatch({
+        selection: { anchor: pos },
+        effects: EditorView.scrollIntoView(pos, { y: 'center' }),
+      });
+    },
+  }));
   const valueRef = useRef(value);
   valueRef.current = value;
   const languageRef = useRef(language);
@@ -92,6 +114,10 @@ export function CodePane({ value, onChange, language, readOnly = false, wrap = t
     const updateListener = EditorView.updateListener.of(update => {
       if (update.docChanged && onChangeRef.current) {
         onChangeRef.current(update.state.doc.toString());
+      }
+      if (update.selectionSet && onCursorChangeRef.current) {
+        const line = update.state.doc.lineAt(update.state.selection.main.head).number;
+        onCursorChangeRef.current(line);
       }
     });
 
@@ -146,4 +172,4 @@ export function CodePane({ value, onChange, language, readOnly = false, wrap = t
   }, [wrap]);
 
   return <div ref={containerRef} style={{ height: '100%', minHeight: 200 }} />;
-}
+});

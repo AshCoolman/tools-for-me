@@ -12,7 +12,7 @@ test.describe('sidebar and tabs', () => {
   });
   test.afterAll(() => server?.cleanup());
 
-  test('click sidebar item opens tab with 3-pane editor', async ({ page }) => {
+  test('click sidebar item opens tab with work.md editor (default view)', async ({ page }) => {
     await page.goto(server.baseURL);
     await page.locator('.unit .name', { hasText: 'valid-readonly' }).click();
 
@@ -21,8 +21,6 @@ test.describe('sidebar and tabs', () => {
 
     const editor = page.locator('.editor');
     await expect(editor.locator('.pane-header .filename', { hasText: 'work.md' })).toBeVisible();
-    await expect(editor.locator('.pane-header .filename', { hasText: 'policy.ts' })).toBeVisible();
-    await expect(editor.locator('.pane-header .filename', { hasText: 'executor.ts' })).toBeVisible();
   });
 
   test('close tab removes it from tabbar', async ({ page }) => {
@@ -69,7 +67,7 @@ test.describe('bottom panel — runs list', () => {
     await page.goto(server.baseURL);
 
     const panel = page.locator('.panel');
-    await expect(panel.locator('.runs-panel-header')).toContainText('RUNS');
+    await expect(panel.locator('.runs-panel-header')).toContainText('RUNS'); // internal header label unchanged
     await expect(panel.locator('.run-row', { hasText: 'valid-readonly' })).toBeVisible();
     await expect(panel.locator('.run-error')).toContainText('simulated agent failure');
   });
@@ -167,8 +165,8 @@ test.describe('add work tab', () => {
     await page.goto(server.baseURL);
     await page.locator('.tab-add').click();
 
-    await expect(page.locator('.tabbar .tab', { hasText: 'Add new work' })).toBeVisible();
-    await expect(page.locator('.add-content h3')).toContainText('Add new work');
+    await expect(page.locator('.tabbar .tab', { hasText: 'Add task' })).toBeVisible();
+    await expect(page.locator('.add-content h3')).toContainText('Add a task');
     await expect(page.locator('.add-input-lg')).toBeVisible();
     await expect(page.locator('.add-drop')).toBeVisible();
   });
@@ -177,7 +175,7 @@ test.describe('add work tab', () => {
     await page.goto(server.baseURL);
     await page.locator('.add-btn').click();
 
-    await expect(page.locator('.tabbar .tab', { hasText: 'Add new work' })).toBeVisible();
+    await expect(page.locator('.tabbar .tab', { hasText: 'Add task' })).toBeVisible();
     await expect(page.locator('.add-content')).toBeVisible();
   });
 });

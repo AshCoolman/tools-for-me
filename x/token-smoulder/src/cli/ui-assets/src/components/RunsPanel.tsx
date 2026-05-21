@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { api } from '../lib/api';
 import { friendlyGateName, RISK_HELP } from '../lib/help';
+import { PREDICATE_TO_GATE } from '../lib/predicate-map';
 
 type Step = {
   index: number;
@@ -47,6 +48,8 @@ type Props = {
   events: EventEntry[];
   focusedUnit: string | null;
   onSelectUnit?: (name: string) => void;
+  focusedGate?: string | null;
+  onGateClick?: (gateName: string) => void;
 };
 
 const RUN_EVENTS = new Set([
@@ -102,7 +105,7 @@ function stepStatusChar(status: string): React.ReactNode {
   }
 }
 
-function Pipeline({ decision, steps }: { decision: Decision; steps: Step[] }) {
+function Pipeline({ decision, steps, focusedGate }: { decision: Decision; steps: Step[]; focusedGate?: string | null }) {
   const passedCount = decision.reasons.length;
   const failedCount = decision.failedReasons.length;
   const totalGates = passedCount + failedCount;
@@ -121,11 +124,17 @@ function Pipeline({ decision, steps }: { decision: Decision; steps: Step[] }) {
         className={`thread ${threadClass}`}
         style={{ width: `${threadWidth}px` }}
       />
-      {Array.from({ length: passedCount }, (_, i) => (
-        <span key={`o${i}`} className="gate open" />
+      {decision.reasons.map((reason, i) => (
+        <span
+          key={`o${i}`}
+          className={`gate open${focusedGate && PREDICATE_TO_GATE[reason] === focusedGate ? ' gate-highlight' : ''}`}
+        />
       ))}
-      {Array.from({ length: failedCount }, (_, i) => (
-        <span key={`c${i}`} className="gate closed" />
+      {decision.failedReasons.map((reason, i) => (
+        <span
+          key={`c${i}`}
+          className={`gate closed${focusedGate && PREDICATE_TO_GATE[reason] === focusedGate ? ' gate-highlight' : ''}`}
+        />
       ))}
       <span className="pipe-gap" />
       {steps.map((step, i) => {
@@ -146,7 +155,7 @@ function Pipeline({ decision, steps }: { decision: Decision; steps: Step[] }) {
   );
 }
 
-function RunDetail({ run }: { run: RunRecord }) {
+function RunDetail({ run, focusedGate, onGateClick }: { run: RunRecord; focusedGate?: string | null; onGateClick?: (gate: string) => void }) {
   const isFailed = run.status === 'failed';
   const isRunning = run.status === 'running';
   const detailClass = [
@@ -156,9 +165,16 @@ function RunDetail({ run }: { run: RunRecord }) {
   ].filter(Boolean).join(' ');
 
   const totalSteps = run.steps.length;
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!focusedGate || !containerRef.current) return;
+    const el = containerRef.current.querySelector('.gate-row-highlight') as HTMLElement | null;
+    el?.scrollIntoView({ block: 'nearest' });
+  }, [focusedGate]);
 
   return (
-    <div className={detailClass}>
+    <div className={detailClass} ref={containerRef}>
       <div className="detail-meta">
         <span><span className="label">run</span> {run.runId.slice(0, 8)}</span>
         <span><span className="label">risk</span> {run.riskClass}</span>
@@ -198,33 +214,51 @@ function RunDetail({ run }: { run: RunRecord }) {
         </>
       )}
       <div className="detail-section-label">gates</div>
-      {run.decision.reasons.map((r, i) => (
-        <div key={`p${i}`} className="gate-row">
-          <span className="gate-name">{friendlyGateName(r)}</span>
-          <span className="ok">{'✓'}</span>
-        </div>
-      ))}
-      {run.decision.failedReasons.map((r, i) => (
-        <div key={`f${i}`} className="gate-row">
-          <span className="gate-name">{friendlyGateName(r)}</span>
-          <span className="err">{'✗'} {r}</span>
-        </div>
-      ))}
+      {run.decision.reasons.map((r, i) => {
+        const gate = PREDICATE_TO_GATE[r] ?? r;
+        const highlighted = focusedGate && PREDICATE_TO_GATE[r] === focusedGate;
+        return (
+          <div
+            key={`p${i}`}
+            className={`gate-row${highlighted ? ' gate-row-highlight' : ''}`}
+            onClick={() => onGateClick?.(gate)}
+          >
+            <span className="gate-name">{friendlyGateName(r)}</span>
+            <span className="ok">{'✓'}</span>
+          </div>
+        );
+      })}
+      {run.decision.failedReasons.map((r, i) => {
+        const gate = PREDICATE_TO_GATE[r] ?? r;
+        const highlighted = focusedGate && PREDICATE_TO_GATE[r] === focusedGate;
+        return (
+          <div
+            key={`f${i}`}
+            className={`gate-row${highlighted ? ' gate-row-highlight' : ''}`}
+            onClick={() => onGateClick?.(gate)}
+          >
+            <span className="gate-name">{friendlyGateName(r)}</span>
+            <span className="err">{'✗'} {r}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-function RunRow({ run, pinned, expanded, fresh, focused, onTogglePin, onToggleExpand, onSelectUnit, onDismiss, onKill }: {
+function RunRow({ run, pinned, expanded, fresh, focused, focusedGate, onTogglePin, onToggleExpand, onSelectUnit, onDismiss, onKill, onGateClick }: {
   run: RunRecord;
   pinned: boolean;
   expanded: boolean;
   fresh: boolean;
   focused: boolean;
+  focusedGate?: string | null;
   onTogglePin: (id: string, e: React.MouseEvent) => void;
   onToggleExpand: (id: string) => void;
   onSelectUnit?: (name: string) => void;
   onDismiss: (id: string, e: React.MouseEvent) => void;
   onKill: (name: string, e: React.MouseEvent) => void;
+  onGateClick?: (gate: string) => void;
 }) {
   const isFailed = run.status === 'failed';
   const isRunning = run.status === 'running';
@@ -254,7 +288,7 @@ function RunRow({ run, pinned, expanded, fresh, focused, onTogglePin, onToggleEx
       >
         <span className={`run-status ${icon.cls}`}>{icon.char}</span>
         <span className="run-unit">{run.orchestrationName}</span>
-        <Pipeline decision={run.decision} steps={run.steps} />
+        <Pipeline decision={run.decision} steps={run.steps} focusedGate={focusedGate} />
         <span
           className="run-risk"
           title={RISK_HELP[run.riskClass] ?? run.riskClass}
@@ -290,12 +324,12 @@ function RunRow({ run, pinned, expanded, fresh, focused, onTogglePin, onToggleEx
           {'📌'}
         </span>
       </div>
-      {expanded && <RunDetail run={run} />}
+      {expanded && <RunDetail run={run} focusedGate={focusedGate} onGateClick={onGateClick} />}
     </>
   );
 }
 
-export function RunsPanel({ units, events, focusedUnit, onSelectUnit }: Props) {
+export function RunsPanel({ units, events, focusedUnit, onSelectUnit, focusedGate, onGateClick }: Props) {
   const [runs, setRuns] = useState<RunRecord[]>([]);
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -443,11 +477,13 @@ export function RunsPanel({ units, events, focusedUnit, onSelectUnit }: Props) {
             expanded={expandedId === run.runId}
             fresh={freshIds.has(run.runId)}
             focused={focusedUnit !== null && run.orchestrationName === focusedUnit}
+            focusedGate={focusedGate}
             onTogglePin={togglePin}
             onToggleExpand={toggleExpand}
             onSelectUnit={onSelectUnit}
             onDismiss={dismiss}
             onKill={kill}
+            onGateClick={onGateClick}
           />
         ))}
         {pinned.length > 0 && unpinned.length > 0 && <div className="pin-divider" />}
@@ -459,11 +495,13 @@ export function RunsPanel({ units, events, focusedUnit, onSelectUnit }: Props) {
             expanded={expandedId === run.runId}
             fresh={freshIds.has(run.runId)}
             focused={focusedUnit !== null && run.orchestrationName === focusedUnit}
+            focusedGate={focusedGate}
             onTogglePin={togglePin}
             onToggleExpand={toggleExpand}
             onSelectUnit={onSelectUnit}
             onDismiss={dismiss}
             onKill={kill}
+            onGateClick={onGateClick}
           />
         ))}
         {visible.length === 0 && dismissed.length === 0 && (
@@ -488,11 +526,13 @@ export function RunsPanel({ units, events, focusedUnit, onSelectUnit }: Props) {
             expanded={expandedId === run.runId}
             fresh={false}
             focused={focusedUnit !== null && run.orchestrationName === focusedUnit}
+            focusedGate={focusedGate}
             onTogglePin={togglePin}
             onToggleExpand={toggleExpand}
             onSelectUnit={onSelectUnit}
             onDismiss={dismiss}
             onKill={kill}
+            onGateClick={onGateClick}
           />
         ))}
       </div>

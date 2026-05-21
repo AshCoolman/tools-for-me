@@ -3,9 +3,13 @@ type Props = {
 };
 
 export function ExternalDot({ active }: Props) {
-  return (
-    <span className="dim">
-      external: {active ? 'active' : 'idle'}
-    </span>
-  );
+  if (active) {
+    return (
+      <span className="external-blocking" title="Another Claude session is active — dispatch paused">
+        <span className="external-dot-warn" />
+        session active
+      </span>
+    );
+  }
+  return null;
 }

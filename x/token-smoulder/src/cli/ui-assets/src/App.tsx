@@ -3,11 +3,13 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { connectSse } from './lib/sse';
 import { api } from './lib/api';
 import { ExternalDot } from './components/ExternalDot';
-import { Sidebar, statusColor, statusLabel } from './components/Sidebar';
+import { Sidebar, statusLabel } from './components/Sidebar';
 import { AddTab, GhostWorkUnitCTA } from './components/AddTab';
-import { WorkEditor } from './components/WorkEditor';
+import { WorkEditor, WorkEditorHandle } from './components/WorkEditor';
 import { RunsPanel } from './components/RunsPanel';
 import { HelpPanel } from './components/HelpPanel';
+import { RunSummary } from './components/RunSummary';
+import { GateStrip } from './components/GateStrip';
 
 const ADD_TAB = '__add__';
 const LS_SIDEBAR = 'ts:sidebar-width';
@@ -77,13 +79,13 @@ function readPaneVisibility(): PaneVisibility {
       if (parsed && typeof parsed === 'object') {
         return {
           work: parsed.work !== false,
-          policy: parsed.policy !== false,
-          executor: parsed.executor !== false,
+          policy: parsed.policy === true,
+          executor: parsed.executor === true,
         };
       }
     }
   } catch {}
-  return { work: true, policy: true, executor: true };
+  return { work: true, policy: false, executor: false };
 }
 
 const LAYOUT_PRESETS: readonly LayoutPreset[] = [
@@ -189,6 +191,8 @@ export function App() {
   const [showPanel, setShowPanel] = useState<boolean>(() => readLSBool(LS_SHOW_PANEL, true));
   const [panelTab, setPanelTab] = useState<'runs' | 'help'>('runs');
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [failureBadge, setFailureBadge] = useState(0);
+  const [connected, setConnected] = useState(true);
 
   const settingsRef = useRef<HTMLDivElement | null>(null);
   const settingsBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -205,28 +209,30 @@ export function App() {
     try {
       const data = await api.get<{ items: UnitItem[] }>('/api/units');
       setUnits(data.items);
-    } catch { /* ignore */ }
+      setConnected(true);
+    } catch { setConnected(false); }
   }, []);
 
   const refreshDaemon = useCallback(async () => {
     try {
       const data = await api.get<DaemonStatus>('/api/daemon/status');
       setDaemon(data);
-    } catch { /* ignore */ }
+      setConnected(true);
+    } catch { setConnected(false); }
   }, []);
 
   const refreshSuppressions = useCallback(async () => {
     try {
       const data = await api.get<SuppressionRecord[]>('/api/suppressions');
       setSuppressions(data);
-    } catch { /* ignore */ }
+    } catch { /* non-critical */ }
   }, []);
 
   const refreshQueue = useCallback(async () => {
     try {
       const data = await api.get<QueueResponse>('/api/queue');
       setQueueData(data);
-    } catch { /* ignore */ }
+    } catch { /* non-critical */ }
   }, []);
 
   useEffect(() => {
@@ -260,10 +266,15 @@ export function App() {
             setClaudeUsage({ fiveHour: p.session.percent, sevenDay: p.week.percent, scrapedAt: p.scrapedAt ?? '' });
           }
         }
-        if (event === 'event') setEvents(prev => {
-          if (prev.some(e => e.timestamp === parsed.timestamp && e.name === parsed.name && e.orchestrationName === parsed.orchestrationName)) return prev;
-          return [...prev.slice(-199), parsed];
-        });
+        if (event === 'event') {
+          setEvents(prev => {
+            if (prev.some(e => e.timestamp === parsed.timestamp && e.name === parsed.name && e.orchestrationName === parsed.orchestrationName)) return prev;
+            return [...prev.slice(-199), parsed];
+          });
+          if (parsed.name === 'run_failed' || parsed.name === 'run_suppressed') {
+            setFailureBadge(prev => prev + 1);
+          }
+        }
       } catch { /* ignore malformed */ }
     });
 
@@ -339,6 +350,18 @@ export function App() {
     });
   };
 
+  const [focusedGate, setFocusedGate] = useState<string | null>(null);
+  const policyEditorRef = useRef<WorkEditorHandle>(null);
+
+  const handleFocusedGateChange = useCallback((gate: string | null) => {
+    setFocusedGate(gate);
+    if (gate !== null) setShowPanel(true);
+  }, []);
+
+  const handleGateClick = useCallback((gateName: string) => {
+    policyEditorRef.current?.scrollToGate(gateName);
+  }, []);
+
   const [runResult, setRunResult] = useState<'ok' | 'fail' | null>(null);
 
   const runUnit = async (name: string) => {
@@ -396,6 +419,25 @@ export function App() {
         <span>token-smoulder</span>
         <span className="spacer" />
         <ExternalDot active={externalActive} />
+        <button
+          className="btn ghost pane-cycle-btn"
+          title="Cycle primary pane"
+          onClick={() => {
+            const cycle: LayoutPreset[] = ['fullscreen-0', 'fullscreen-1', 'fullscreen-2'];
+            const idx = cycle.indexOf(layoutPreset);
+            setLayoutPreset(cycle[(idx + 1) % cycle.length]);
+          }}
+        >
+          ⇥
+        </button>
+        <button
+          className="btn ghost pane-reset-btn"
+          title="Reset to equal panes"
+          disabled={layoutPreset === 'equal'}
+          onClick={() => setLayoutPreset('equal')}
+        >
+          =
+        </button>
         <button
           ref={settingsBtnRef}
           className={`btn ghost settings-cog${settingsOpen ? ' active' : ''}`}
@@ -502,14 +544,11 @@ export function App() {
               >
                 {name !== ADD_TAB && (
                   <span
-                    className="dot"
-                    style={{
-                      background: statusColor(units.find(u => u.name === name)?.latestStatus ?? null),
-                      width: 6, height: 6,
-                    }}
+                    className="dot dot-sm"
+                    data-status={units.find(u => u.name === name)?.latestStatus ?? 'idle'}
                   />
                 )}
-                {name === ADD_TAB ? 'Add new work' : name}
+                {name === ADD_TAB ? 'Add task' : name}
                 <span
                   className="close"
                   onClick={e => { e.stopPropagation(); closeTab(name); }}
@@ -518,7 +557,7 @@ export function App() {
                 </span>
               </div>
             ))}
-            <span className="tab-add" title="Add new work" onClick={() => openTab(ADD_TAB)}>+</span>
+            <span className="tab-add" title="Add task" onClick={() => openTab(ADD_TAB)}>+</span>
           </div>
 
           <div
@@ -530,9 +569,19 @@ export function App() {
             }
           >
             {isEmptyState && (
-              <div className="pane">
-                <div className="pane-body">
-                  <GhostWorkUnitCTA onClick={() => openTab(ADD_TAB)} />
+              <div className="welcome-screen">
+                <div className="welcome-content">
+                  <h2 className="welcome-title">token-smoulder</h2>
+                  <p className="welcome-sub">Queue tasks for your AI agent. They run when conditions are right — enough quota, no active sessions, and safe to run unattended.</p>
+                  <button className="welcome-cta" onClick={() => openTab(ADD_TAB)}>
+                    Add your first task
+                  </button>
+                  <div className="welcome-steps">
+                    <div className="welcome-step"><span className="welcome-num">1</span> Describe a task in plain language</div>
+                    <div className="welcome-step"><span className="welcome-num">2</span> The system creates a definition, safety policy, and executor</div>
+                    <div className="welcome-step"><span className="welcome-num">3</span> Start the daemon — it dispatches when conditions align</div>
+                    <div className="welcome-step"><span className="welcome-num">4</span> Review results when you're back</div>
+                  </div>
                 </div>
               </div>
             )}
@@ -545,15 +594,27 @@ export function App() {
                   <AddTab
                     onConverted={convertAddTab}
                     onRefreshUnits={refreshUnits}
+                    onRunUnit={runUnit}
                     unitsEmpty={units.length === 0}
+                    daemonRunning={daemon.running}
                   />
                 </div>
               </div>
             )}
             {activeTab && !isAddTab && visibleFiles.map(file => (
-              <WorkEditor key={file} unitName={activeTab} file={file} />
+              <WorkEditor
+                key={file}
+                unitName={activeTab}
+                file={file}
+                ref={file === 'policy' ? policyEditorRef : undefined}
+                onFocusedGateChange={file === 'policy' ? handleFocusedGateChange : undefined}
+              />
             ))}
           </div>
+
+          {activeUnit && !isAddTab && (
+            <GateStrip unitName={activeUnit.name} focusedGate={focusedGate} onGateClick={handleGateClick} />
+          )}
 
           {showPanel && (
             <>
@@ -563,15 +624,18 @@ export function App() {
                 <div className="panel-tabs">
                   <div
                     className={`panel-tab${panelTab === 'runs' ? ' active' : ''}`}
-                    onClick={() => setPanelTab('runs')}
+                    onClick={() => { setPanelTab('runs'); setFailureBadge(0); }}
                   >
-                    Runs
+                    History
+                    {failureBadge > 0 && panelTab !== 'runs' && (
+                      <span className="failure-badge">{failureBadge}</span>
+                    )}
                   </div>
                   <div
                     className={`panel-tab${panelTab === 'help' ? ' active' : ''}`}
                     onClick={() => setPanelTab('help')}
                   >
-                    Help
+                    Glossary
                   </div>
                 </div>
                 {panelTab === 'runs' ? (
@@ -580,6 +644,8 @@ export function App() {
                     events={events}
                     focusedUnit={activeTab && !isAddTab ? activeTab : null}
                     onSelectUnit={openTab}
+                    focusedGate={focusedGate}
+                    onGateClick={handleGateClick}
                   />
                 ) : (
                   <HelpPanel />
@@ -590,15 +656,18 @@ export function App() {
         </div>
       </div>
 
-      <div className="statusbar">
+      <div className={`statusbar${failureBadge > 0 ? ' has-failures' : ''}${!daemon.running ? ' queue-paused' : ''}${!connected ? ' connection-lost' : ''}`}>
+        {!connected && (
+          <span className="statusbar-warn">Connection lost — data may be stale</span>
+        )}
+        {connected && !daemon.running && (
+          <span className="statusbar-warn">Queue paused — tasks will not dispatch</span>
+        )}
         {activeUnit && (
           <>
             <span
-              className="dot"
-              style={{
-                background: statusColor(activeUnit.latestStatus),
-                width: 6, height: 6,
-              }}
+              className="dot dot-sm"
+              data-status={activeUnit.latestStatus ?? 'idle'}
             />
             <span>{activeUnit.name}</span>
             <span className="pill">
@@ -606,8 +675,8 @@ export function App() {
             </span>
           </>
         )}
-        {!activeUnit && !isAddTab && <span>no selection</span>}
-        {isAddTab && <span>adding new work</span>}
+        {!activeUnit && !isAddTab && daemon.running && <span>no task selected</span>}
+        {isAddTab && <span>adding a task</span>}
         <span className="spacer" />
         {quota && (
           <span>

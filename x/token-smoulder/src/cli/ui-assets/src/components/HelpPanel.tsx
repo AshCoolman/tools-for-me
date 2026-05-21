@@ -1,4 +1,4 @@
-import { TERM_HELP, RISK_HELP, STATUS_HELP } from '../lib/help';
+import { TERM_HELP, RISK_HELP, STATUS_HELP, PREDICATE_HELP } from '../lib/help';
 
 function Section({ title, entries }: { title: string; entries: Record<string, string> }) {
   return (
@@ -20,6 +20,7 @@ export function HelpPanel() {
   return (
     <div className="panel-body">
       <Section title="Terms" entries={TERM_HELP} />
+      <Section title="Policy predicates" entries={PREDICATE_HELP} />
       <Section title="Risk classes" entries={RISK_HELP} />
       <Section title="Run statuses" entries={STATUS_HELP} />
     </div>

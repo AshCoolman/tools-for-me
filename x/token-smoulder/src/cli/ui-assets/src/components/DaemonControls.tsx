@@ -6,13 +6,30 @@ type Props = {
   onRefresh: () => void;
 };
 
+function msToFriendly(ms: number): string {
+  if (ms < 60_000) return `${Math.round(ms / 1000)}s`;
+  const mins = Math.round(ms / 60_000);
+  return `${mins}m`;
+}
+
+function friendlyToMs(input: string): number | null {
+  const trimmed = input.trim().toLowerCase();
+  const mMatch = trimmed.match(/^(\d+)\s*m$/);
+  if (mMatch) return Number(mMatch[1]) * 60_000;
+  const sMatch = trimmed.match(/^(\d+)\s*s$/);
+  if (sMatch) return Number(sMatch[1]) * 1000;
+  const num = Number(trimmed);
+  if (Number.isFinite(num) && num > 0) return num > 300 ? num : num * 1000;
+  return null;
+}
+
 export function DaemonControls({ running, onRefresh }: Props) {
-  const [tick, setTick] = useState('30000');
+  const [tickInput, setTickInput] = useState('30s');
 
   const start = async () => {
-    const tickMs = Number(tick);
+    const tickMs = friendlyToMs(tickInput);
     await api.post('/api/daemon/start', {
-      tick: Number.isFinite(tickMs) && tickMs > 0 ? tickMs : undefined,
+      tick: tickMs && tickMs >= 5000 ? tickMs : undefined,
     });
     onRefresh();
   };
@@ -25,30 +42,33 @@ export function DaemonControls({ running, onRefresh }: Props) {
   return (
     <>
       <div className="daemon-row">
-        <span className={`daemon-dot ${running ? 'running' : 'stopped'}`} />
-        <span>daemon</span>
-        <span className={`daemon-pill ${running ? 'running' : 'stopped'}`}>
-          {running ? 'running' : 'stopped'}
+        <span className={`daemon-dot ${running ? 'running' : 'paused'}`} />
+        <span>queue</span>
+        <span className={`daemon-pill ${running ? 'running' : 'paused'}`}>
+          {running ? 'running' : 'paused'}
         </span>
-        <span style={{ flex: 1 }} />
+        <span className="spacer" />
         {running ? (
-          <button className="daemon-btn" onClick={stop}>stop</button>
+          <button className="daemon-btn" onClick={stop}>pause</button>
         ) : (
-          <button className="daemon-btn" onClick={start}>start</button>
+          <button className="daemon-btn" onClick={start}>resume</button>
         )}
       </div>
-      <div className="daemon-row" style={{ marginTop: 4 }}>
-        <span>tick</span>
-        <input
-          className="tick-input"
-          type="number"
-          value={tick}
-          onChange={e => setTick(e.target.value)}
-          readOnly={running}
-          aria-label="tick interval in milliseconds"
-        />
-        <span className="dim">ms</span>
-      </div>
+      {!running && (
+        <div className="daemon-row daemon-tick-row">
+          <span>check every</span>
+          <input
+            className="tick-input"
+            type="text"
+            value={tickInput}
+            onChange={e => setTickInput(e.target.value)}
+            placeholder="30s"
+            aria-label="polling interval (e.g. 30s, 5m)"
+          />
+        </div>
+      )}
     </>
   );
 }
+
+export { msToFriendly };

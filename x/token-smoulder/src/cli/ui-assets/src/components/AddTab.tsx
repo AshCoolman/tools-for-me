@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, type DragEvent } from 'react';
 import { api } from '../lib/api';
+import { friendlyBlockingReason } from '../lib/help';
 
 type LintIssue = { rule: string; message: string };
 type LintReport = { ok: boolean; name: string; issues: LintIssue[] };
@@ -32,7 +33,9 @@ type SourceCandidate = {
 type Props = {
   onConverted: (name: string) => void;
   onRefreshUnits: () => void;
+  onRunUnit?: (name: string) => void;
   unitsEmpty?: boolean;
+  daemonRunning?: boolean;
 };
 
 export function GhostWorkUnitCTA({ onClick }: { onClick: () => void }) {
@@ -46,7 +49,7 @@ export function GhostWorkUnitCTA({ onClick }: { onClick: () => void }) {
   );
 }
 
-export function AddTab({ onConverted, onRefreshUnits, unitsEmpty = false }: Props) {
+export function AddTab({ onConverted, onRefreshUnits, onRunUnit, unitsEmpty = false, daemonRunning = true }: Props) {
   const [idea, setIdea] = useState('');
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -144,8 +147,11 @@ export function AddTab({ onConverted, onRefreshUnits, unitsEmpty = false }: Prop
           <span>No work units yet — start by adding one below.</span>
         </div>
       )}
-      <h3>Add new work</h3>
-      <p>Describe a task to automate. The system creates a definition, policy, and executor for it.</p>
+      <h3>Add a task</h3>
+      <p>Describe what you want an AI agent to do. The system creates three files:
+        <strong> work.md</strong> (what to do),
+        <strong> policy.ts</strong> (when to run),
+        <strong> executor.ts</strong> (how to run it).</p>
 
       <form className="add-form" onSubmit={handleSubmit}>
         <input
@@ -196,7 +202,7 @@ export function AddTab({ onConverted, onRefreshUnits, unitsEmpty = false }: Prop
           <div className="verdict-grid">
             {verdict.inferred && (
               <div className="verdict-row">
-                <span className="verdict-label">risk</span>
+                <span className="verdict-label">safety</span>
                 <span>{verdict.inferred.riskClass} <span className="dim">({verdict.inferred.signal})</span></span>
               </div>
             )}
@@ -219,24 +225,54 @@ export function AddTab({ onConverted, onRefreshUnits, unitsEmpty = false }: Prop
               </div>
             ))}
             <div className="verdict-row">
-              <span className="verdict-label">ready</span>
+              <span className="verdict-label">dispatch</span>
               <span>
-                {checkReady && <span className="ok">yes</span>}
-                {checkBlocked && <span className="err">no — policy blocks</span>}
-                {checkError && <span className="err">error</span>}
-                {checkSkipped && <span className="dim">skipped</span>}
+                {checkReady && daemonRunning && <span className="ok">ready — conditions met</span>}
+                {checkReady && !daemonRunning && <span className="warn">conditions met but queue is paused</span>}
+                {checkBlocked && (() => {
+                  const reasons = (verdict.check as CheckDecision).failedReasons;
+                  const first = reasons[0] ? friendlyBlockingReason(reasons[0]) : 'safety check failed';
+                  return <span className="err">blocked — {first}{reasons.length > 1 ? ` (+${reasons.length - 1} more)` : ''}</span>;
+                })()}
+                {checkError && <span className="err">error checking conditions</span>}
+                {checkSkipped && <span className="dim">not checked yet</span>}
               </span>
             </div>
-            <div className="verdict-row">
-              <span className="verdict-label">next</span>
-              <span>{verdict.next}</span>
+            {!daemonRunning && (
+              <div className="verdict-row">
+                <span className="verdict-label" />
+                <span className="warn verdict-daemon-warn">Queue paused — resume for automatic dispatch</span>
+              </div>
+            )}
+          </div>
+
+          {verdict.scaffolded && (
+            <div className="verdict-defaults">
+              Default policy: runs when quota is available and keyboard is idle. Edit policy.ts to change.
             </div>
+          )}
+
+          <div className="verdict-actions">
+            {checkReady && onRunUnit && (
+              <button className="add-submit-lg" onClick={() => onRunUnit(verdict.name)}>
+                Run now
+              </button>
+            )}
+            <button className="verdict-open-btn" onClick={() => onConverted(verdict.name)}>
+              Open in editor
+            </button>
           </div>
 
           {widenClass && (
             <button className="add-submit-lg verdict-action" onClick={handleWiden}>
-              Allow risk class: {widenClass}
+              Allow safety level: {widenClass}
             </button>
+          )}
+
+          {verdict.next && (
+            <div className="verdict-next">
+              <span className="verdict-label">next step:</span> {verdict.next}
+            </div>
           )}
         </div>
       )}
