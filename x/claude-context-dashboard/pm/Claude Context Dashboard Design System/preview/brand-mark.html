@@ -1,0 +1,56 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="_card.css">
+<style>
+.brand-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.box { background: #0e0e10; border: 1px solid #27272a; border-radius: 8px; padding: 22px; display: flex; align-items: center; gap: 16px; min-height: 100px; }
+.role { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-vdim); font-weight: 600; }
+.dim { color: var(--fg-dim); font-size: 11px; }
+
+.mono-2x2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; width: 56px; height: 56px; flex-shrink: 0; }
+.mono-2x2 div { border-radius: 6px; }
+
+.wordmark {
+  display: flex; align-items: center; gap: 12px;
+  font-family: Inter, system-ui, sans-serif; font-weight: 600;
+  letter-spacing: -0.01em; color: #f4f4f5;
+}
+.mono-sm { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; width: 22px; height: 22px; }
+.mono-sm div { border-radius: 3px; }
+.sizes { display: flex; flex-direction: column; gap: 8px; }
+</style></head><body>
+<div class="preview-card">
+  <div class="role">monogram — 4 severity dots, 2×2 grid</div>
+  <div class="brand-grid">
+    <div class="box">
+      <div class="mono-2x2">
+        <div style="background:#22c55e"></div>
+        <div style="background:#eab308"></div>
+        <div style="background:#f97316"></div>
+        <div style="background:#ef4444"></div>
+      </div>
+      <div>
+        <div class="role" style="margin-bottom:4px">monogram 56px</div>
+        <div class="dim">Geometric · severity-encoded · favicon-ready</div>
+      </div>
+    </div>
+    <div class="box">
+      <div class="sizes">
+        <div class="wordmark" style="font-size:18px;">
+          <div class="mono-sm" style="width:24px;height:24px;">
+            <div style="background:#22c55e"></div><div style="background:#eab308"></div>
+            <div style="background:#f97316"></div><div style="background:#ef4444"></div>
+          </div>
+          <span>Claude Context Dashboard</span>
+        </div>
+        <div class="wordmark" style="font-size:13px; color:#a1a1aa;">
+          <div class="mono-sm" style="width:16px;height:16px;">
+            <div style="background:#22c55e"></div><div style="background:#eab308"></div>
+            <div style="background:#f97316"></div><div style="background:#ef4444"></div>
+          </div>
+          <span>Claude Context Dashboard</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>

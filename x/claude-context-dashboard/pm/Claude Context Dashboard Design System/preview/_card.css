@@ -1,0 +1,80 @@
+/* ============================================================
+   Shared styles for design system preview cards.
+   Each card is ~700px wide, dark surface, no chrome.
+   ============================================================ */
+
+@import url("../colors_and_type.css");
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--bg-page);
+  color: var(--fg-1);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+}
+
+.preview-card {
+  width: 700px;
+  padding: 20px 24px;
+  background: var(--bg-page);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.row { display: flex; align-items: center; gap: 12px; }
+.col { display: flex; flex-direction: column; gap: 6px; }
+
+.label {
+  font-size: var(--fs-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fg-dim);
+  font-weight: var(--fw-semibold);
+}
+
+.muted { color: var(--fg-muted); }
+.dim { color: var(--fg-dim); }
+.vdim { color: var(--fg-vdim); }
+.tabular { font-variant-numeric: tabular-nums; }
+.mono { font-family: var(--font-mono); }
+
+.swatch {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-3);
+  border: 1px solid var(--border-1);
+}
+.swatch.sm { width: 36px; height: 36px; border-radius: var(--radius-2); }
+.swatch.dot { width: 14px; height: 14px; border-radius: var(--radius-1); }
+
+.token-row {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  gap: 14px;
+  align-items: center;
+}
+.token-name {
+  font-size: var(--fs-row);
+  color: var(--fg-1);
+  font-weight: var(--fw-medium);
+}
+.token-meta {
+  font-size: var(--fs-small);
+  color: var(--fg-dim);
+}
+.token-value {
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  color: var(--fg-muted);
+}
+
+.divider {
+  height: 1px;
+  background: var(--border-1);
+  margin: 4px 0;
+}

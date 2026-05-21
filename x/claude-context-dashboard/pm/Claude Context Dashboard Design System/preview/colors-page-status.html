@@ -1,0 +1,50 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="_card.css">
+<style>
+.bg-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.bg-cell {
+  height: 90px; border-radius: var(--radius-3);
+  display: flex; align-items: flex-end; padding: 12px;
+  font-size: 11px; color: rgba(255,255,255,0.7);
+  font-family: var(--font-mono);
+}
+.bg-cell.normal { background: #101114; border: 1px solid var(--border-1); }
+.bg-cell.warn   { background: #2a2008; }
+.bg-cell.crit   { background: #2a0d0d; }
+.bg-cell .label-ctx {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+  font-family: var(--font-sans); font-weight: 600;
+  display: flex; align-items: center; gap: 6px;
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; }
+.dot.ok { background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,0.18); }
+.dot.warn-d { background: #eab308; box-shadow: 0 0 0 3px rgba(234,179,8,0.22); }
+.dot.crit-d { background: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,0.25); }
+</style></head><body>
+<div class="preview-card">
+  <div class="label">page background — reflects status.claude.com</div>
+  <div class="bg-row">
+    <div class="bg-cell normal">
+      <div>
+        <div class="label-ctx" style="color:#86efac"><span class="dot ok"></span>operational</div>
+        <div style="margin-top:6px;color:#71717a">#101114</div>
+      </div>
+    </div>
+    <div class="bg-cell warn">
+      <div>
+        <div class="label-ctx" style="color:#fde68a"><span class="dot warn-d"></span>minor incident</div>
+        <div style="margin-top:6px;color:#a8957a">#2a2008</div>
+      </div>
+    </div>
+    <div class="bg-cell crit">
+      <div>
+        <div class="label-ctx" style="color:#fecaca"><span class="dot crit-d"></span>major incident</div>
+        <div style="margin-top:6px;color:#bd9090">#2a0d0d</div>
+      </div>
+    </div>
+  </div>
+  <div class="dim" style="font-size:11px;">
+    Whole-page tint, transitioned over 400ms. Polled every 5min from <span class="mono" style="color:#a1a1aa">/api/status</span>.
+  </div>
+</div>
+</body></html>

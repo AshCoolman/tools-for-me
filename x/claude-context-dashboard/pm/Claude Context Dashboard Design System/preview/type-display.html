@@ -1,0 +1,45 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="_card.css">
+<style>
+.row-spec { display: grid; grid-template-columns: 96px 1fr auto; gap: 16px; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--border-1); }
+.row-spec:last-child { border-bottom: 0; }
+.role { font-size: var(--fs-micro); text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-vdim); font-weight: 600; }
+.specimen { color: var(--fg-1); }
+.meta { font-family: var(--font-mono); font-size: 11px; color: var(--fg-dim); white-space: nowrap; }
+</style></head><body>
+<div class="preview-card">
+  <div class="label">type — Inter sans</div>
+  <div>
+    <div class="row-spec">
+      <div class="role">h1</div>
+      <div class="specimen" style="font-size:28px;font-weight:600;letter-spacing:-0.01em;line-height:1.2">Claude Context Dashboard</div>
+      <div class="meta">28 / 600 / -0.01em</div>
+    </div>
+    <div class="row-spec">
+      <div class="role">stat</div>
+      <div class="specimen" style="font-size:24px;font-weight:600">328k</div>
+      <div class="meta">24 / 600</div>
+    </div>
+    <div class="row-spec">
+      <div class="role">h2</div>
+      <div class="specimen" style="font-size:16px;font-weight:600;color:#a1a1aa">Active sessions (last 6 hours)</div>
+      <div class="meta">16 / 600 / muted</div>
+    </div>
+    <div class="row-spec">
+      <div class="role">body</div>
+      <div class="specimen" style="font-size:14px;font-weight:400">Showing 12 of 47 sessions with activity in the last 6 hours.</div>
+      <div class="meta">14 / 400</div>
+    </div>
+    <div class="row-spec">
+      <div class="role">row</div>
+      <div class="specimen" style="font-size:13px;font-weight:500">claude-context-dashboard / src / client</div>
+      <div class="meta">13 / 500</div>
+    </div>
+    <div class="row-spec">
+      <div class="role">small</div>
+      <div class="specimen" style="font-size:12px;color:#a1a1aa">last 6 hours · auto-refreshed 5s</div>
+      <div class="meta">12 / 400 / muted</div>
+    </div>
+  </div>
+</div>
+</body></html>

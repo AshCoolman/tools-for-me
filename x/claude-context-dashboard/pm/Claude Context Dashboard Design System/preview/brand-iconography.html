@@ -1,0 +1,72 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="_card.css">
+<style>
+.row { display: flex; flex-wrap: wrap; gap: 14px; }
+.item {
+  background: #0e0e10; border: 1px solid #27272a; border-radius: 8px;
+  padding: 10px 14px;
+  /* CSS grid: icon and text share a baseline-aligned first row.
+     Icon uses fixed 14px box, vertically centered against cap-height of "name". */
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 10px;
+  row-gap: 1px;
+  min-width: 160px;
+}
+.item .iconwrap {
+  grid-column: 1; grid-row: 1;
+  height: 16px;            /* matches name's line-box; icon sits in the cap-height middle */
+  display: flex; align-items: center; justify-content: center;
+}
+.item .glyph { font-size: 14px; color: #f4f4f5; line-height: 1; }
+.icon-svg { width: 14px; height: 14px; color: #a1a1aa; display: block; }
+.item .name {
+  grid-column: 2; grid-row: 1;
+  font-size: 12px; color: var(--fg-muted); line-height: 1.33;
+}
+.item .where {
+  grid-column: 2; grid-row: 2;
+  font-size: 10px; color: var(--fg-vdim);
+  text-transform: uppercase; letter-spacing: 0.06em; line-height: 1.4;
+}
+.role { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-vdim); font-weight: 600; }
+.deny {
+  display: flex; align-items: center; gap: 8px; padding: 4px 0;
+  font-size: 12px; color: #fca5a5;
+}
+.deny strong { color: #f4f4f5; font-weight: 500; }
+.deny::before { content: "⊘"; color: #ef4444; font-size: 14px; }
+</style></head><body>
+<div class="preview-card">
+  <div class="role">iconography — minimal, unicode-first</div>
+  <div class="row">
+    <div class="item">
+      <span class="iconwrap"><svg class="icon-svg" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="4"/><path d="M9 9l4 4"/></svg></span>
+      <div class="name">Search</div>
+      <div class="where">header input · 14px</div>
+    </div>
+    <div class="item">
+      <span class="iconwrap"><svg class="icon-svg" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="5.25"/><path d="M3.4 3.4l7.2 7.2"/></svg></span>
+      <div class="name">Orphan project</div>
+      <div class="where">project name suffix · 14px</div>
+    </div>
+    <div class="item">
+      <span class="iconwrap"><svg class="icon-svg" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7s2.5-4.5 6-4.5S13 7 13 7s-2.5 4.5-6 4.5S1 7 1 7z"/><circle cx="7" cy="7" r="1.75"/></svg></span>
+      <div class="name">Visibility / Edit</div>
+      <div class="where">header SVG · 14px</div>
+    </div>
+    <div class="item">
+      <span class="iconwrap"><svg class="icon-svg" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="2"/><path d="M7 1v1.5M7 11.5V13M2.05 2.05l1.06 1.06M10.89 10.89l1.06 1.06M1 7h1.5M11.5 7H13M2.05 11.95l1.06-1.06M10.89 3.11l1.06-1.06"/></svg></span>
+      <div class="name">Settings</div>
+      <div class="where">header SVG · 14px</div>
+    </div>
+  </div>
+  <div class="role" style="margin-top:6px">policy</div>
+  <div style="display:flex;flex-direction:column;gap:4px">
+    <div class="deny">No emoji <strong style="margin-left:auto;color:#71717a">use unicode geometric glyphs</strong></div>
+    <div class="deny">No bundled icon library <strong style="margin-left:auto;color:#71717a">CDN Lucide if extending</strong></div>
+    <div class="deny">No filled / multi-color icons <strong style="margin-left:auto;color:#71717a">1.5px stroke, currentColor</strong></div>
+  </div>
+</div>
+</body></html>

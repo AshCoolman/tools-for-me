@@ -1,0 +1,66 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="_card.css">
+<style>
+.tt {
+  background: #0b0b0e; border: 1px solid #3f3f46; border-radius: 8px;
+  padding: 12px 14px; box-shadow: 0 6px 18px rgba(0,0,0,0.55);
+  width: 360px; display: flex; flex-direction: column; gap: 8px;
+}
+.tt .time {
+  font-family: ui-monospace, monospace; font-size: 11px; color: #71717a;
+  border-bottom: 1px solid #27272a; padding-bottom: 6px;
+}
+.band-label {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
+  font-weight: 600; margin-bottom: 4px;
+}
+.tt-row { display: flex; flex-direction: column; gap: 3px; padding: 4px 0; }
+.tt-row + .tt-row { border-top: 1px solid #18181b; }
+.row-head { display: flex; align-items: center; gap: 6px; }
+.swatch { width: 8px; height: 8px; border-radius: 2px; }
+.project { font-size: 12px; font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
+.project-dim { color: #52525b; font-weight: 400; }
+.short-id { font-family: ui-monospace, monospace; font-size: 11px; opacity: 0.7; }
+.row-meta { display: flex; gap: 14px; font-size: 11px; }
+.metric { display: flex; align-items: baseline; gap: 4px; color: #d4d4d8; }
+.metric-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: #71717a; }
+.metric-value { font-family: ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+.tail { font-size: 11px; color: #71717a; font-style: italic; line-height: 1.4; }
+.role { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-vdim); font-weight: 600; }
+</style></head><body>
+<div class="preview-card">
+  <div class="role">chart hover tooltip — grouped by severity</div>
+  <div class="tt">
+    <div class="time">Jan 12, 14:32:08</div>
+    <div>
+      <div class="band-label" style="color:#ef4444">Critical</div>
+      <div class="tt-row">
+        <div class="row-head">
+          <span class="swatch" style="background:#fca5a5"></span>
+          <span class="project" style="color:#fca5a5"><span class="project-dim">~/code/</span>claude-context-dashboard</span>
+          <span class="short-id" style="color:#fca5a5">a4f9c3b2</span>
+        </div>
+        <div class="row-meta">
+          <span class="metric"><span class="metric-label">ctx</span><span class="metric-value">328,470</span></span>
+          <span class="metric"><span class="metric-label">cum</span><span class="metric-value">2,104,889</span></span>
+        </div>
+        <div class="tail">"Refactor session row sparkline padding to align with chart margins…"</div>
+      </div>
+    </div>
+    <div>
+      <div class="band-label" style="color:#f97316">Large</div>
+      <div class="tt-row">
+        <div class="row-head">
+          <span class="swatch" style="background:#fdba74"></span>
+          <span class="project" style="color:#fdba74"><span class="project-dim">~/code/</span>tools-for-me</span>
+          <span class="short-id" style="color:#fdba74">7b21ee04</span>
+        </div>
+        <div class="row-meta">
+          <span class="metric"><span class="metric-label">ctx</span><span class="metric-value">218,200</span></span>
+          <span class="metric"><span class="metric-label">cum</span><span class="metric-value">912,440</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>

@@ -1,0 +1,40 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="_card.css">
+<style>
+.scales { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.col-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-vdim); font-weight: 600; margin-bottom: 8px; }
+.space-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
+.space-row .name { font-family: var(--font-mono); font-size: 11px; color: var(--fg-muted); width: 28px; }
+.space-row .bar { background: #3f3f46; height: 8px; border-radius: 2px; }
+.space-row .px { font-family: var(--font-mono); font-size: 11px; color: var(--fg-dim); }
+
+.radius-row { display: flex; align-items: center; gap: 12px; padding: 4px 0; }
+.radius-row .r { width: 36px; height: 36px; background: #27272a; border: 1px solid #3f3f46; }
+.radius-row .name { font-family: var(--font-mono); font-size: 11px; color: var(--fg-muted); width: 20px; }
+.radius-row .desc { font-size: 12px; color: var(--fg-dim); }
+.radius-row .px { font-family: var(--font-mono); font-size: 11px; color: var(--fg-dim); margin-left: auto; }
+</style></head><body>
+<div class="preview-card">
+  <div class="scales">
+    <div>
+      <div class="col-title">spacing — 4px base</div>
+      <div class="space-row"><span class="name">1</span><div class="bar" style="width:4px"></div><span class="px">4</span></div>
+      <div class="space-row"><span class="name">2</span><div class="bar" style="width:8px"></div><span class="px">8</span></div>
+      <div class="space-row"><span class="name">3</span><div class="bar" style="width:12px"></div><span class="px">12</span></div>
+      <div class="space-row"><span class="name">4</span><div class="bar" style="width:16px"></div><span class="px">16</span></div>
+      <div class="space-row"><span class="name">5</span><div class="bar" style="width:24px"></div><span class="px">24</span></div>
+      <div class="space-row"><span class="name">6</span><div class="bar" style="width:32px"></div><span class="px">32</span></div>
+      <div class="space-row"><span class="name">8</span><div class="bar" style="width:48px"></div><span class="px">48</span></div>
+    </div>
+    <div>
+      <div class="col-title">radii</div>
+      <div class="radius-row"><span class="name">1</span><div class="r" style="border-radius:4px"></div><span class="desc">tags · swatches</span><span class="px">4</span></div>
+      <div class="radius-row"><span class="name">2</span><div class="r" style="border-radius:6px"></div><span class="desc">small inputs</span><span class="px">6</span></div>
+      <div class="radius-row"><span class="name">3</span><div class="r" style="border-radius:8px"></div><span class="desc">cards · buttons</span><span class="px">8</span></div>
+      <div class="radius-row"><span class="name">4</span><div class="r" style="border-radius:10px"></div><span class="desc">session rows</span><span class="px">10</span></div>
+      <div class="radius-row"><span class="name">5</span><div class="r" style="border-radius:12px"></div><span class="desc">modal</span><span class="px">12</span></div>
+      <div class="radius-row"><span class="name">∞</span><div class="r" style="border-radius:999px"></div><span class="desc">pill · dot</span><span class="px">999</span></div>
+    </div>
+  </div>
+</div>
+</body></html>

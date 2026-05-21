@@ -1,0 +1,55 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="_card.css">
+<style>
+.usage-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.u { display: flex; flex-direction: column; gap: 6px; padding: 12px; background: var(--bg-card); border-radius: var(--radius-3); }
+.u .chip { height: 6px; border-radius: 3px; opacity: 0.45; }
+.u .chip-solid { height: 28px; border-radius: var(--radius-2); }
+.u .name { font-size: var(--fs-row); font-weight: var(--fw-semibold); }
+.u .hex { font-family: var(--font-mono); font-size: 11px; color: var(--fg-dim); }
+
+.stack-demo {
+  height: 56px;
+  display: flex; align-items: flex-end;
+  gap: 0;
+  background: var(--bg-card);
+  border-radius: var(--radius-3);
+  overflow: hidden;
+  padding: 6px;
+}
+.stack-demo .layer {
+  flex: 1;
+  border-radius: 2px 2px 0 0;
+  margin: 0 1px;
+  opacity: 0.45;
+}
+</style></head><body>
+<div class="preview-card">
+  <div class="label">usage layer colors — stacked activity strip</div>
+  <div class="usage-grid">
+    <div class="u">
+      <div class="chip-solid" style="background:#60a5fa;opacity:0.45"></div>
+      <div class="name" style="color:#60a5fa">Input</div>
+      <div class="hex">#60a5fa</div>
+    </div>
+    <div class="u">
+      <div class="chip-solid" style="background:#fbbf24;opacity:0.45"></div>
+      <div class="name" style="color:#fbbf24">Cache create</div>
+      <div class="hex">#fbbf24</div>
+    </div>
+    <div class="u">
+      <div class="chip-solid" style="background:#2dd4bf;opacity:0.45"></div>
+      <div class="name" style="color:#2dd4bf">Cache read</div>
+      <div class="hex">#2dd4bf</div>
+    </div>
+    <div class="u">
+      <div class="chip-solid" style="background:#c084fc;opacity:0.45"></div>
+      <div class="name" style="color:#c084fc">Output</div>
+      <div class="hex">#c084fc</div>
+    </div>
+  </div>
+  <div class="dim" style="font-size:11px;">
+    Stack order in the chart, bottom→top: input → cache create → cache read → output. Painted at 35% opacity over a dark base so layered colors stay legible.
+  </div>
+</div>
+</body></html>

@@ -1,0 +1,171 @@
+/* ============================================================
+   Claude Context Dashboard — Design Tokens
+   Extracted verbatim from claude-context-dashboard/src/client/styles.css
+   ============================================================ */
+
+:root {
+  /* ---------- Surfaces (zinc steps) ---------- */
+  --bg-page:       #101114;   /* default; goes amber/red on status incident */
+  --bg-page-warn:  #2a2008;
+  --bg-page-crit:  #2a0d0d;
+  --bg-card:       #18181b;
+  --bg-input:      #1f1f23;
+  --bg-hover:      #27272a;
+  --bg-tooltip:    #0b0b0e;
+
+  /* ---------- Borders ---------- */
+  --border-1: #27272a;   /* default */
+  --border-2: #3f3f46;   /* hover */
+  --border-3: #52525b;   /* focus */
+  --border-4: #71717a;   /* selected */
+
+  /* ---------- Foreground ---------- */
+  --fg-1:      #f4f4f5;   /* primary text */
+  --fg-2:      #e4e4e7;   /* secondary */
+  --fg-3:      #d4d4d8;   /* tertiary */
+  --fg-muted:  #a1a1aa;   /* labels, blurbs */
+  --fg-dim:    #71717a;   /* tags, captions */
+  --fg-vdim:   #52525b;   /* dividers, range hints */
+
+  /* ---------- Severity (the brand's loudest signal) ---------- */
+  --sev-ok:    #22c55e;   /* Fast       <50k */
+  --sev-warn:  #eab308;   /* Medium     50k–150k */
+  --sev-high:  #f97316;   /* Large      150k–300k */
+  --sev-crit:  #ef4444;   /* Critical   300k+ */
+
+  /* paler variants for text on dark surfaces */
+  --sev-ok-text:   #4ade80;
+  --sev-warn-text: #fbbf24;
+  --sev-high-text: #fdba74;
+  --sev-crit-text: #fca5a5;
+
+  /* ---------- Usage layers (stacked area) ---------- */
+  --usage-input:    #60a5fa;
+  --usage-output:   #c084fc;
+  --usage-cache-r:  #2dd4bf;
+  --usage-cache-c:  #fbbf24;
+
+  /* ---------- Session-tag accents ---------- */
+  --tag-active:    rgba(34, 197, 94, 0.15);
+  --tag-awaiting:  rgba(251, 191, 36, 0.15);
+  --tag-compact:   rgba(167, 139, 250, 0.15);
+  --tag-cache:     rgba(96, 165, 250, 0.15);
+  --tag-compact-fg: #a78bfa;
+  --tag-cache-fg:   #60a5fa;
+
+  /* ---------- Type ---------- */
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+               "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, "JetBrains Mono", monospace;
+
+  /* sizes */
+  --fs-h1:        28px;
+  --fs-stat:      24px;
+  --fs-h2:        16px;
+  --fs-body:      14px;
+  --fs-row:       13px;
+  --fs-small:     12px;
+  --fs-axis:      11px;
+  --fs-micro:     10px;
+  --fs-watermark: 56px;
+
+  /* weights */
+  --fw-regular: 400;
+  --fw-medium:  500;
+  --fw-semibold: 600;
+  --fw-bold:     700;
+  --fw-black:    800;
+
+  /* ---------- Spacing (4px base) ---------- */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  24px;
+  --space-6:  32px;
+  --space-8:  48px;
+
+  /* ---------- Radii ---------- */
+  --radius-1: 4px;    /* tags, swatches */
+  --radius-2: 6px;    /* small buttons, inputs */
+  --radius-3: 8px;    /* cards, buttons, status chip */
+  --radius-4: 10px;   /* session rows */
+  --radius-5: 12px;   /* modal */
+  --radius-pill: 999px;
+
+  /* ---------- Borders ---------- */
+  --bw-1: 1px;
+  --bw-2: 1.5px;   /* session-row */
+  --bw-3: 2px;     /* focused color-swatch */
+
+  /* ---------- Shadows ---------- */
+  --shadow-modal:  0 18px 48px rgba(0, 0, 0, 0.6);
+  --shadow-tip:    0 6px 18px rgba(0, 0, 0, 0.55);
+  --shadow-row-text:
+    0 1px 2px rgba(0, 0, 0, 1),
+    0 2px 4px rgba(0, 0, 0, 1),
+    0 0 8px  rgba(0, 0, 0, 0.95),
+    0 0 14px rgba(0, 0, 0, 0.85),
+    0 0 22px rgba(0, 0, 0, 0.6);
+
+  /* ---------- Motion ---------- */
+  --ease-page: 400ms ease;       /* background-color on status change */
+  --ease-hover: 0.12s ease;      /* text links, copyable */
+  --ease-input: 0.15s ease;      /* feature edit borders */
+}
+
+/* ============================================================
+   Semantic primitives — base styles for HTML elements.
+   ============================================================ */
+
+html, body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--bg-page);
+  color: var(--fg-1);
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  font-feature-settings: "cv11" on, "ss01" on;
+}
+
+h1 {
+  font-size: var(--fs-h1);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  font-weight: var(--fw-semibold);
+  margin: 0;
+}
+
+h2 {
+  font-size: var(--fs-h2);
+  font-weight: var(--fw-semibold);
+  color: var(--fg-muted);
+  margin: 0 0 var(--space-1);
+}
+
+p {
+  font-size: var(--fs-small);
+  color: var(--fg-muted);
+  margin: 0;
+}
+
+code, .mono {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  background: var(--bg-card);
+  border: 1px solid var(--border-1);
+  padding: 1px 6px;
+  border-radius: var(--radius-1);
+  color: var(--fg-muted);
+}
+
+.label-micro {
+  font-size: var(--fs-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fg-dim);
+  font-weight: var(--fw-semibold);
+}
+
+.tabular { font-variant-numeric: tabular-nums; }
+.smallcaps { font-variant-caps: all-small-caps; letter-spacing: 0.04em; }

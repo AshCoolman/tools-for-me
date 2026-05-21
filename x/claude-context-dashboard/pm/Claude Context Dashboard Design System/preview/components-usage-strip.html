@@ -1,0 +1,156 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="_card.css">
+<style>
+.strip-wrap { background: #0e0e10; border: 1px solid #27272a; border-radius: 8px; padding: 4px; }
+.role { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-vdim); font-weight: 600; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; padding: 6px 8px 0; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--fg-muted); }
+.legend-swatch { width: 8px; height: 8px; border-radius: 2px; }
+.legend-value { font-family: ui-monospace, monospace; color: var(--fg-1); }
+</style></head><body>
+<div class="preview-card">
+  <div class="role">activity strip — stacked usage layers, per bucket</div>
+  <div class="strip-wrap">
+    <svg viewBox="0 0 660 64" width="100%" height="64">
+      <g transform="translate(56,4)">
+        <!-- 24 bars, stacked input → cache-create → cache-read → output -->
+        <g>
+          <!-- bar template, repeat with varying heights -->
+        </g>
+        <!-- We hand-roll 24 bars w/ 4 layers each at 22px wide. Width 540, 24bars*22 = 528 + 12 gap -->
+        <!-- generate via repeated <g>; use approximate stacked heights -->
+        <!-- Bucket 0..23. Each bar is x = i*22.5 -->
+        <g>
+          <!-- bar 0 -->
+          <rect x="0"   y="48" width="20" height="8"  fill="#60a5fa" fill-opacity="0.45"/>
+          <rect x="0"   y="44" width="20" height="4"  fill="#fbbf24" fill-opacity="0.45"/>
+          <rect x="0"   y="36" width="20" height="8"  fill="#2dd4bf" fill-opacity="0.45"/>
+          <rect x="0"   y="32" width="20" height="4"  fill="#c084fc" fill-opacity="0.45"/>
+          <!-- 1 -->
+          <rect x="22.5" y="50" width="20" height="6"  fill="#60a5fa" fill-opacity="0.45"/>
+          <rect x="22.5" y="48" width="20" height="2"  fill="#fbbf24" fill-opacity="0.45"/>
+          <rect x="22.5" y="42" width="20" height="6"  fill="#2dd4bf" fill-opacity="0.45"/>
+          <rect x="22.5" y="40" width="20" height="2"  fill="#c084fc" fill-opacity="0.45"/>
+          <!-- 2 -->
+          <rect x="45"  y="40" width="20" height="16" fill="#60a5fa" fill-opacity="0.45"/>
+          <rect x="45"  y="34" width="20" height="6"  fill="#fbbf24" fill-opacity="0.45"/>
+          <rect x="45"  y="22" width="20" height="12" fill="#2dd4bf" fill-opacity="0.45"/>
+          <rect x="45"  y="18" width="20" height="4"  fill="#c084fc" fill-opacity="0.45"/>
+          <!-- 3 -->
+          <rect x="67.5" y="46" width="20" height="10" fill="#60a5fa" fill-opacity="0.45"/>
+          <rect x="67.5" y="42" width="20" height="4"  fill="#fbbf24" fill-opacity="0.45"/>
+          <rect x="67.5" y="32" width="20" height="10" fill="#2dd4bf" fill-opacity="0.45"/>
+          <rect x="67.5" y="29" width="20" height="3"  fill="#c084fc" fill-opacity="0.45"/>
+          <!-- 4 -->
+          <rect x="90"  y="38" width="20" height="18" fill="#60a5fa" fill-opacity="0.45"/>
+          <rect x="90"  y="32" width="20" height="6"  fill="#fbbf24" fill-opacity="0.45"/>
+          <rect x="90"  y="18" width="20" height="14" fill="#2dd4bf" fill-opacity="0.45"/>
+          <rect x="90"  y="14" width="20" height="4"  fill="#c084fc" fill-opacity="0.45"/>
+          <!-- 5..18: dense activity -->
+          <rect x="112.5" y="32" width="20" height="24" fill="#60a5fa" fill-opacity="0.45"/>
+          <rect x="112.5" y="26" width="20" height="6"  fill="#fbbf24" fill-opacity="0.45"/>
+          <rect x="112.5" y="10" width="20" height="16" fill="#2dd4bf" fill-opacity="0.45"/>
+          <rect x="112.5" y="4"  width="20" height="6"  fill="#c084fc" fill-opacity="0.45"/>
+
+          <rect x="135"  y="36" width="20" height="20" fill="#60a5fa" fill-opacity="0.45"/>
+          <rect x="135"  y="32" width="20" height="4"  fill="#fbbf24" fill-opacity="0.45"/>
+          <rect x="135"  y="18" width="20" height="14" fill="#2dd4bf" fill-opacity="0.45"/>
+          <rect x="135"  y="14" width="20" height="4"  fill="#c084fc" fill-opacity="0.45"/>
+
+          <rect x="157.5" y="42" width="20" height="14" fill="#60a5fa" fill-opacity="0.45"/>
+          <rect x="157.5" y="36" width="20" height="6"  fill="#fbbf24" fill-opacity="0.45"/>
+          <rect x="157.5" y="22" width="20" height="14" fill="#2dd4bf" fill-opacity="0.45"/>
+          <rect x="157.5" y="18" width="20" height="4"  fill="#c084fc" fill-opacity="0.45"/>
+
+          <rect x="180"  y="36" width="20" height="20" fill="#60a5fa" fill-opacity="0.45"/>
+          <rect x="180"  y="30" width="20" height="6"  fill="#fbbf24" fill-opacity="0.45"/>
+          <rect x="180"  y="14" width="20" height="16" fill="#2dd4bf" fill-opacity="0.45"/>
+          <rect x="180"  y="9"  width="20" height="5"  fill="#c084fc" fill-opacity="0.45"/>
+
+          <rect x="202.5" y="40" width="20" height="16" fill="#60a5fa" fill-opacity="0.45"/>
+          <rect x="202.5" y="34" width="20" height="6"  fill="#fbbf24" fill-opacity="0.45"/>
+          <rect x="202.5" y="20" width="20" height="14" fill="#2dd4bf" fill-opacity="0.45"/>
+          <rect x="202.5" y="16" width="20" height="4"  fill="#c084fc" fill-opacity="0.45"/>
+
+          <rect x="225"  y="34" width="20" height="22" fill="#60a5fa" fill-opacity="0.45"/>
+          <rect x="225"  y="28" width="20" height="6"  fill="#fbbf24" fill-opacity="0.45"/>
+          <rect x="225"  y="12" width="20" height="16" fill="#2dd4bf" fill-opacity="0.45"/>
+          <rect x="225"  y="6"  width="20" height="6"  fill="#c084fc" fill-opacity="0.45"/>
+
+          <rect x="247.5" y="38" width="20" height="18" fill="#60a5fa" fill-opacity="0.45"/>
+          <rect x="247.5" y="32" width="20" height="6"  fill="#fbbf24" fill-opacity="0.45"/>
+          <rect x="247.5" y="18" width="20" height="14" fill="#2dd4bf" fill-opacity="0.45"/>
+          <rect x="247.5" y="14" width="20" height="4"  fill="#c084fc" fill-opacity="0.45"/>
+
+          <rect x="270"  y="42" width="20" height="14" fill="#60a5fa" fill-opacity="0.45"/>
+          <rect x="270"  y="36" width="20" height="6"  fill="#fbbf24" fill-opacity="0.45"/>
+          <rect x="270"  y="22" width="20" height="14" fill="#2dd4bf" fill-opacity="0.45"/>
+          <rect x="270"  y="18" width="20" height="4"  fill="#c084fc" fill-opacity="0.45"/>
+
+          <rect x="292.5" y="44" width="20" height="12" fill="#60a5fa" fill-opacity="0.45"/>
+          <rect x="292.5" y="40" width="20" height="4"  fill="#fbbf24" fill-opacity="0.45"/>
+          <rect x="292.5" y="28" width="20" height="12" fill="#2dd4bf" fill-opacity="0.45"/>
+          <rect x="292.5" y="25" width="20" height="3"  fill="#c084fc" fill-opacity="0.45"/>
+
+          <rect x="315"  y="46" width="20" height="10" fill="#60a5fa" fill-opacity="0.45"/>
+          <rect x="315"  y="42" width="20" height="4"  fill="#fbbf24" fill-opacity="0.45"/>
+          <rect x="315"  y="32" width="20" height="10" fill="#2dd4bf" fill-opacity="0.45"/>
+          <rect x="315"  y="29" width="20" height="3"  fill="#c084fc" fill-opacity="0.45"/>
+
+          <rect x="337.5" y="40" width="20" height="16" fill="#60a5fa" fill-opacity="0.45"/>
+          <rect x="337.5" y="34" width="20" height="6"  fill="#fbbf24" fill-opacity="0.45"/>
+          <rect x="337.5" y="20" width="20" height="14" fill="#2dd4bf" fill-opacity="0.45"/>
+          <rect x="337.5" y="15" width="20" height="5"  fill="#c084fc" fill-opacity="0.45"/>
+
+          <rect x="360"  y="36" width="20" height="20" fill="#60a5fa" fill-opacity="0.45"/>
+          <rect x="360"  y="30" width="20" height="6"  fill="#fbbf24" fill-opacity="0.45"/>
+          <rect x="360"  y="14" width="20" height="16" fill="#2dd4bf" fill-opacity="0.45"/>
+          <rect x="360"  y="9"  width="20" height="5"  fill="#c084fc" fill-opacity="0.45"/>
+
+          <rect x="382.5" y="42" width="20" height="14" fill="#60a5fa" fill-opacity="0.45"/>
+          <rect x="382.5" y="36" width="20" height="6"  fill="#fbbf24" fill-opacity="0.45"/>
+          <rect x="382.5" y="22" width="20" height="14" fill="#2dd4bf" fill-opacity="0.45"/>
+          <rect x="382.5" y="18" width="20" height="4"  fill="#c084fc" fill-opacity="0.45"/>
+
+          <rect x="405"  y="38" width="20" height="18" fill="#60a5fa" fill-opacity="0.45"/>
+          <rect x="405"  y="32" width="20" height="6"  fill="#fbbf24" fill-opacity="0.45"/>
+          <rect x="405"  y="18" width="20" height="14" fill="#2dd4bf" fill-opacity="0.45"/>
+          <rect x="405"  y="14" width="20" height="4"  fill="#c084fc" fill-opacity="0.45"/>
+
+          <rect x="427.5" y="44" width="20" height="12" fill="#60a5fa" fill-opacity="0.45"/>
+          <rect x="427.5" y="40" width="20" height="4"  fill="#fbbf24" fill-opacity="0.45"/>
+          <rect x="427.5" y="30" width="20" height="10" fill="#2dd4bf" fill-opacity="0.45"/>
+          <rect x="427.5" y="27" width="20" height="3"  fill="#c084fc" fill-opacity="0.45"/>
+
+          <rect x="450"  y="48" width="20" height="8"  fill="#60a5fa" fill-opacity="0.45"/>
+          <rect x="450"  y="46" width="20" height="2"  fill="#fbbf24" fill-opacity="0.45"/>
+          <rect x="450"  y="38" width="20" height="8"  fill="#2dd4bf" fill-opacity="0.45"/>
+          <rect x="450"  y="36" width="20" height="2"  fill="#c084fc" fill-opacity="0.45"/>
+
+          <rect x="472.5" y="50" width="20" height="6"  fill="#60a5fa" fill-opacity="0.45"/>
+          <rect x="472.5" y="46" width="20" height="4"  fill="#2dd4bf" fill-opacity="0.45"/>
+
+          <rect x="495"  y="52" width="20" height="4"  fill="#60a5fa" fill-opacity="0.45"/>
+          <rect x="495"  y="49" width="20" height="3"  fill="#2dd4bf" fill-opacity="0.45"/>
+
+          <rect x="517.5" y="54" width="20" height="2"  fill="#60a5fa" fill-opacity="0.45"/>
+        </g>
+        <!-- cumulative dashed line -->
+        <path d="M0,55 L22.5,53 L45,46 L67.5,42 L90,32 L112.5,18 L135,10 L157.5,8 L180,5 L202.5,4 L225,2 L247.5,1 L270,1 L292.5,1 L315,1 L337.5,1 L360,1 L382.5,1 L405,1 L427.5,1 L450,1 L472.5,1 L495,1 L517.5,1 L540,1"
+              stroke="#a1a1aa" stroke-width="1.5" stroke-dasharray="4 3" stroke-opacity="0.8" fill="none"/>
+        <!-- frame -->
+        <line x1="0" y1="0"   x2="0"   y2="56" stroke="#3f3f46" stroke-dasharray="4 3"/>
+        <line x1="540" y1="0" x2="540" y2="56" stroke="#3f3f46"/>
+        <line x1="0" y1="56"  x2="540" y2="56" stroke="#3f3f46"/>
+      </g>
+    </svg>
+  </div>
+  <div class="legend">
+    <span class="legend-item"><span class="legend-swatch" style="background:#60a5fa;opacity:0.45"></span><span>Input</span><span class="legend-value">412k</span></span>
+    <span class="legend-item"><span class="legend-swatch" style="background:#fbbf24;opacity:0.45"></span><span>Cache create</span><span class="legend-value">87k</span></span>
+    <span class="legend-item"><span class="legend-swatch" style="background:#2dd4bf;opacity:0.45"></span><span>Cache read</span><span class="legend-value">1.2M</span></span>
+    <span class="legend-item"><span class="legend-swatch" style="background:#c084fc;opacity:0.45"></span><span>Output</span><span class="legend-value">94k</span></span>
+    <span class="legend-item"><span class="legend-swatch" style="background:#a1a1aa;opacity:0.7"></span><span>Cumulative</span><span class="legend-value">1.8M</span></span>
+  </div>
+</div>
+</body></html>

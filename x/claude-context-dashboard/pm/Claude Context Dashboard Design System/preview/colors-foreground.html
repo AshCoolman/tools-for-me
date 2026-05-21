@@ -1,0 +1,107 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="_card.css">
+<style>
+.fg-card { background: var(--bg-card); padding: 14px 16px 16px; }
+.fg-grid {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  column-gap: 14px;
+  row-gap: 8px;
+  align-items: baseline;
+}
+.fg-row { display: contents; }
+.fg-row > .swatch {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  font-variant-numeric: tabular-nums;
+}
+.fg-row > .role {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #a1a1aa;
+  letter-spacing: 0.02em;
+}
+.fg-row > .hex {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #71717a;
+}
+.fg-row > .grade {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: right;
+  white-space: nowrap;
+}
+.grade.aa  { color: #22c55e; }
+.grade.aaL { color: #eab308; }
+.grade.fail{ color: #f97316; }
+
+.fg-row .swatch.interactive {
+  cursor: default;
+  transition: color 0.12s ease;
+}
+.fg-card:hover .swatch.interactive[data-hover="dim"]  { color: #d4d4d8; }
+.fg-card:hover .swatch.interactive[data-hover="vdim"] { color: #a1a1aa; }
+
+.fg-divider {
+  grid-column: 1 / -1;
+  height: 1px;
+  background: #27272a;
+  margin: 6px 0 2px;
+}
+.fg-note {
+  grid-column: 1 / -1;
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: #a1a1aa;
+  margin-top: 4px;
+}
+.fg-note b { color: #d4d4d8; font-weight: 600; }
+</style></head><body>
+<div class="preview-card fg-card">
+  <div class="fg-grid">
+
+    <span class="swatch" style="color:#f4f4f5">Aa primary text</span>
+    <span class="role">--fg-1</span>
+    <span class="hex">#f4f4f5</span>
+    <span class="grade aa">14.7 · AA</span>
+
+    <span class="swatch" style="color:#e4e4e7">Aa secondary text</span>
+    <span class="role">--fg-2</span>
+    <span class="hex">#e4e4e7</span>
+    <span class="grade aa">12.6 · AA</span>
+
+    <span class="swatch" style="color:#d4d4d8">Aa tertiary / labels</span>
+    <span class="role">--fg-3</span>
+    <span class="hex">#d4d4d8</span>
+    <span class="grade aa">10.6 · AA</span>
+
+    <span class="swatch" style="color:#a1a1aa">Aa muted · captions, hints</span>
+    <span class="role">--fg-muted</span>
+    <span class="hex">#a1a1aa</span>
+    <span class="grade aa">5.7 · AA</span>
+
+    <div class="fg-divider"></div>
+
+    <span class="swatch interactive" data-hover="dim" style="color:#71717a">Aa dim · resting metadata</span>
+    <span class="role">--fg-dim</span>
+    <span class="hex">#71717a</span>
+    <span class="grade aaL">3.5 · AA-Large</span>
+
+    <span class="swatch interactive" data-hover="vdim" style="color:#52525b">Aa very dim · path prefix</span>
+    <span class="role">--fg-vdim</span>
+    <span class="hex">#52525b</span>
+    <span class="grade fail">2.0 · fail</span>
+
+    <div class="fg-note">
+      <b>Dim tones are sub-AA on purpose</b> — they encode "present but not readable yet."
+      Hover this card: dim → tertiary, very-dim → muted (both jump above AA).
+      Use vdim only for <b>large, decoratable</b> text (≥18px / ≥14px bold) or as the recessive half of a pair (e.g. <code>/Users/me/work/</code><b>repo</b>) where the legible half carries meaning.
+    </div>
+  </div>
+</div>
+</body></html>

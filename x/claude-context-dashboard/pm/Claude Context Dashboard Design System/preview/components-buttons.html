@@ -1,0 +1,90 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="_card.css">
+<style>
+.section { display: flex; flex-direction: column; gap: 5px; }
+.role { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: #71717a; font-weight: 600; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+
+/* compact button — 22px tall */
+button.btn {
+  border: 1px solid #3f3f46; border-radius: 5px; background: #18181b;
+  color: #f4f4f5; padding: 2px 8px; cursor: pointer; font: inherit;
+  font-size: 11px; line-height: 1.4;
+}
+button.btn:hover { background: #27272a; border-color: #52525b; }
+button.btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+
+.tab {
+  padding: 2px 8px; border: 1px solid #27272a; background: transparent;
+  color: #a1a1aa; border-radius: 5px; cursor: pointer; font-size: 11px;
+  font-variant-numeric: tabular-nums; line-height: 1.4;
+}
+.tab:hover { color: #d4d4d8; border-color: #3f3f46; }
+.tab.active { background: #27272a; color: #f4f4f5; border-color: #3f3f46; }
+.tab[disabled] { opacity: 0.35; cursor: not-allowed; }
+
+.window-label {
+  color: #71717a; font-size: 9.5px;
+  text-transform: uppercase; letter-spacing: 0.06em; margin-right: 3px;
+}
+
+.days-input {
+  width: 52px; padding: 2px 6px; border: 1px solid #27272a; border-radius: 5px;
+  background: #18181b; color: #d4d4d8; font: inherit; font-size: 11px;
+  font-variant-numeric: tabular-nums; text-align: center;
+}
+.days-input::placeholder { color: #52525b; }
+
+.icon-btn {
+  width: 22px; height: 22px; padding: 0; display: inline-flex;
+  align-items: center; justify-content: center;
+  border: 1px solid #3f3f46; background: transparent;
+  color: #a1a1aa; border-radius: 5px; cursor: pointer;
+}
+.icon-btn:hover { color: #f4f4f5; border-color: #52525b; }
+.icon-btn svg { display: block; }
+
+.text-link {
+  background: transparent; border: 0; padding: 0; margin: 0;
+  color: #71717a; font: inherit; font-size: 10.5px; cursor: pointer;
+  text-decoration: underline; text-decoration-color: #3f3f46; text-underline-offset: 2px;
+}
+.text-link:hover { color: #d4d4d8; text-decoration-color: #71717a; }
+</style></head><body>
+<div class="preview-card" style="display:flex;flex-direction:column;gap:8px;">
+  <div class="section">
+    <div class="role">buttons · 22px</div>
+    <div class="btn-row">
+      <button class="btn">Default</button>
+      <button class="btn" style="background:#27272a;border-color:#52525b">Hover</button>
+      <button class="btn" disabled>Disabled</button>
+      <button class="icon-btn" title="Settings">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="role">window selector — tabs + custom days</div>
+    <div class="btn-row">
+      <span class="window-label">window</span>
+      <button class="tab">24h</button>
+      <button class="tab active">6h</button>
+      <button class="tab">1h</button>
+      <button class="tab">20m</button>
+      <button class="tab" disabled>1m</button>
+      <input class="days-input" type="number" placeholder="days" value="">
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="role">text link</div>
+    <div class="btn-row">
+      <button class="text-link">Show 3 dismissed</button>
+      <button class="text-link" style="color:#d4d4d8;text-decoration-color:#71717a">Hover</button>
+      <button class="text-link">Restore by id</button>
+    </div>
+  </div>
+</div>
+</body></html>

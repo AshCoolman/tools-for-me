@@ -1,0 +1,55 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="_card.css">
+<style>
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.tag {
+  font-size: 10px; font-weight: 500; letter-spacing: 0.03em;
+  padding: 1px 6px; border-radius: 3px; line-height: 1.4;
+  font-family: var(--font-sans);
+}
+.tag.active   { color: #4ade80; background: rgba(34, 197, 94, 0.15); }
+.tag.awaiting { color: #fbbf24; background: rgba(251, 191, 36, 0.15); }
+.tag.compact  { color: #a78bfa; background: rgba(167, 139, 250, 0.15); }
+.tag.cache    { color: #60a5fa; background: rgba(96, 165, 250, 0.15); }
+.role { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-vdim); font-weight: 600; }
+
+.dot-row { display: flex; gap: 22px; align-items: center; padding: 8px 0; }
+.dot {
+  width: 16px; height: 16px; border-radius: 999px; flex-shrink: 0;
+  background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,0.18);
+}
+.dot.off { background: #3f3f46; box-shadow: none; }
+.dot.awaiting {
+  background: transparent; border: 2px solid #fbbf24;
+  box-shadow: 0 0 0 3px rgba(251,191,36,0.18); position: relative;
+}
+.dot-caption { font-size: 11px; color: var(--fg-dim); margin-top: 4px; }
+</style></head><body>
+<div class="preview-card">
+  <div class="role">session inline tags</div>
+  <div class="row">
+    <span class="tag active">active</span>
+    <span class="tag awaiting">awaiting reply</span>
+    <span class="tag compact">compacted</span>
+    <span class="tag cache">cache-heavy</span>
+  </div>
+  <div class="role" style="margin-top:6px;">activity dot — three states</div>
+  <div class="dot-row">
+    <div style="text-align:center;">
+      <span class="dot"></span>
+      <div class="dot-caption">active</div>
+    </div>
+    <div style="text-align:center;">
+      <span class="dot off"></span>
+      <div class="dot-caption">idle</div>
+    </div>
+    <div style="text-align:center;">
+      <span class="dot awaiting"></span>
+      <div class="dot-caption">awaiting reply</div>
+    </div>
+  </div>
+  <div class="dim" style="font-size:11px;line-height:1.5;">
+    "Active" = last event ≤ 5min ago. "Awaiting" pulses a 1.6s ring (the only persistent animation in the system).
+  </div>
+</div>
+</body></html>

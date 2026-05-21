@@ -1,0 +1,117 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="_card.css">
+<style>
+.spark-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.spark-cell {
+  position: relative; height: 80px; border-radius: 8px;
+  background: #0e0e10; border: 1px solid #27272a; overflow: hidden;
+}
+.spark-cell svg { display: block; width: 100%; height: 100%; }
+.spark-cell .label-l {
+  position: absolute; left: 12px; top: 8px; font-size: 11px; font-weight: 600;
+  color: var(--fg-1); text-shadow: 0 1px 2px rgba(0,0,0,1);
+}
+.spark-cell .label-r {
+  position: absolute; right: 12px; top: 8px; font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+}
+.role { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-vdim); font-weight: 600; }
+</style></head><body>
+<div class="preview-card">
+  <div class="role">row sparkline — d3 step-after, gradient line + area</div>
+  <div class="spark-grid">
+    <!-- ok -->
+    <div class="spark-cell">
+      <svg viewBox="0 0 320 80" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="lf-ok" x1="0" y1="0" x2="320" y2="0" gradientUnits="userSpaceOnUse">
+            <stop offset="0%"  stop-color="#22c55e" stop-opacity="0"/>
+            <stop offset="60%" stop-color="#22c55e" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="#22c55e" stop-opacity="0.9"/>
+          </linearGradient>
+          <linearGradient id="af-ok" x1="0" y1="0" x2="320" y2="0" gradientUnits="userSpaceOnUse">
+            <stop offset="0%"  stop-color="#22c55e" stop-opacity="0"/>
+            <stop offset="90%" stop-color="#22c55e" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#22c55e" stop-opacity="0.3"/>
+          </linearGradient>
+        </defs>
+        <path d="M0,72 L40,72 L40,68 L80,68 L80,64 L120,64 L120,60 L160,60 L160,58 L200,58 L200,56 L240,56 L240,54 L280,54 L280,52 L316,52 L316,80 L0,80 Z" fill="url(#af-ok)"/>
+        <path d="M0,72 L40,72 L40,68 L80,68 L80,64 L120,64 L120,60 L160,60 L160,58 L200,58 L200,56 L240,56 L240,54 L280,54 L280,52 L316,52" stroke="url(#lf-ok)" fill="none" stroke-width="2"/>
+        <circle cx="316" cy="52" r="2.5" fill="#22c55e"/>
+      </svg>
+      <div class="label-l" style="color:#4ade80;">Fast</div>
+      <div class="label-r" style="color:#4ade80">28k</div>
+    </div>
+    <!-- warn -->
+    <div class="spark-cell">
+      <svg viewBox="0 0 320 80" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="lf-w" x1="0" y1="0" x2="320" y2="0" gradientUnits="userSpaceOnUse">
+            <stop offset="0%"  stop-color="#eab308" stop-opacity="0"/>
+            <stop offset="60%" stop-color="#eab308" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="#eab308" stop-opacity="0.9"/>
+          </linearGradient>
+          <linearGradient id="af-w" x1="0" y1="0" x2="320" y2="0" gradientUnits="userSpaceOnUse">
+            <stop offset="0%"  stop-color="#eab308" stop-opacity="0"/>
+            <stop offset="90%" stop-color="#eab308" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#eab308" stop-opacity="0.3"/>
+          </linearGradient>
+        </defs>
+        <path d="M0,68 L40,68 L40,60 L80,60 L80,52 L120,52 L120,48 L160,48 L160,42 L200,42 L200,38 L240,38 L240,34 L280,34 L280,30 L316,30 L316,80 L0,80 Z" fill="url(#af-w)"/>
+        <path d="M0,68 L40,68 L40,60 L80,60 L80,52 L120,52 L120,48 L160,48 L160,42 L200,42 L200,38 L240,38 L240,34 L280,34 L280,30 L316,30" stroke="url(#lf-w)" fill="none" stroke-width="2"/>
+        <circle cx="316" cy="30" r="2.5" fill="#eab308"/>
+      </svg>
+      <div class="label-l" style="color:#fbbf24;">Medium</div>
+      <div class="label-r" style="color:#fbbf24">112k</div>
+    </div>
+    <!-- high -->
+    <div class="spark-cell">
+      <svg viewBox="0 0 320 80" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="lf-h" x1="0" y1="0" x2="320" y2="0" gradientUnits="userSpaceOnUse">
+            <stop offset="0%"  stop-color="#f97316" stop-opacity="0"/>
+            <stop offset="60%" stop-color="#f97316" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="#f97316" stop-opacity="0.9"/>
+          </linearGradient>
+          <linearGradient id="af-h" x1="0" y1="0" x2="320" y2="0" gradientUnits="userSpaceOnUse">
+            <stop offset="0%"  stop-color="#f97316" stop-opacity="0"/>
+            <stop offset="90%" stop-color="#f97316" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#f97316" stop-opacity="0.3"/>
+          </linearGradient>
+        </defs>
+        <path d="M0,64 L40,64 L40,52 L80,52 L80,48 L120,48 L120,40 L160,40 L160,32 L200,32 L200,26 L240,26 L240,20 L280,20 L280,15 L316,15 L316,80 L0,80 Z" fill="url(#af-h)"/>
+        <path d="M0,64 L40,64 L40,52 L80,52 L80,48 L120,48 L120,40 L160,40 L160,32 L200,32 L200,26 L240,26 L240,20 L280,20 L280,15 L316,15" stroke="url(#lf-h)" fill="none" stroke-width="2"/>
+        <circle cx="316" cy="15" r="2.5" fill="#f97316"/>
+      </svg>
+      <div class="label-l" style="color:#fdba74;">Large</div>
+      <div class="label-r" style="color:#fdba74">218k</div>
+    </div>
+    <!-- crit -->
+    <div class="spark-cell">
+      <svg viewBox="0 0 320 80" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="lf-c" x1="0" y1="0" x2="320" y2="0" gradientUnits="userSpaceOnUse">
+            <stop offset="0%"  stop-color="#ef4444" stop-opacity="0"/>
+            <stop offset="60%" stop-color="#ef4444" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="#ef4444" stop-opacity="0.9"/>
+          </linearGradient>
+          <linearGradient id="af-c" x1="0" y1="0" x2="320" y2="0" gradientUnits="userSpaceOnUse">
+            <stop offset="0%"  stop-color="#ef4444" stop-opacity="0"/>
+            <stop offset="90%" stop-color="#ef4444" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#ef4444" stop-opacity="0.3"/>
+          </linearGradient>
+        </defs>
+        <path d="M0,52 L40,52 L40,38 L80,38 L80,30 L120,30 L120,30 L160,30 L160,72 L200,72 L200,55 L240,55 L240,28 L280,28 L280,8 L316,8 L316,80 L0,80 Z" fill="url(#af-c)"/>
+        <path d="M0,52 L40,52 L40,38 L80,38 L80,30 L120,30 L120,30 L160,30 L160,72 L200,72 L200,55 L240,55 L240,28 L280,28 L280,8 L316,8" stroke="url(#lf-c)" fill="none" stroke-width="2"/>
+        <circle cx="316" cy="8" r="2.5" fill="#ef4444"/>
+      </svg>
+      <div class="label-l" style="color:#fca5a5;">Critical · /compact at 160</div>
+      <div class="label-r" style="color:#fca5a5">328k</div>
+    </div>
+  </div>
+  <div class="dim" style="font-size:11px;">
+    Step-after curve preserves discrete turn boundaries. Trough on Critical = post-/compact rebound.
+  </div>
+</div>
+</body></html>

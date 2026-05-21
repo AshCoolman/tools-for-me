@@ -1,0 +1,71 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="_card.css">
+<style>
+.section { display: flex; flex-direction: column; gap: 8px; }
+.role { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-vdim); font-weight: 600; }
+.search-wrap { position: relative; max-width: 360px; }
+.search-wrap input {
+  width: 100%; height: 36px; padding: 0 12px 0 32px;
+  border: 1px solid #3f3f46; background: #1f1f23; color: #f4f4f5;
+  border-radius: 8px; font: inherit; font-size: 14px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+}
+.search-wrap input::placeholder { color: #a1a1aa; }
+.search-wrap.focus input {
+  border-color: #71717a; background: #25252a;
+  box-shadow: 0 0 0 3px rgba(161,161,170,0.12);
+  outline: none;
+}
+.search-wrap .icon {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  color: #a1a1aa; font-size: 14px; pointer-events: none;
+}
+.num-input {
+  width: 130px; padding: 6px 10px; font-size: 13px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  background: #18181b; border: 1px solid #3f3f46;
+  border-radius: 6px; color: #f4f4f5; text-align: right;
+}
+.color-swatch {
+  width: 18px; height: 18px; padding: 0; border: 1px solid #3f3f46;
+  border-radius: 4px;
+}
+.swatch-row { display: flex; gap: 8px; align-items: center; }
+.row-3 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: end; }
+.field-label { font-size: 12px; color: #f4f4f5; }
+.field-hint { font-size: 11px; color: #a1a1aa; }
+</style></head><body>
+<div class="preview-card">
+  <div class="section">
+    <div class="role">header search</div>
+    <div style="display:flex;gap:14px;align-items:center;">
+      <div class="search-wrap">
+        <span class="icon">⌕</span>
+        <input type="search" placeholder="Filter project, session id, or chat" value="">
+      </div>
+      <div class="search-wrap focus" style="max-width:300px;">
+        <span class="icon">⌕</span>
+        <input type="search" value="src/client" placeholder="">
+      </div>
+    </div>
+    <div class="field-hint">Default · focused (3px halo)</div>
+  </div>
+  <div class="row-3">
+    <div class="section">
+      <div class="role">numeric input — settings</div>
+      <input class="num-input" value="1,000,000">
+      <div class="field-hint">Right-aligned mono · context limit</div>
+    </div>
+    <div class="section">
+      <div class="role">color swatch — per-project</div>
+      <div class="swatch-row">
+        <span class="color-swatch" style="background:#2dd4bf"></span>
+        <span class="color-swatch" style="background:#fb923c"></span>
+        <span class="color-swatch" style="background:#a78bfa;border-style:dashed;border-width:2px"></span>
+        <span class="color-swatch" style="background:#60a5fa;border-width:2px"></span>
+      </div>
+      <div class="field-hint">solid = project · dashed = session · 2px = detached</div>
+    </div>
+  </div>
+</div>
+</body></html>

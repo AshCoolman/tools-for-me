@@ -1,0 +1,50 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="_card.css">
+<style>
+.swatches { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.sw {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 10px; border-radius: var(--radius-3);
+  background: var(--bg-card); border: 1px solid var(--border-1);
+}
+.sw .chip {
+  height: 48px; border-radius: var(--radius-2);
+  border: 1px solid rgba(255,255,255,0.04);
+}
+.sw .name { font-size: var(--fs-row); font-weight: var(--fw-semibold); color: var(--fg-1); }
+.sw .meta { font-family: var(--font-mono); font-size: 11px; color: var(--fg-dim); }
+.sw .range { font-size: var(--fs-micro); color: var(--fg-vdim); margin-top: 2px;}
+</style></head><body>
+<div class="preview-card">
+  <div class="row" style="justify-content:space-between;">
+    <div class="label">severity scale — context fullness</div>
+    <div class="dim" style="font-size:11px;">tokens · vs default 1M context limit</div>
+  </div>
+  <div class="swatches">
+    <div class="sw">
+      <div class="chip" style="background:#22c55e"></div>
+      <div class="name" style="color:#4ade80">Fast</div>
+      <div class="meta">#22c55e</div>
+      <div class="range">&lt; 50k</div>
+    </div>
+    <div class="sw">
+      <div class="chip" style="background:#eab308"></div>
+      <div class="name" style="color:#fbbf24">Medium</div>
+      <div class="meta">#eab308</div>
+      <div class="range">50k – 150k</div>
+    </div>
+    <div class="sw">
+      <div class="chip" style="background:#f97316"></div>
+      <div class="name" style="color:#fdba74">Large</div>
+      <div class="meta">#f97316</div>
+      <div class="range">150k – 300k</div>
+    </div>
+    <div class="sw">
+      <div class="chip" style="background:#ef4444"></div>
+      <div class="name" style="color:#fca5a5">Critical</div>
+      <div class="meta">#ef4444</div>
+      <div class="range">300k +</div>
+    </div>
+  </div>
+</div>
+</body></html>

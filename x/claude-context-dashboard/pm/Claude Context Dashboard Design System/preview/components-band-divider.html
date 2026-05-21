@@ -1,0 +1,102 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="_card.css">
+<style>
+.bands { display: flex; flex-direction: column; gap: 2px; }
+
+.band {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 2px;
+  position: relative;
+}
+
+/* The keyword: bold, large, severity-colored, with an inset chip + threshold range */
+.band__keyword {
+  display: flex; align-items: baseline; gap: 10px;
+  flex-shrink: 0;
+}
+.band__bar {
+  width: 4px; height: 22px; border-radius: 2px;
+  align-self: center;
+}
+.band__label {
+  font-size: 18px; font-weight: 800;
+  letter-spacing: -0.01em; line-height: 1;
+  text-transform: uppercase;
+  font-feature-settings: "ss01";
+}
+.band__range {
+  font-family: var(--font-mono);
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 2px 6px; border-radius: 3px;
+  line-height: 1;
+}
+
+/* Explanation: kept low-weight, dim, the way the user liked it */
+.band__blurb {
+  font-style: normal;
+  color: #71717a;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+/* Severity tints */
+.crit .band__bar      { background: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,0.45); }
+.crit .band__label    { color: #fca5a5; }
+.crit .band__range    { color: #fca5a5; background: rgba(239,68,68,0.12); }
+
+.high .band__bar      { background: #f97316; box-shadow: 0 0 6px rgba(249,115,22,0.4); }
+.high .band__label    { color: #fdba74; }
+.high .band__range    { color: #fdba74; background: rgba(249,115,22,0.12); }
+
+.warn .band__bar      { background: #eab308; }
+.warn .band__label    { color: #fcd34d; }
+.warn .band__range    { color: #fcd34d; background: rgba(234,179,8,0.12); }
+
+.ok .band__bar        { background: #22c55e; }
+.ok .band__label      { color: #4ade80; }
+.ok .band__range      { color: #4ade80; background: rgba(34,197,94,0.12); }
+
+.role { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-vdim); font-weight: 600; margin-bottom: 6px; }
+</style></head><body>
+<div class="preview-card">
+  <div class="role">band divider — separates session list by severity</div>
+  <div class="bands">
+    <div class="band crit">
+      <div class="band__keyword">
+        <span class="band__bar"></span>
+        <span class="band__label">Critical</span>
+        <span class="band__range">300k+</span>
+      </div>
+      <em class="band__blurb">Approaching limits; expect slowdowns.</em>
+    </div>
+    <div class="band high">
+      <div class="band__keyword">
+        <span class="band__bar"></span>
+        <span class="band__label">Large</span>
+        <span class="band__range">150–300k</span>
+      </div>
+      <em class="band__blurb">Long session; consider /compact soon.</em>
+    </div>
+    <div class="band warn">
+      <div class="band__keyword">
+        <span class="band__bar"></span>
+        <span class="band__label">Medium</span>
+        <span class="band__range">50–150k</span>
+      </div>
+      <em class="band__blurb">Substantial conversation, still responsive.</em>
+    </div>
+    <div class="band ok">
+      <div class="band__keyword">
+        <span class="band__bar"></span>
+        <span class="band__label">Fast</span>
+        <span class="band__range">&lt;50k</span>
+      </div>
+      <em class="band__blurb">Snappy turns, tight focus.</em>
+    </div>
+  </div>
+</div>
+</body></html>

@@ -1,0 +1,55 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="_card.css">
+<style>
+.specimen-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.box {
+  background: var(--bg-card); border-radius: var(--radius-3); padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.role { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-vdim); font-weight: 600; }
+.mono-text { font-family: var(--font-mono); color: var(--fg-1); }
+.micro {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--fg-dim); font-weight: 600;
+}
+.smallcaps {
+  font-variant-caps: all-small-caps; letter-spacing: 0.04em;
+  font-size: 13px; color: var(--fg-dim);
+}
+.tabular-demo {
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  color: var(--fg-1);
+}
+</style></head><body>
+<div class="preview-card">
+  <div class="label">type — mono & micro</div>
+  <div class="specimen-grid">
+    <div class="box">
+      <div class="role">session id</div>
+      <div class="mono-text" style="font-size:13px;color:#a1a1aa">a4f9c3b2-1d8e-4f7a-…</div>
+      <div class="role" style="margin-top:6px">code inline</div>
+      <div class="mono-text" style="font-size:12px"><span style="background:#27272a;border:1px solid #3f3f46;padding:1px 6px;border-radius:4px;color:#a1a1aa">POST /api/usage</span></div>
+    </div>
+    <div class="box">
+      <div class="role">tabular numbers</div>
+      <div class="tabular-demo">328,470 → 412,891 → 1,204,000</div>
+      <div class="role" style="margin-top:6px">tooltip metric</div>
+      <div class="micro">ctx · cum · session · weekly</div>
+    </div>
+    <div class="box">
+      <div class="role">conversation tag</div>
+      <div class="smallcaps">prompt:</div>
+      <div class="smallcaps">reply:</div>
+    </div>
+    <div class="box">
+      <div class="role">band divider</div>
+      <div style="display:flex;align-items:baseline;gap:10px;">
+        <span style="width:10px;height:10px;border-radius:2px;background:#f97316"></span>
+        <strong style="font-size:14px">Large</strong>
+        <em style="font-style:normal;color:#71717a;font-size:12px">150k–300k</em>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>

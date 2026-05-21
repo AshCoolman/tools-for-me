@@ -1,0 +1,69 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="_card.css">
+<style>
+.spec {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  column-gap: 18px; row-gap: 10px; align-items: baseline;
+  font-size: 12px;
+}
+.spec .role { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-1); font-weight: 600; }
+.spec .hex { font-family: var(--font-mono); color: var(--fg-muted); font-variant-numeric: tabular-nums; }
+.spec .desc { color: var(--fg-dim); font-size: 11px; line-height: 1.5; }
+.spec .dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; border: 1px solid rgba(255,255,255,0.06); vertical-align: -1px; margin-right: 6px; }
+
+.section-h {
+  margin-top: 16px; margin-bottom: 8px;
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--fg-1); font-weight: 600;
+}
+.states { display: flex; gap: 10px; flex-wrap: wrap; }
+.state {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 12px 14px; min-width: 130px;
+  background: transparent;
+  font-size: 12px;
+}
+.state .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-vdim); font-weight: 600; }
+.state .name { font-family: var(--font-mono); font-size: 11px; color: var(--fg-muted); }
+.s-rest    { border: 1px solid #27272a; }
+.s-hover   { border: 1px solid #a1a1aa; }
+.s-focus   { outline: 2px solid #fafafa; outline-offset: -1px; border: 1px solid #a1a1aa; }
+.s-focus .lbl { color: #fafafa; }
+
+.note { margin-top: 14px; padding-top: 10px; border-top: 1px dashed var(--border-1); color: var(--fg-muted); font-size: 11px; line-height: 1.55; }
+</style></head><body>
+<div class="preview-card">
+  <div class="label">tones — minimal</div>
+  <div class="spec">
+    <span class="role"><span class="dot" style="background:#101114"></span>page</span>
+    <span class="hex">#101114</span>
+    <span class="desc">Single body surface. No raised panels — modals overlay with backdrop blur instead. Becomes amber / red on incident.</span>
+
+    <span class="role"><span class="dot" style="background:#27272a"></span>border</span>
+    <span class="hex">#27272a</span>
+    <span class="desc">1px hairline. The only thing separating cards from page.</span>
+  </div>
+
+  <div class="section-h">Interactive states — high-contrast outlines</div>
+  <div class="states">
+    <div class="state s-rest">
+      <span class="lbl">rest</span>
+      <span class="name">border #27272a</span>
+    </div>
+    <div class="state s-hover">
+      <span class="lbl">hover</span>
+      <span class="name">border #a1a1aa</span>
+    </div>
+    <div class="state s-focus">
+      <span class="lbl">focus</span>
+      <span class="name">outline 2px #fafafa</span>
+    </div>
+  </div>
+
+  <div class="note">
+    Two tones, not seven. State changes are <strong style="color:var(--fg-1)">large</strong>: rest → hover lifts border 4 zinc steps (#27272a → #a1a1aa);<br>
+    focus stamps a 2px white outline. Loud enough to hold against the severity reds and oranges.
+  </div>
+</div>
+</body></html>

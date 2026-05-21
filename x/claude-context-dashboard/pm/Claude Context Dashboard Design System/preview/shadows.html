@@ -1,0 +1,92 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="_card.css">
+<style>
+.grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.demo {
+  background: var(--bg-card); border: 1px solid var(--border-1);
+  border-radius: var(--radius-3); padding: 16px 16px 14px;
+  display: flex; flex-direction: column; gap: 8px;
+  min-height: 96px;
+}
+.role { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: #71717a; font-weight: 600; }
+.shadow-modal { box-shadow: 0 18px 48px rgba(0,0,0,0.6); }
+.shadow-tip   { box-shadow: 0 6px 18px rgba(0,0,0,0.55); }
+.spec { font-family: var(--font-mono); font-size: 11px; color: #a1a1aa; line-height: 1.5; }
+
+/* ── naturalistic legibility vignette ──
+   No text-shadow halo. The TEXT is unshadowed; instead a soft radial
+   darkening sits *under* the text inside the colored fill. The fill
+   itself recedes behind the type, so the eye reads it as depth, not as
+   a glow on the letters. */
+.row-text-bg {
+  position: relative;
+  height: 48px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: linear-gradient(90deg,
+    rgba(34,197,94,0.05) 0%,
+    rgba(34,197,94,0.45) 100%);
+}
+.row-text-bg::before {
+  /* radial vignette behind the text — darkens the colored fill locally */
+  content: "";
+  position: absolute;
+  left: 6px; top: 50%;
+  width: 70%; height: 220%;
+  transform: translateY(-50%);
+  background: radial-gradient(ellipse at left center,
+    rgba(14,14,16,0.55) 0%,
+    rgba(14,14,16,0.32) 28%,
+    rgba(14,14,16,0)    65%);
+  pointer-events: none;
+}
+.row-text-bg span {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: #f4f4f5;
+}
+
+.dot-aura { display: flex; gap: 16px; align-items: center; padding: 6px 0; }
+.aura-dot { width: 12px; height: 12px; border-radius: 50%; }
+
+.note {
+  font-size: 11px; color: #a1a1aa; line-height: 1.55;
+}
+.note b { color: #d4d4d8; font-weight: 600; }
+</style></head><body>
+<div class="preview-card">
+  <div class="label">shadow &amp; glow</div>
+  <div class="grid">
+    <div class="demo shadow-modal">
+      <div class="role">modal</div>
+      <div class="spec">0 18px 48px<br>rgba(0,0,0,0.6)</div>
+    </div>
+    <div class="demo shadow-tip">
+      <div class="role">tooltip</div>
+      <div class="spec">0 6px 18px<br>rgba(0,0,0,0.55)</div>
+    </div>
+    <div class="demo">
+      <div class="role">dot aura — colored</div>
+      <div class="dot-aura">
+        <span class="aura-dot" style="background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,0.18)"></span>
+        <span class="aura-dot" style="background:#eab308;box-shadow:0 0 0 3px rgba(234,179,8,0.22)"></span>
+        <span class="aura-dot" style="background:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,0.25)"></span>
+      </div>
+      <div class="spec" style="color:#71717a">0 0 0 3px · α 0.18–0.25</div>
+    </div>
+  </div>
+
+  <div class="row-text-bg">
+    <span>session text over chart fill</span>
+  </div>
+
+  <div class="note">
+    <b>Legibility vignette, not a text glow.</b>
+    Where labels sit on top of a colored sparkline fill, the <i>fill</i> is darkened locally with a soft radial gradient behind the type — a naturalistic recession. The text itself carries no shadow.
+  </div>
+</div>
+</body></html>

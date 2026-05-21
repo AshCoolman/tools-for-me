@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 32" width="240" height="32">
+  <g transform="translate(0,3)">
+    <rect x="0" y="0" width="11" height="11" rx="2" fill="#22c55e"></rect>
+    <rect x="14" y="0" width="11" height="11" rx="2" fill="#eab308"></rect>
+    <rect x="0" y="14" width="11" height="11" rx="2" fill="#f97316"></rect>
+    <rect x="14" y="14" width="11" height="11" rx="2" fill="#ef4444"></rect>
+  </g>
+  <text x="36" y="22" font-family="Inter, system-ui, sans-serif" font-size="16" font-weight="600" letter-spacing="-0.01em" fill="#f4f4f5">
+    Claude Context Dashboard
+  </text>
+</svg>
