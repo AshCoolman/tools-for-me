@@ -1,1 +1,1 @@
-yarn lerna run pre-commit
+pnpm lerna run pre-commit
