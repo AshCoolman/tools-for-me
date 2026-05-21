@@ -1,0 +1,42 @@
+{
+  "name": "@ashcoolman/contract-slice",
+  "version": "0.1.0",
+  "description": "Install a Contract Slice workflow into any project — intent, contracts, tests, implementation, verification.",
+  "license": "MIT",
+  "author": "Ash Coolman <banquet.poll-4g@icloud.com>",
+  "keywords": [
+    "claude-code",
+    "contract-slice",
+    "cslice",
+    "cli",
+    "workflow"
+  ],
+  "type": "module",
+  "bin": {
+    "cslice": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "src/templates"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "echo 'lint: no linter configured' && exit 0",
+    "gate": "pnpm typecheck && pnpm test && pnpm build"
+  },
+  "dependencies": {
+    "commander": "^12.0.0",
+    "kleur": "^4.1.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
