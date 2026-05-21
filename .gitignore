@@ -14,3 +14,4 @@ dist/
 *.gitignored.*
 .claude/settings.local.json
 **/*/.claude/settings.local.json
+.zed
