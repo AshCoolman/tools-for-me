@@ -1,6 +1,5 @@
 node_modules/
 dist/
-!src/cli/ui-assets/dist/
 coverage/
 .orchestration-state/
 orchestration/*
